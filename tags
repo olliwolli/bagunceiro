@@ -1,0 +1,298 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+ADMIN_MODE	z_features.h	22;"	d
+BLOGGER_O	Makefile	/^BLOGGER_O=z_time.o z_cdb.o z_entry.o z_blogger.o$/;"	m
+BLOG_O	Makefile	/^BLOG_O=z_mainblog.o z_blog.o z_entry.o z_time.o  z_cdb.o format.o$/;"	m
+CC	Makefile	/^CC=$(DIET)\/bin\/diet gcc$/;"	m
+CFLAGS	Makefile	/^CFLAGS=-g -Wall -I$(DIET_INCLUDE)$/;"	m
+CHOOSE_DB_FILE	z_entry.c	26;"	d	file:
+CLOG_TYPE_HTML	z_blog.h	9;"	d
+CLOG_TYPE_RSS_2_0	z_blog.h	8;"	d
+COOKIE_MAX	z_features.h	10;"	d
+CP_NOP	z_cdb.c	24;"	d	file:
+CP_PAR	z_cdb.c	25;"	d	file:
+CP_SRC	z_cdb.c	26;"	d	file:
+CSS_COOKIE	z_blog.h	/^		    CSS_COOKIE } csstype;$/;"	e	enum:blog::csstype
+CSS_DEFAULT	z_blog.h	/^	enum csstype { CSS_DEFAULT, CSS_ERROR, CSS_RESET, CSS_SELECT,$/;"	e	enum:blog::csstype
+CSS_ERROR	z_blog.h	/^	enum csstype { CSS_DEFAULT, CSS_ERROR, CSS_RESET, CSS_SELECT,$/;"	e	enum:blog::csstype
+CSS_RESET	z_blog.h	/^	enum csstype { CSS_DEFAULT, CSS_ERROR, CSS_RESET, CSS_SELECT,$/;"	e	enum:blog::csstype
+CSS_SELECT	z_blog.h	/^	enum csstype { CSS_DEFAULT, CSS_ERROR, CSS_RESET, CSS_SELECT,$/;"	e	enum:blog::csstype
+DAYS_SECS	z_time.c	103;"	d	file:
+DAYS_SECS	z_time.c	115;"	d	file:
+DEBUG	z_features.h	23;"	d
+DEBUG_PARSING	z_features.h	24;"	d
+DIET	Makefile	/^DIET=\/opt\/diet$/;"	m
+DIET_INCLUDE	Makefile	/^DIET_INCLUDE=$(DIET)\/include$/;"	m
+FILE_BUFFER_SIZE	z_blog.h	11;"	d
+MAX_ENTRIES_PER_DAY	z_entry.h	11;"	d
+MAX_ENTRY_SIZE	z_entry.h	10;"	d
+N_ACTION	z_features.h	/^enum notice { N_ERROR, N_NOTE, N_NONE, N_ACTION };$/;"	e	enum:notice
+N_ERROR	z_features.h	/^enum notice { N_ERROR, N_NOTE, N_NONE, N_ACTION };$/;"	e	enum:notice
+N_NONE	z_features.h	/^enum notice { N_ERROR, N_NOTE, N_NONE, N_ACTION };$/;"	e	enum:notice
+N_NOTE	z_features.h	/^enum notice { N_ERROR, N_NOTE, N_NONE, N_ACTION };$/;"	e	enum:notice
+OP_ADD	z_cdb.c	/^	OP_CPY, OP_MOD, OP_DEL, OP_ADD$/;"	e	enum:cop	file:
+OP_ADD	z_cdb.c	23;"	d	file:
+OP_CPY	z_cdb.c	/^	OP_CPY, OP_MOD, OP_DEL, OP_ADD$/;"	e	enum:cop	file:
+OP_CPY	z_cdb.c	20;"	d	file:
+OP_DEL	z_cdb.c	/^	OP_CPY, OP_MOD, OP_DEL, OP_ADD$/;"	e	enum:cop	file:
+OP_DEL	z_cdb.c	22;"	d	file:
+OP_MOD	z_cdb.c	/^	OP_CPY, OP_MOD, OP_DEL, OP_ADD$/;"	e	enum:cop	file:
+OP_MOD	z_cdb.c	21;"	d	file:
+POSTDATA_MAX	z_features.h	8;"	d
+PROGRAM_NAME	z_features.h	12;"	d
+QA_ADD	z_blog.h	/^	enum qaction { QA_SHOW, QA_DELETE, QA_ADD, QA_MODIFY } action;$/;"	e	enum:query::qaction
+QA_DELETE	z_blog.h	/^	enum qaction { QA_SHOW, QA_DELETE, QA_ADD, QA_MODIFY } action;$/;"	e	enum:query::qaction
+QA_MODIFY	z_blog.h	/^	enum qaction { QA_SHOW, QA_DELETE, QA_ADD, QA_MODIFY } action;$/;"	e	enum:query::qaction
+QA_SHOW	z_blog.h	/^	enum qaction { QA_SHOW, QA_DELETE, QA_ADD, QA_MODIFY } action;$/;"	e	enum:query::qaction
+QRY_TS	z_blog.h	/^	enum qtype { QRY_TS, QRY_WEEK } type;$/;"	e	enum:query::qtype
+QRY_WEEK	z_blog.h	/^	enum qtype { QRY_TS, QRY_WEEK } type;$/;"	e	enum:query::qtype
+QUERY_MAX	z_features.h	9;"	d
+SRCS	Makefile	/^SRCS=$(OBJS:.o=.c)$/;"	m
+S_HTML	z_blog.h	/^	enum stype { S_HTML, S_RSS } stype;$/;"	e	enum:blog::stype
+S_RSS	z_blog.h	/^	enum stype { S_HTML, S_RSS } stype;$/;"	e	enum:blog::stype
+TARGETS	Makefile	/^TARGETS=blog.cgi blogger$/;"	m
+_Z_BLOG_H	z_blog.h	2;"	d
+_Z_CDB_H	z_cdb.h	2;"	d
+_Z_ENTRY_H	z_entry.h	2;"	d
+_Z_FEATURES_H	z_features.h	2;"	d
+_Z_TIME_H	z_time.h	2;"	d
+__cdb_remake	z_cdb.c	/^static int __cdb_remake(const array * file, const array * k, const array * v, enum cop op)$/;"	f	file:	signature:(const array * file, const array * k, const array * v, enum cop op)
+__cdb_remake_real	z_cdb.c	/^static int __cdb_remake_real(const char *name, const char *newname,$/;"	f	file:	signature:(const char *name, const char *newname, const unsigned char *skey, const size_t slen, unsigned char *value, size_t vlen, enum cop op)
+__d	z_mainblog.c	/^static void __d(const char *desc, const char *value)$/;"	f	file:	signature:(const char *desc, const char *value)
+__make_tmp_name	z_cdb.c	/^static size_t __make_tmp_name(array * tmpname, const array * file)$/;"	f	file:	signature:(array * tmpname, const array * file)
+__nop	format.c	/^void __nop(struct nentry *e)$/;"	f	signature:(struct nentry *e)
+action	z_blog.h	/^	enum qaction { QA_SHOW, QA_DELETE, QA_ADD, QA_MODIFY } action;$/;"	m	struct:query	typeref:enum:query::qaction	access:public
+add_entry	z_entry.c	/^int add_entry(const char *dbpath, struct nentry *entry)$/;"	f	signature:(const char *dbpath, struct nentry *entry)
+add_entry	z_entry.h	/^int add_entry(const char *dbpath, struct nentry *entry);$/;"	p	signature:(const char *dbpath, struct nentry *entry)
+add_entry_now	z_entry.c	/^int add_entry_now(const char *dbpath, struct nentry *entry)$/;"	f	signature:(const char *dbpath, struct nentry *entry)
+add_entry_now	z_entry.h	/^int add_entry_now(const char *dbpath, struct nentry *entry);$/;"	p	signature:(const char *dbpath, struct nentry *entry)
+add_key	z_cdb.h	/^	void (*add_key) (void *e, unsigned char *s, size_t l);$/;"	m	struct:eops	access:public
+add_to_array	z_cdb.h	/^	void (*add_to_array) (void *e, array * arr);$/;"	m	struct:eops	access:public
+add_val	z_cdb.h	/^	void (*add_val) (void *e, unsigned char *s, size_t l);$/;"	m	struct:eops	access:public
+alloc	z_cdb.h	/^	void *(*alloc) ();$/;"	m	struct:eops	access:public
+blog	z_blog.h	/^typedef struct blog {$/;"	s
+blog::CSS_COOKIE	z_blog.h	/^		    CSS_COOKIE } csstype;$/;"	e	enum:blog::csstype
+blog::CSS_DEFAULT	z_blog.h	/^	enum csstype { CSS_DEFAULT, CSS_ERROR, CSS_RESET, CSS_SELECT,$/;"	e	enum:blog::csstype
+blog::CSS_ERROR	z_blog.h	/^	enum csstype { CSS_DEFAULT, CSS_ERROR, CSS_RESET, CSS_SELECT,$/;"	e	enum:blog::csstype
+blog::CSS_RESET	z_blog.h	/^	enum csstype { CSS_DEFAULT, CSS_ERROR, CSS_RESET, CSS_SELECT,$/;"	e	enum:blog::csstype
+blog::CSS_SELECT	z_blog.h	/^	enum csstype { CSS_DEFAULT, CSS_ERROR, CSS_RESET, CSS_SELECT,$/;"	e	enum:blog::csstype
+blog::S_HTML	z_blog.h	/^	enum stype { S_HTML, S_RSS } stype;$/;"	e	enum:blog::stype
+blog::S_RSS	z_blog.h	/^	enum stype { S_HTML, S_RSS } stype;$/;"	e	enum:blog::stype
+blog::cookie	z_blog.h	/^	char *cookie;$/;"	m	struct:blog	access:public
+blog::css	z_blog.h	/^	array css;$/;"	m	struct:blog	access:public
+blog::csstype	z_blog.h	/^		    CSS_COOKIE } csstype;$/;"	m	struct:blog	typeref:enum:blog::csstype	access:public
+blog::csstype	z_blog.h	/^	enum csstype { CSS_DEFAULT, CSS_ERROR, CSS_RESET, CSS_SELECT,$/;"	g	struct:blog	access:public
+blog::db	z_blog.h	/^	char db[128];$/;"	m	struct:blog	access:public
+blog::fmt	z_blog.h	/^	struct fmting *fmt;$/;"	m	struct:blog	typeref:struct:blog::fmting	access:public
+blog::host	z_blog.h	/^	char *host;$/;"	m	struct:blog	access:public
+blog::input	z_blog.h	/^	array input;$/;"	m	struct:blog	access:public
+blog::ptime	z_blog.h	/^	struct timeval ptime;$/;"	m	struct:blog	typeref:struct:blog::timeval	access:public
+blog::qry	z_blog.h	/^	query_t qry;$/;"	m	struct:blog	access:public
+blog::script	z_blog.h	/^	char *script;$/;"	m	struct:blog	access:public
+blog::stype	z_blog.h	/^	enum stype { S_HTML, S_RSS } stype;$/;"	g	struct:blog	access:public
+blog::stype	z_blog.h	/^	enum stype { S_HTML, S_RSS } stype;$/;"	m	struct:blog	typeref:enum:blog::stype	access:public
+blog::title	z_blog.h	/^	char title[20];$/;"	m	struct:blog	access:public
+blog_t	z_blog.h	/^} blog_t;$/;"	t	typeref:struct:blog
+caldate_fmtn	z_time.c	/^unsigned int caldate_fmtn(char *s, struct caldate *cd)$/;"	f	signature:(char *s, struct caldate *cd)
+caldate_fmtn	z_time.h	/^unsigned int caldate_fmtn(char *s, struct caldate *cd);$/;"	p	signature:(char *s, struct caldate *cd)
+cdb_add	z_cdb.c	/^int cdb_add(const array * file, const array * k, const array * v)$/;"	f	signature:(const array * file, const array * k, const array * v)
+cdb_add	z_cdb.h	/^int cdb_add(const array * name, const array * k, const array * v);$/;"	p	signature:(const array * name, const array * k, const array * v)
+cdb_del	z_cdb.c	/^int cdb_del(const array * file, const array * k)$/;"	f	signature:(const array * file, const array * k)
+cdb_del	z_cdb.h	/^int cdb_del(const array * name, const array * k);$/;"	p	signature:(const array * name, const array * k)
+cdb_exist	z_blog.h	/^int cdb_exist();$/;"	p	signature:()
+cdb_get	z_cdb.c	/^int cdb_get(const array * file, const array * k, array * v)$/;"	f	signature:(const array * file, const array * k, array * v)
+cdb_get	z_cdb.h	/^int cdb_get(const array * name, const array * k, array * v);$/;"	p	signature:(const array * name, const array * k, array * v)
+cdb_init_file	z_cdb.c	/^int cdb_init_file(array * file)$/;"	f	signature:(array * file)
+cdb_init_file	z_cdb.h	/^int cdb_init_file(array * file);$/;"	p	signature:(array * file)
+cdb_mod	z_cdb.c	/^int cdb_mod(const array * file, const array * k, const array * v)$/;"	f	signature:(const array * file, const array * k, const array * v)
+cdb_mod	z_cdb.h	/^int cdb_mod(const array * name, const array * k, const array * v);$/;"	p	signature:(const array * name, const array * k, const array * v)
+cdb_read_all	z_cdb.c	/^int cdb_read_all(const char *name, array * entries, struct eops *ops)$/;"	f	signature:(const char *name, array * entries, struct eops *ops)
+cdb_read_all	z_cdb.h	/^int cdb_read_all(const char *name, array * entries, struct eops *ops);$/;"	p	signature:(const char *name, array * entries, struct eops *ops)
+choose_file	z_entry.c	/^void choose_file(array * file, const char *dbpath, const struct taia *key)$/;"	f	signature:(array * file, const char *dbpath, const struct taia *key)
+choose_file	z_entry.h	/^void choose_file(array * file, const char *dbpath, const struct taia *key);$/;"	p	signature:(array * file, const char *dbpath, const struct taia *key)
+cookie	z_blog.h	/^	char *cookie;$/;"	m	struct:blog	access:public
+cop	z_cdb.c	/^typedef enum cop {$/;"	g	file:
+cop_t	z_cdb.c	/^}cop_t;$/;"	t	typeref:enum:cop	file:
+css	z_blog.h	/^	array css;$/;"	m	struct:blog	access:public
+csstype	z_blog.h	/^		    CSS_COOKIE } csstype;$/;"	m	struct:blog	typeref:enum:blog::csstype	access:public
+csstype	z_blog.h	/^	enum csstype { CSS_DEFAULT, CSS_ERROR, CSS_RESET, CSS_SELECT,$/;"	g	struct:blog	access:public
+daction	z_blog.h	/^static char daction[4][10] = { "Show", "Delete", "Add", "Modify" };$/;"	v
+date	format.h	/^	void (*date) (struct day_entry *);$/;"	m	struct:fmting	access:public
+date	z_entry.h	/^	struct caldate *date;$/;"	m	struct:day_entry	typeref:struct:day_entry::caldate	access:public
+day_entry	z_entry.h	/^typedef struct day_entry {$/;"	s
+day_entry::date	z_entry.h	/^	struct caldate *date;$/;"	m	struct:day_entry	typeref:struct:day_entry::caldate	access:public
+day_entry::es	z_entry.h	/^	array *es;$/;"	m	struct:day_entry	access:public
+day_entry_t	z_entry.h	/^} day_entry_t;$/;"	t	typeref:struct:day_entry
+db	z_blog.h	/^	char db[128];$/;"	m	struct:blog	access:public
+debug_print	z_mainblog.c	/^static void debug_print(const blog_t * conf)$/;"	f	file:	signature:(const blog_t * conf)
+debugmsg	z_mainblog.c	/^static array debugmsg;$/;"	v	file:
+delete_entry	z_entry.c	/^int delete_entry(const char *dbpath, struct nentry *entry)$/;"	f	signature:(const char *dbpath, struct nentry *entry)
+delete_entry	z_entry.h	/^int delete_entry(const char *dbpath, struct nentry *entry);$/;"	p	signature:(const char *dbpath, struct nentry *entry)
+description	format.h	/^	void (*description) (struct nentry *);$/;"	m	struct:fmting	access:public
+dump_entries	z_entry.c	/^void dump_entries(array * entries)$/;"	f	signature:(array * entries)
+dump_entries	z_entry.h	/^void dump_entries(array * entries);$/;"	p	signature:(array * entries)
+e	z_entry.h	/^	array e;		\/*  entry *\/$/;"	m	struct:nentry	access:public
+e_add_key	z_entry.c	/^void e_add_key(void *e, unsigned char *s, size_t l)$/;"	f	signature:(void *e, unsigned char *s, size_t l)
+e_add_key	z_entry.h	/^void e_add_key(void *e, unsigned char *s, size_t l);$/;"	p	signature:(void *e, unsigned char *s, size_t l)
+e_add_to_array	z_entry.c	/^void e_add_to_array(void *e, array * arr)$/;"	f	signature:(void *e, array * arr)
+e_add_to_array	z_entry.h	/^void e_add_to_array(void *e, array * arr);$/;"	p	signature:(void *e, array * arr)
+e_add_val	z_entry.c	/^void e_add_val(void *e, unsigned char *s, size_t l)$/;"	f	signature:(void *e, unsigned char *s, size_t l)
+e_add_val	z_entry.h	/^void e_add_val(void *e, unsigned char *s, size_t l);$/;"	p	signature:(void *e, unsigned char *s, size_t l)
+e_malloc	z_entry.c	/^void *e_malloc()$/;"	f
+e_malloc	z_entry.h	/^void *e_malloc();$/;"	p	signature:()
+end	z_blog.h	/^	unsigned int end;	\/* offset from today, positive *\/$/;"	m	struct:query	access:public
+entry_dump	z_entry.c	/^void entry_dump(const struct nentry *e)$/;"	f	signature:(const struct nentry *e)
+entry_dump	z_entry.h	/^void entry_dump(const struct nentry *e);$/;"	p	signature:(const struct nentry *e)
+eops	z_cdb.h	/^typedef struct eops {$/;"	s
+eops::add_key	z_cdb.h	/^	void (*add_key) (void *e, unsigned char *s, size_t l);$/;"	m	struct:eops	access:public
+eops::add_to_array	z_cdb.h	/^	void (*add_to_array) (void *e, array * arr);$/;"	m	struct:eops	access:public
+eops::add_val	z_cdb.h	/^	void (*add_val) (void *e, unsigned char *s, size_t l);$/;"	m	struct:eops	access:public
+eops::alloc	z_cdb.h	/^	void *(*alloc) ();$/;"	m	struct:eops	access:public
+eops_t	z_cdb.h	/^} eops_t;$/;"	t	typeref:struct:eops
+eprint	z_features.h	29;"	d
+eprintf	z_features.h	34;"	d
+eprintm	z_features.h	31;"	d
+eprintmf	z_features.h	36;"	d
+error	z_features.h	/^	int error;$/;"	m	struct:errors	access:public
+errors	z_features.h	/^struct errors {$/;"	s
+errors::error	z_features.h	/^	int error;$/;"	m	struct:errors	access:public
+errors::note	z_features.h	/^	char note[128];$/;"	m	struct:errors	access:public
+errors::type	z_features.h	/^	enum notice type;$/;"	m	struct:errors	typeref:enum:errors::notice	access:public
+es	z_entry.h	/^	array *es;$/;"	m	struct:day_entry	access:public
+exists	z_cdb.c	/^static int exists(array * file)$/;"	f	file:	signature:(array * file)
+exists_c	z_cdb.c	/^static int exists_c(const char * file)$/;"	f	file:	signature:(const char * file)
+fmt	z_blog.h	/^	struct fmting *fmt;$/;"	m	struct:blog	typeref:struct:blog::fmting	access:public
+fmt_html	format.c	/^struct fmting fmt_html = {$/;"	v	typeref:struct:fmting
+fmt_time_bin	z_time.c	/^size_t fmt_time_bin(array * s, const struct taia * time)$/;"	f	signature:(array * s, const struct taia * time)
+fmt_time_bin	z_time.h	/^size_t fmt_time_bin(array * s, const struct taia *time);$/;"	p	signature:(array * s, const struct taia *time)
+fmt_time_hex	z_time.c	/^size_t fmt_time_hex(array * s, const struct taia *time)$/;"	f	signature:(array * s, const struct taia *time)
+fmt_time_hex	z_time.h	/^size_t fmt_time_hex(array * s, const struct taia *time);$/;"	p	signature:(array * s, const struct taia *time)
+fmt_time_str	z_time.c	/^size_t fmt_time_str(array * s, const struct taia * time)$/;"	f	signature:(array * s, const struct taia * time)
+fmt_time_str	z_time.h	/^size_t fmt_time_str(array * s, const struct taia *time);$/;"	p	signature:(array * s, const struct taia *time)
+fmt_time_tstr	z_time.c	/^size_t fmt_time_tstr(array * s, const struct taia * time)$/;"	f	signature:(array * s, const struct taia * time)
+fmt_time_tstr	z_time.h	/^size_t fmt_time_tstr(array * s, const struct taia *time);$/;"	p	signature:(array * s, const struct taia *time)
+fmting	format.h	/^typedef struct fmting {$/;"	s
+fmting::date	format.h	/^	void (*date) (struct day_entry *);$/;"	m	struct:fmting	access:public
+fmting::description	format.h	/^	void (*description) (struct nentry *);$/;"	m	struct:fmting	access:public
+fmting::format	format.h	/^	void (*format) (struct nentry * e);$/;"	m	struct:fmting	access:public
+fmting::key	format.h	/^	void (*key) (struct nentry *);$/;"	m	struct:fmting	access:public
+fmting::key_plain	format.h	/^	void (*key_plain) (struct nentry * e);$/;"	m	struct:fmting	access:public
+fmting::value	format.h	/^	void (*value) (struct nentry *);$/;"	m	struct:fmting	access:public
+fmting_t	format.h	/^} fmting_t;$/;"	t	typeref:struct:fmting
+format	format.h	/^	void (*format) (struct nentry * e);$/;"	m	struct:fmting	access:public
+format_html	format.c	/^void format_html(struct day_entry * de)$/;"	f	signature:(struct day_entry * de)
+format_loop	format.c	/^void format_loop(array * blog, const blog_t * conf)$/;"	f	signature:(array * blog, const blog_t * conf)
+generate_entries_days	z_blog.c	/^int generate_entries_days(const blog_t * conf, array * blog)$/;"	f	signature:(const blog_t * conf, array * blog)
+generate_entry_ts	z_blog.c	/^int generate_entry_ts(const blog_t * conf, array * blog)$/;"	f	signature:(const blog_t * conf, array * blog)
+gerr	z_blog.c	/^struct errors gerr = {$/;"	v	typeref:struct:errors
+gerr	z_features.h	/^} gerr;$/;"	v	typeref:struct:errors
+get_cookie_string	z_mainblog.c	/^static void get_cookie_string(array * co)$/;"	f	file:	signature:(array * co)
+get_param	z_mainblog.c	/^static int get_param(char *q_str, char *search, array * ret, size_t n)$/;"	f	file:	signature:(char *q_str, char *search, array * ret, size_t n)
+get_post_string	z_mainblog.c	/^static void get_post_string(array * ps)$/;"	f	file:	signature:(array * ps)
+get_query_string	z_mainblog.c	/^static void get_query_string(array * qs)$/;"	f	file:	signature:(array * qs)
+host	z_blog.h	/^	char *host;$/;"	m	struct:blog	access:public
+ht_sub_days	z_time.c	/^size_t ht_sub_days(struct taia * time, const unsigned int days)$/;"	f	signature:(struct taia * time, const unsigned int days)
+ht_sub_days	z_time.h	/^size_t ht_sub_days(struct taia *time, const unsigned int days);$/;"	p	signature:(struct taia *time, const unsigned int days)
+input	z_blog.h	/^	array input;$/;"	m	struct:blog	access:public
+k	z_entry.h	/^	struct taia k;		\/*  key *\/$/;"	m	struct:nentry	typeref:struct:nentry::taia	access:public
+key	format.h	/^	void (*key) (struct nentry *);$/;"	m	struct:fmting	access:public
+key_plain	format.h	/^	void (*key_plain) (struct nentry * e);$/;"	m	struct:fmting	access:public
+load_config	z_blog.c	/^int load_config(blog_t * conf)$/;"	f	signature:(blog_t * conf)
+load_config	z_blog.h	/^int load_config(blog_t * conf);$/;"	p	signature:(blog_t * conf)
+load_config	z_blogger.c	/^int load_config(blog_t * conf)$/;"	f	signature:(blog_t * conf)
+main	xmlrpc.c	/^int main(int argc, char **argv)$/;"	f	signature:(int argc, char **argv)
+main	z_blogger.c	/^int main(int argc, char **argv)$/;"	f	signature:(int argc, char **argv)
+main	z_mainblog.c	/^int main()$/;"	f
+modify_entry	z_entry.c	/^int modify_entry(const char *dbpath, struct nentry *entry)$/;"	f	signature:(const char *dbpath, struct nentry *entry)
+modify_entry	z_entry.h	/^int modify_entry(const char *dbpath, struct nentry *entry);$/;"	p	signature:(const char *dbpath, struct nentry *entry)
+months	z_time.c	/^char months[12][4] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez" };$/;"	v
+nentry	z_entry.h	/^typedef struct nentry {$/;"	s
+nentry::e	z_entry.h	/^	array e;		\/*  entry *\/$/;"	m	struct:nentry	access:public
+nentry::k	z_entry.h	/^	struct taia k;		\/*  key *\/$/;"	m	struct:nentry	typeref:struct:nentry::taia	access:public
+nentry_t	z_entry.h	/^} nentry_t;$/;"	t	typeref:struct:nentry
+new_nentry	z_entry.h	13;"	d
+note	z_features.h	/^	char note[128];$/;"	m	struct:errors	access:public
+notice	z_features.h	/^enum notice { N_ERROR, N_NOTE, N_NONE, N_ACTION };$/;"	g
+parse_cookie	z_mainblog.c	/^static void parse_cookie(blog_t * conf, array * co)$/;"	f	file:	signature:(blog_t * conf, array * co)
+parse_postdata	z_mainblog.c	/^static void parse_postdata(blog_t * conf)$/;"	f	file:	signature:(blog_t * conf)
+parse_postdata	z_mainblog.c	/^static void parse_postdata(blog_t * conf, array * pd)$/;"	f	file:	signature:(blog_t * conf, array * pd)
+parse_query	z_mainblog.c	/^static void parse_query(blog_t * conf, array * qs)$/;"	f	file:	signature:(blog_t * conf, array * qs)
+print_add_entry	z_blog.c	/^static int print_add_entry(const blog_t * conf)$/;"	f	file:	signature:(const blog_t * conf)
+print_blog	z_blog.c	/^int print_blog(const blog_t * conf)$/;"	f	signature:(const blog_t * conf)
+print_blog	z_blog.h	/^int print_blog(const blog_t * conf);$/;"	p	signature:(const blog_t * conf)
+print_body	z_blog.c	/^int print_body(array * blog, const blog_t * conf)$/;"	f	signature:(array * blog, const blog_t * conf)
+print_date_html	format.c	/^void print_date_html(struct day_entry *e)$/;"	f	signature:(struct day_entry *e)
+print_footer	z_blog.c	/^static void print_footer(const blog_t * conf)$/;"	f	file:	signature:(const blog_t * conf)
+print_header	z_blog.c	/^static void print_header(const blog_t * conf)$/;"	f	file:	signature:(const blog_t * conf)
+print_help	z_blogger.c	/^void print_help()$/;"	f
+print_html_normal	z_blog.c	/^int print_html_normal(array * db, int start, int stop, int order, blog_t * conf)$/;"	f	signature:(array * db, int start, int stop, int order, blog_t * conf)
+print_html_query	z_blog.c	/^static int print_html_query(const blog_t * conf)$/;"	f	file:	signature:(const blog_t * conf)
+print_key	z_blog.c	/^void print_key(struct nentry *e)$/;"	f	signature:(struct nentry *e)
+print_key_html	format.c	/^void print_key_html(struct nentry *e)$/;"	f	signature:(struct nentry *e)
+print_key_plain	format.c	/^void print_key_plain(struct nentry *e)$/;"	f	signature:(struct nentry *e)
+print_key_plain	format.h	/^void print_key_plain(struct nentry *e);$/;"	p	signature:(struct nentry *e)
+print_mod_entry	z_blog.c	/^static int print_mod_entry(const blog_t * conf, struct nentry *n)$/;"	f	file:	signature:(const blog_t * conf, struct nentry *n)
+print_notice	z_blog.c	/^static void print_notice(const blog_t * conf)$/;"	f	file:	signature:(const blog_t * conf)
+print_rss_query	z_blog.c	/^static int print_rss_query(const blog_t * conf)$/;"	f	file:	signature:(const blog_t * conf)
+print_template	z_blog.c	/^int print_template(array * blog, const blog_t * conf)$/;"	f	signature:(array * blog, const blog_t * conf)
+print_time	z_time.c	/^size_t print_time(const struct taia * time)$/;"	f	signature:(const struct taia * time)
+print_time	z_time.h	/^size_t print_time(const struct taia *time);$/;"	p	signature:(const struct taia *time)
+print_value	z_blog.c	/^void print_value(struct nentry *e)$/;"	f	signature:(struct nentry *e)
+print_value_html	format.c	/^void print_value_html(struct nentry *e)$/;"	f	signature:(struct nentry *e)
+ptime	z_blog.h	/^	struct timeval ptime;$/;"	m	struct:blog	typeref:struct:blog::timeval	access:public
+qaction	z_blog.h	/^	enum qaction { QA_SHOW, QA_DELETE, QA_ADD, QA_MODIFY } action;$/;"	g	struct:query	access:public
+qry	z_blog.h	/^	query_t qry;$/;"	m	struct:blog	access:public
+qtype	z_blog.h	/^	enum qtype { QRY_TS, QRY_WEEK } type;$/;"	g	struct:query	access:public
+query	z_blog.h	/^typedef struct query {$/;"	s
+query::QA_ADD	z_blog.h	/^	enum qaction { QA_SHOW, QA_DELETE, QA_ADD, QA_MODIFY } action;$/;"	e	enum:query::qaction
+query::QA_DELETE	z_blog.h	/^	enum qaction { QA_SHOW, QA_DELETE, QA_ADD, QA_MODIFY } action;$/;"	e	enum:query::qaction
+query::QA_MODIFY	z_blog.h	/^	enum qaction { QA_SHOW, QA_DELETE, QA_ADD, QA_MODIFY } action;$/;"	e	enum:query::qaction
+query::QA_SHOW	z_blog.h	/^	enum qaction { QA_SHOW, QA_DELETE, QA_ADD, QA_MODIFY } action;$/;"	e	enum:query::qaction
+query::QRY_TS	z_blog.h	/^	enum qtype { QRY_TS, QRY_WEEK } type;$/;"	e	enum:query::qtype
+query::QRY_WEEK	z_blog.h	/^	enum qtype { QRY_TS, QRY_WEEK } type;$/;"	e	enum:query::qtype
+query::action	z_blog.h	/^	enum qaction { QA_SHOW, QA_DELETE, QA_ADD, QA_MODIFY } action;$/;"	m	struct:query	typeref:enum:query::qaction	access:public
+query::end	z_blog.h	/^	unsigned int end;	\/* offset from today, positive *\/$/;"	m	struct:query	access:public
+query::qaction	z_blog.h	/^	enum qaction { QA_SHOW, QA_DELETE, QA_ADD, QA_MODIFY } action;$/;"	g	struct:query	access:public
+query::qtype	z_blog.h	/^	enum qtype { QRY_TS, QRY_WEEK } type;$/;"	g	struct:query	access:public
+query::start	z_blog.h	/^	unsigned int start;	\/* offset from today, positive *\/$/;"	m	struct:query	access:public
+query::ts	z_blog.h	/^	array ts;$/;"	m	struct:query	access:public
+query::type	z_blog.h	/^	enum qtype { QRY_TS, QRY_WEEK } type;$/;"	m	struct:query	typeref:enum:query::qtype	access:public
+query_t	z_blog.h	/^} query_t;$/;"	t	typeref:struct:query
+read_stdin	z_blogger.c	/^void read_stdin(array * content)$/;"	f	signature:(array * content)
+scan_time_hex	z_time.c	/^size_t scan_time_hex(const array * s, struct taia * time)$/;"	f	signature:(const array * s, struct taia * time)
+scan_time_hex	z_time.h	/^size_t scan_time_hex(const array * s, struct taia *time);$/;"	p	signature:(const array * s, struct taia *time)
+scan_time_tstr	z_time.c	/^size_t scan_time_tstr(const array * s, struct taia * time)$/;"	f	signature:(const array * s, struct taia * time)
+scan_time_tstr	z_time.h	/^size_t scan_time_tstr(const array * s, struct taia *time);$/;"	p	signature:(const array * s, struct taia *time)
+script	z_blog.h	/^	char *script;$/;"	m	struct:blog	access:public
+show_day	z_entry.c	/^int show_day(const char *dbpath, array * entries, const struct taia *day)$/;"	f	signature:(const char *dbpath, array * entries, const struct taia *day)
+show_day	z_entry.h	/^int show_day(const char *dbpath, array * entries, const struct taia *tday);$/;"	p	signature:(const char *dbpath, array * entries, const struct taia *tday)
+show_entry	z_entry.c	/^int show_entry(const char *dbpath, struct nentry *entry)$/;"	f	signature:(const char *dbpath, struct nentry *entry)
+show_entry	z_entry.h	/^int show_entry(const char *dbpath, struct nentry *entry);$/;"	p	signature:(const char *dbpath, struct nentry *entry)
+show_file	z_entry.c	/^int show_file(array * entries, const char *file)$/;"	f	signature:(array * entries, const char *file)
+show_file	z_entry.h	/^int show_file(array * entries, const char *file);$/;"	p	signature:(array * entries, const char *file)
+sprint	z_features.h	28;"	d
+sprintf	z_features.h	33;"	d
+sprintm	z_features.h	30;"	d
+sprintmf	z_features.h	35;"	d
+sprintn	z_features.h	38;"	d
+start	z_blog.h	/^	unsigned int start;	\/* offset from today, positive *\/$/;"	m	struct:query	access:public
+stype	z_blog.h	/^	enum stype { S_HTML, S_RSS } stype;$/;"	g	struct:blog	access:public
+stype	z_blog.h	/^	enum stype { S_HTML, S_RSS } stype;$/;"	m	struct:blog	typeref:enum:blog::stype	access:public
+sumAndDifference	xmlrpc.c	/^xmlrpc_value *sumAndDifference(xmlrpc_env * env, xmlrpc_value * param_array,$/;"	f	signature:(xmlrpc_env * env, xmlrpc_value * param_array, void *user_data)
+time_start	z_time.c	/^void time_start(struct timeval * time)$/;"	f	signature:(struct timeval * time)
+time_start	z_time.h	/^void time_start(struct timeval *time);$/;"	p	signature:(struct timeval *time)
+time_stop_print	z_time.c	/^void time_stop_print(struct timeval * time)$/;"	f	signature:(struct timeval * time)
+time_stop_print	z_time.h	/^void time_stop_print(struct timeval *time);$/;"	p	signature:(struct timeval *time)
+timeval_subtract	z_time.c	/^int	timeval_subtract (struct timeval *result, struct timeval  * x,struct timeval  *y)$/;"	f	signature:(struct timeval *result, struct timeval * x,struct timeval *y)
+title	z_blog.h	/^	char title[20];$/;"	m	struct:blog	access:public
+ts	z_blog.h	/^	array ts;$/;"	m	struct:query	access:public
+type	z_blog.h	/^	enum qtype { QRY_TS, QRY_WEEK } type;$/;"	m	struct:query	typeref:enum:query::qtype	access:public
+type	z_features.h	/^	enum notice type;$/;"	m	struct:errors	typeref:enum:errors::notice	access:public
+unencode	z_mainblog.c	/^void unencode(char *coded, array * arruncoded)$/;"	f	signature:(char *coded, array * arruncoded)
+value	format.h	/^	void (*value) (struct nentry *);$/;"	m	struct:fmting	access:public
+weekday	z_time.c	/^int weekday(int month, int day, int year)$/;"	f	signature:(int month, int day, int year)
+weekdays	z_time.c	/^char weekdays[7][4] = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };$/;"	v

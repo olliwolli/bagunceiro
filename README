@@ -1,0 +1,22 @@
+This is a simple blogging engine for my personal page in C. Yes, C.
+
+License: none. The code is under only TRUE free "license", public domain.
+
+DEMO:
+
+http://kgfamily.com/cgi-bin/clog --> html
+http://kgfamily.com/cgi-bin/clog?format=json --> json
+http://kgfamily.com/cgi-bin/clog?format=rss --> rss
+
+
+TODO:
+
+1. Block SQL injection
+2. Add reddit style html formatting
+3. Add a nice str_replace() function
+
+N. ... many more...
+
+
+
+
