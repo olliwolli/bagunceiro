@@ -11,15 +11,15 @@
 
 typedef struct fmting {
 	/* default formating */
-	void (*day_entries) (const blog_t *conf, struct day_entry * e, size_t elen);
+	void (*day_entries) (const blog_t * conf, struct day_entry * e,
+		size_t elen);
 	void (*header) (const blog_t * conf);
 	void (*footer) (const blog_t * conf);
 } fmting_t;
 
-void print_key_plain(struct nentry *e);
-
-void print_do(array * blog, const blog_t * conf);
+void print_show(array * blog, blog_t * conf);
+int print_add_entry(const blog_t * conf);
+int print_mod_entry(const blog_t * conf, struct nentry *n);
 
 extern struct fmting fmt_html;
 extern struct fmting fmt_rss;
-

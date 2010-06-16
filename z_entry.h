@@ -5,8 +5,6 @@
 #include <taia.h>
 #include <caldate.h>
 
-#include "cdbextra.h"
-
 #define MAX_ENTRY_SIZE 32768
 #define MAX_ENTRIES_PER_DAY    128
 
@@ -37,5 +35,4 @@ void e_add_val(void *e, unsigned char *s, size_t l);
 void e_add_to_array(void *e, array * arr);
 void *e_malloc();
 
-void choose_file(array * file, const char *dbpath, const struct taia *key);
 #endif

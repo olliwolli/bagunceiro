@@ -2,8 +2,8 @@
 #define _Z_CDB_H
 
 #include <array.h>
+#include "z_features.h"
 
-int cdb_init_file(array * file);
 typedef struct eops {
 	void (*add_key) (void *e, unsigned char *s, size_t l);
 	void *(*alloc) ();
@@ -11,10 +11,14 @@ typedef struct eops {
 	void (*add_to_array) (void *e, array * arr);
 } eops_t;
 
-int cdb_read_all(const char *name, array * entries, struct eops *ops);
+#ifdef ADMIN_MODE
+int cdb_init_file(const char * file);
+int cdb_add(const char * name, const char * k, const size_t ks, const array * v);
+int cdb_del(const char * name, const char * k, const size_t ks);
+int cdb_mod(const char * name, const char * k, const size_t ks, const array * v);
+#endif
 
-int cdb_add(const array * name, const array * k, const array * v);
-int cdb_del(const array * name, const array * k);
-int cdb_mod(const array * name, const array * k, const array * v);
-int cdb_get(const array * name, const array * k, array * v);
+int cdb_read_all(const char *name, array * entries, struct eops *ops);
+int cdb_get(const char * name, const char * k, const size_t ks, array * v);
+
 #endif

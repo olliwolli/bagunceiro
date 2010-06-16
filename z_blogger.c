@@ -10,11 +10,7 @@
 #include "z_entry.h"
 #include "z_blog.h"
 #include "z_time.h"
-
-int load_config(blog_t * conf)
-{
-	return 0;
-}
+#ifdef ADMIN_MODE
 
 void read_stdin(array * content)
 {
@@ -39,12 +35,13 @@ void print_help()
 /* options */
 int main(int argc, char **argv)
 {
-	static array pkey, fmtkey;
 	static struct nentry entry;
 	struct taia key;
 	char c;
 	int err = 0;
 	char db[32] = "db/";
+	char pkey[MAX_FMT_LENGTH_KEY];
+	char fmtkey[MAX_FMT_HEX_LENGTH_KEY];
 
 	while ((c = getopt(argc, argv, "b:ad:m:n:s:z:?h")) != -1) {
 		switch (c) {
@@ -59,20 +56,24 @@ int main(int argc, char **argv)
 			read_stdin(&entry.e);
 
 			err = add_entry_now(db, &entry);
+#ifdef DEBUG_ENTRY
 			entry_dump(&entry);
+#endif
 			break;
 		case 'n':
 			if (str_len(optarg) != 32) {
 				eprintf("Key must by 32 hex characters wide\n");
 				return 2;
 			}
-			array_cats0(&pkey, optarg);
-			scan_time_hex(&pkey, &key);
+			str_copy(pkey, optarg);
+			scan_time_hex(pkey, &key);
 			entry.k = key;
 			read_stdin(&entry.e);
 
 			err = add_entry(db, &entry);
+#ifdef DEBUG_ENTRY
 			entry_dump(&entry);
+#endif
 			break;
 		case 'd':
 			if (str_len(optarg) != 32) {
@@ -80,8 +81,8 @@ int main(int argc, char **argv)
 				return 2;
 			}
 
-			array_cats0(&pkey, optarg);
-			scan_time_hex(&pkey, &key);
+			str_copy(pkey, optarg);
+			scan_time_hex(pkey, &key);
 			entry.k = key;
 
 			err = delete_entry(db, &entry);
@@ -91,9 +92,8 @@ int main(int argc, char **argv)
 				eprintf("Key must by 32 hex characters wide\n");
 				return 2;
 			}
-
-			array_cats0(&pkey, optarg);
-			scan_time_hex(&pkey, &key);
+			str_copy(pkey, optarg);
+			scan_time_hex(pkey, &key);
 			entry.k = key;
 			read_stdin(&entry.e);
 
@@ -104,14 +104,13 @@ int main(int argc, char **argv)
 				eprintf("Key must by 32 hex characters wide\n");
 				return 2;
 			}
-
-			array_cats0(&pkey, optarg);
-			scan_time_hex(&pkey, &key);
+			str_copy(pkey, optarg);
+			scan_time_hex(pkey, &key);
 			entry.k = key;
 
 			show_entry(db, &entry);
-			fmt_time_hex(&fmtkey, &entry.k);
-			eprintmf(fmtkey.p, ":", entry.e.p, "\n");
+			fmt_time_hex(fmtkey, &entry.k);
+			eprintmf(fmtkey, ":", entry.e.p, "\n");
 			break;
 		case 'z':
 			str_copy(db, optarg);
@@ -123,3 +122,4 @@ int main(int argc, char **argv)
 	}
 	return err;
 }
+#endif

@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include <array.h>
 #include "z_features.h"
+#include "z_time.h"
 
 #define CLOG_TYPE_RSS_2_0 1
 #define CLOG_TYPE_HTML 2
@@ -13,10 +14,14 @@
 
 typedef struct query {
 	enum qtype { QRY_TS, QRY_WEEK } type;
-	enum qaction { QA_SHOW, QA_DELETE, QA_ADD, QA_MODIFY } action;
+	enum qaction { QA_SHOW
+#ifdef ADMIN_MODE
+			, QA_DELETE, QA_ADD, QA_MODIFY
+#endif
+	} action;
 	unsigned int start;	/* offset from today, positive */
 	unsigned int end;	/* offset from today, positive */
-	array ts;
+	char ts[MAX_FMT_LENGTH_KEY];
 } query_t;
 
 typedef struct blog {
@@ -32,7 +37,8 @@ typedef struct blog {
 	char *host;
 	char *cookie;
 /* parsed info */
-	array css;
+#define MAX_CSS_ARG	10
+	char css[MAX_CSS_ARG];
 	enum csstype { CSS_DEFAULT, CSS_ERROR, CSS_RESET, CSS_SELECT,
 		CSS_COOKIE
 	} csstype;
@@ -43,9 +49,6 @@ typedef struct blog {
 	struct fmting *fmt;
 } blog_t;
 
-int load_config(blog_t * conf);
+int handle_query(blog_t * conf);
 
-int print_blog(blog_t * conf);
-
-int cdb_exist();
 #endif

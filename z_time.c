@@ -6,41 +6,209 @@
 #include <array.h>
 #include <textcode.h>
 #include <str.h>
-#include <stdio.h>
 #include <caltime.h>
 
 #include "z_features.h"
 #include "z_time.h"
 
 /* the following format functions null-terminate the resulting strings */
-size_t fmt_time_hex(array * s, const struct taia *time)
+size_t fmt_time_hex(char * s, const struct taia *time)
 {
 	char buf[TAIA_PACK + 1];
-	char hexfmt[TAIA_PACK * 2];
 	int len;
 
 	taia_pack(buf, time);
-	len = fmt_hexdump(hexfmt, buf, TAIA_PACK);
-	hexfmt[len] = '\0';
-	array_cats0(s, hexfmt);
-
+	len = fmt_hexdump(s, buf, TAIA_PACK);
+	s[len] = '\0';
 	return len;
 }
 
-size_t fmt_time_str(array * s, const struct taia * time)
+size_t scan_time_hex(const char * s, struct taia * time)
+{
+	char buf[TAIA_PACK];
+	size_t destlen = TAIA_PACK;
+	if (!s)
+		return 0;
+	scan_hexdump(s, buf, &destlen);
+	taia_unpack(buf, time);
+
+	return TAIA_PACK;
+}
+
+/* this function does not append \0  */
+size_t fmt_time_bin(array * s, const struct taia * time)
+{
+	char pack[TAIA_PACK];
+
+	taia_pack(pack, time);
+	array_catb(s, pack, TAIA_PACK);
+	return TAIA_PACK;
+}
+
+#define DAYS_SECS 86400
+size_t ht_sub_days(struct taia * time, const unsigned int days)
+{
+	struct taia day;
+	int i;
+
+	taia_uint(&day, DAYS_SECS);
+	for (i = 0; i < days; i++)
+		taia_sub(time, time, &day);
+
+	return days;
+}
+
+#undef DAYS_SECS
+
+static inline int timeval_subtract(struct timeval *result, struct timeval *x,
+	struct timeval *y)
+{
+	/* Perform the carry for the later subtraction by updating y. */
+	if (x->tv_usec < y->tv_usec) {
+		int nsec = (y->tv_usec - x->tv_usec) / 1000000 + 1;
+		y->tv_usec -= 1000000 * nsec;
+		y->tv_sec += nsec;
+	}
+	if (x->tv_usec - y->tv_usec > 1000000) {
+		int nsec = (y->tv_usec - x->tv_usec) / 1000000;
+		y->tv_usec += 1000000 * nsec;
+		y->tv_sec -= nsec;
+	}
+
+	/* Compute the time remaining to wait.
+	   tv_usec  is certainly positive. */
+	result->tv_sec = x->tv_sec - y->tv_sec;
+	result->tv_usec = x->tv_usec - y->tv_usec;
+
+	/* Return 1 if result is negative. */
+	return x->tv_sec < y->tv_sec;
+}
+
+char months[12][4] =
+	{ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Okt",
+	"Nov", "Dez"
+};
+char weekdays[7][4] = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+
+static int weekday(int month, int day, int year)
+{
+	int ix, tx, vx;
+	vx = 0;
+	switch (month) {
+	case 2:
+	case 6:
+		vx = 0;
+		break;
+	case 8:
+		vx = 4;
+		break;
+	case 10:
+		vx = 8;
+		break;
+	case 9:
+	case 12:
+		vx = 12;
+		break;
+	case 3:
+	case 11:
+		vx = 16;
+		break;
+	case 1:
+	case 5:
+		vx = 20;
+		break;
+	case 4:
+	case 7:
+		vx = 24;
+		break;
+	}
+	if (year > 1900)
+		year -= 1900;
+	ix = ((year - 21) % 28) + vx + (month > 2);
+
+	tx = (ix + (ix / 4)) % 7 + day;
+	return (tx % 7);
+}
+
+unsigned int caldate_fmtn(char *s, const struct caldate *cd)
+{
+	long x;
+	int i = 0;
+	int yi;
+
+	x = cd->year;
+	if (x < 0)
+		x = -x;
+	do {
+		++i;
+		x /= 10;
+	} while (x);
+	yi = i;
+	if (s) {
+
+		memcpy(s, weekdays[weekday(cd->month, cd->day, cd->year)], 3);
+		s[3] = ' ';
+
+		x = cd->day;
+		s[5] = '0' + (x % 10);
+		x /= 10;
+		s[4] = '0' + (x % 10);
+		if (s[4] == '0')
+			s[4] = ' ';
+
+		s[6] = ' ';
+		x = cd->month;
+		memcpy(s + 7, months[x], 3);
+		s[10] = ' ';
+
+		x = cd->year;
+
+		s += yi + 11;
+		do {
+			*--s = '0' + (x % 10);
+			x /= 10;
+		} while (x);
+	}
+
+	return (cd->year < 0) + yi + 11;
+}
+
+void time_stop_print(struct timeval *time)
+{
+	struct timeval end, diff;
+
+	char fmtsec[12];
+	char fmtnsec[12];
+	int len;
+
+	gettimeofday(&end, NULL);
+	timeval_subtract(&diff, &end, time);
+	fmtsec[fmt_long(fmtsec, diff.tv_sec)] = 0;
+
+	len = fmt_long(fmtnsec, diff.tv_usec);
+	fmtnsec[len] = 0;
+
+	sprintm("<!-- Execution took: ", fmtsec, ".");
+
+	for (; len < 6; len++)
+		sprint("0");
+
+	sprintmf(fmtnsec, "s --/>");
+}
+#ifndef USE_COHERENT_TIME
+size_t fmt_time_str(char * s, const struct taia *time)
 {
 	struct caltime ct;
 	unsigned int len;
-	char buf[64];
 
 	caltime_utc(&ct, &time->sec, (int *)0, (int *)0);
-	len = caldate_fmt(buf, &ct);
-	buf[len] = '\0';
-	array_cats0(s, buf);
+	len = caldate_fmt(s, &ct);
+	s[len] = '\0';
 
 	return len;
 }
-
+#endif
+#ifdef DEBUG_TIME
 size_t fmt_time_tstr(array * s, const struct taia * time)
 {
 	struct caltime ct;
@@ -53,17 +221,6 @@ size_t fmt_time_tstr(array * s, const struct taia * time)
 	array_cats0(s, buf);
 
 	return len;
-}
-
-/* this function does not append \0  */
-size_t fmt_time_bin(array * s, const struct taia * time)
-{
-	char pack[TAIA_PACK];
-
-	taia_pack(pack, time);
-	array_catb(s, pack, TAIA_PACK);
-
-	return TAIA_PACK;
 }
 
 size_t print_time(const struct taia * time)
@@ -83,143 +240,9 @@ size_t print_time(const struct taia * time)
 	return 0;
 }
 
-size_t scan_time_hex(const array * s, struct taia * time)
-{
-	char buf[TAIA_PACK];
-	size_t destlen = TAIA_PACK;
-	if(!s->p)
-		return 0;
-	scan_hexdump(s->p, buf, &destlen);
-	taia_unpack(buf, time);
-
-	return TAIA_PACK;
-}
-
 size_t scan_time_tstr(const array * s, struct taia * time)
 {
 	return caltime_scan(s->p, time);
 }
 
-#define DAYS_SECS 86400
-size_t ht_sub_days(struct taia * time, const unsigned int days)
-{
-	struct taia day;
-	int i;
-
-	taia_uint(&day, DAYS_SECS);
-	for (i = 0; i < days; i++)
-		taia_sub(time, time, &day);
-
-	return days;
-}
-#undef DAYS_SECS
-
-int	timeval_subtract (struct timeval *result, struct timeval  * x,struct timeval  *y)
-	{
-	  /* Perform the carry for the later subtraction by updating y. */
-	  if (x->tv_usec < y->tv_usec) {
-	    int nsec = (y->tv_usec - x->tv_usec) / 1000000 + 1;
-	    y->tv_usec -= 1000000 * nsec;
-	    y->tv_sec += nsec;
-	  }
-	  if (x->tv_usec - y->tv_usec > 1000000) {
-	    int nsec = (y->tv_usec - x->tv_usec) / 1000000;
-	    y->tv_usec += 1000000 * nsec;
-	    y->tv_sec -= nsec;
-	  }
-
-	  /* Compute the time remaining to wait.
-	     tv_usec  is certainly positive. */
-	  result->tv_sec = x->tv_sec - y->tv_sec;
-	  result->tv_usec = x->tv_usec - y->tv_usec;
-
-	  /* Return 1 if result is negative. */
-	  return x->tv_sec < y->tv_sec;
-	}
-
-char months[12][4] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez" };
-char weekdays[7][4] = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
-
-int weekday(int month, int day, int year)
-{
-	int ix, tx, vx;
-
-	switch (month) {
-	case 2 :
-	case 6 : vx = 0; break;
-	case 8 : vx = 4; break;
-	case 10 : vx = 8; break;
-	case 9 :
-	case 12 : vx = 12; break;
-	case 3 :
-	case 11 : vx = 16; break;
-	case 1 :
-	case 5 : vx = 20; break;
-	case 4 :
-	case 7 : vx = 24; break;
-	}
-	if (year > 1900)
-		year -= 1900;
-	ix = ((year - 21) % 28) + vx + (month > 2);
-
-	tx = (ix + (ix / 4)) % 7 + day;
-	return (tx % 7);
-}
-
-unsigned int caldate_fmtn(char *s, struct caldate *cd)
-{
-  long x;
-  int i = 0;
-  int yi;
-
-  x = cd->year; if (x < 0) x = -x; do { ++i; x /= 10; } while(x);
-  yi = i;
-  if (s) {
-
-    memcpy(s, weekdays[weekday(cd->month, cd->day, cd->year)], 3);
-    s[3] = ' ';
-
-    x = cd->day;
-    s[5] = '0' + (x % 10); x /= 10; s[4] = '0' + (x % 10);
-    if(s[4] == '0') s[4] = ' ';
-
-    s[6] = ' ';
-    x = cd->month;
-    memcpy(s+7, months[x], 3);
-    s[10] = ' ';
-
-    x = cd->year;
-
-    s += yi + 11; do { *--s = '0' + (x % 10); x /= 10; } while(x);
-  }
-
-  return (cd->year < 0) + yi +11;
-}
-
-void time_start(struct timeval * time)
-{
-	gettimeofday(time, NULL);
-}
-
-void time_stop_print(struct timeval * time)
-{
-	struct timeval end, diff;
-
-	char fmtsec[12];
-	char fmtnsec[12];
-	int len;
-
-	gettimeofday(&end, NULL);
-	timeval_subtract(&diff, &end, time);
-	fmtsec[fmt_long(fmtsec, diff.tv_sec)] = 0;
-
-	len = fmt_long(fmtnsec, diff.tv_usec);
-	fmtnsec[len] = 0;
-
-	sprintm("<!-- Execution took: ", fmtsec, ".");
-
-	for(; len < 6; len++)
-		sprint("0");
-
-	sprintmf(fmtnsec, "s --/>");
-}
+#endif
