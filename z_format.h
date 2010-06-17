@@ -10,7 +10,6 @@
 #include "z_entry.h"
 
 typedef struct fmting {
-	/* default formating */
 	void (*day_entries) (const blog_t * conf, struct day_entry * e,
 		size_t elen);
 	void (*header) (const blog_t * conf);
@@ -18,8 +17,14 @@ typedef struct fmting {
 } fmting_t;
 
 void print_show(array * blog, blog_t * conf);
+#ifdef ADMIN_MODE
 int print_add_entry(const blog_t * conf);
 int print_mod_entry(const blog_t * conf, struct nentry *n);
+#endif
 
-extern struct fmting fmt_html;
-extern struct fmting fmt_rss;
+#ifdef ADMIN_MODE_PASS
+void print_login(const blog_t * conf);
+#endif
+
+extern struct fmting fmt__html;
+extern struct fmting fmt__rss;

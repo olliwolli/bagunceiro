@@ -11,8 +11,37 @@
 #include "z_features.h"
 #include "z_time.h"
 
+#ifdef WANT_REDUCE_TS
+void reduce_ts(char *src)
+{
+	byte_copy(src, 4, src + REDUCE_OFFSET);
+	byte_copy(src + 4, 4, src + REDUCE_OFFSET + 4);
+	byte_copy(src + 8, 4, src + REDUCE_OFFSET + 8);
+	byte_copy(src + 12, 4, src + REDUCE_OFFSET + 12);
+	byte_zero(src + REDUCE_SIZE, REDUCE_SIZE);
+}
+
+void inflate_ts(char *src)
+{
+	byte_copy(src + REDUCE_OFFSET + 12, 4, src + 12);
+	byte_copy(src + REDUCE_OFFSET + 8, 4, src + 8);
+	byte_copy(src + REDUCE_OFFSET + 4, 4, src + 4);
+	byte_copy(src + REDUCE_OFFSET, 4, src);
+	byte_copy(src, 8, "40000000");
+	memset(src + REDUCE_SIZE + REDUCE_OFFSET, '0', 8);
+}
+#else
+void reduce_ts(char *src)
+{
+}
+
+void inflate_ts(char *src)
+{
+}
+#endif
+
 /* the following format functions null-terminate the resulting strings */
-size_t fmt_time_hex(char * s, const struct taia *time)
+size_t fmt_time_hex(char *s, const struct taia *time)
 {
 	char buf[TAIA_PACK + 1];
 	int len;
@@ -23,7 +52,7 @@ size_t fmt_time_hex(char * s, const struct taia *time)
 	return len;
 }
 
-size_t scan_time_hex(const char * s, struct taia * time)
+size_t scan_time_hex(const char *s, struct taia * time)
 {
 	char buf[TAIA_PACK];
 	size_t destlen = TAIA_PACK;
@@ -32,16 +61,6 @@ size_t scan_time_hex(const char * s, struct taia * time)
 	scan_hexdump(s, buf, &destlen);
 	taia_unpack(buf, time);
 
-	return TAIA_PACK;
-}
-
-/* this function does not append \0  */
-size_t fmt_time_bin(array * s, const struct taia * time)
-{
-	char pack[TAIA_PACK];
-
-	taia_pack(pack, time);
-	array_catb(s, pack, TAIA_PACK);
 	return TAIA_PACK;
 }
 
@@ -195,8 +214,9 @@ void time_stop_print(struct timeval *time)
 
 	sprintmf(fmtnsec, "s --/>");
 }
+
 #ifndef USE_COHERENT_TIME
-size_t fmt_time_str(char * s, const struct taia *time)
+size_t fmt_time_str(char *s, const struct taia *time)
 {
 	struct caltime ct;
 	unsigned int len;
@@ -207,42 +227,4 @@ size_t fmt_time_str(char * s, const struct taia *time)
 
 	return len;
 }
-#endif
-#ifdef DEBUG_TIME
-size_t fmt_time_tstr(array * s, const struct taia * time)
-{
-	struct caltime ct;
-	unsigned int len;
-	char buf[64];
-
-	caltime_utc(&ct, &time->sec, (int *)0, (int *)0);
-	len = caltime_fmt(buf, &ct);
-	buf[len] = '\0';
-	array_cats0(s, buf);
-
-	return len;
-}
-
-size_t print_time(const struct taia * time)
-{
-	static array tstr, thex, ttstr;
-
-	fmt_time_str(&tstr, time);
-	fmt_time_hex(&thex, time);
-	fmt_time_tstr(&ttstr, time);
-
-	sprintmf("Time: ", tstr.p, " / ", ttstr.p, " / ", thex.p, "\n");
-
-	array_reset(&tstr);
-	array_reset(&thex);
-	array_reset(&ttstr);
-
-	return 0;
-}
-
-size_t scan_time_tstr(const array * s, struct taia * time)
-{
-	return caltime_scan(s->p, time);
-}
-
 #endif

@@ -14,17 +14,26 @@
 
 typedef struct query {
 	enum qtype { QRY_TS, QRY_WEEK } type;
-	enum qaction { QA_SHOW
+	enum qaction { QA_SHOW,
 #ifdef ADMIN_MODE
-			, QA_DELETE, QA_ADD, QA_MODIFY
+			QA_DELETE, QA_ADD, QA_MODIFY,
+#endif
+#ifdef ADMIN_MODE_PASS
+		QA_LOGIN,
 #endif
 	} action;
 	unsigned int start;	/* offset from today, positive */
 	unsigned int end;	/* offset from today, positive */
-	char ts[MAX_FMT_LENGTH_KEY];
+	char ts[FMT_TAIA_HEX];
 } query_t;
 
 typedef struct blog {
+#ifdef ADMIN_MODE_PASS
+	int authcache;
+	int authpost;
+	unsigned char token[SHA256_DIGEST_LENGTH];
+	int ssl;
+#endif
 /* basic info */
 	char title[20];
 	char db[128];

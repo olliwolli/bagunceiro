@@ -7,10 +7,10 @@ CFLAGS=-Wall -I$(DIET_INCLUDE) -g -DNO_ADMIN_MODE
 LDFLAGS=-lowfat -L$(DIET)/lib -static
 
 #CFLAGS=-Wall -I$(DIET_INCLUDE) -Os -fomit-frame-pointer
-#LDFLAGS=-lowfat -L$(DIET)/lib -static -s
+#LDFLAGS=-lowfat -L$(DIET)/lib -static -s 
 
-CFLAGS_ADMIN=-Wall -I$(DIET_INCLUDE) -DADMIN_MODE
-LDFLAGS_ADMIN=$(LDFLAGS)
+CFLAGS_ADMIN=-Wall -I$(DIET_INCLUDE) -DADMIN_MODE -DADMIN_MODE_PASS -g
+LDFLAGS_ADMIN=$(LDFLAGS) -lcrypto
 
 TARGETS=blog.cgi blogger blog.cgi.adm blog.cgi.strip
 

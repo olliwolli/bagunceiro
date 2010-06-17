@@ -10,6 +10,7 @@
 #include "z_entry.h"
 #include "z_blog.h"
 #include "z_time.h"
+
 #ifdef ADMIN_MODE
 
 void read_stdin(array * content)
@@ -20,7 +21,7 @@ void read_stdin(array * content)
 
 void print_help()
 {
-	eprintf("Usage: cblog [OPTION]\n"
+	sprintf("Usage: cblog [OPTION]\n"
 		"Reads value from stdin\n"
 		"  -b path     db path (default: db/)\n"
 		"  -a          add value read from stdin\n"
@@ -40,8 +41,8 @@ int main(int argc, char **argv)
 	char c;
 	int err = 0;
 	char db[32] = "db/";
-	char pkey[MAX_FMT_LENGTH_KEY];
-	char fmtkey[MAX_FMT_HEX_LENGTH_KEY];
+	char pkey[FMT_TAIA_HEX];
+	char fmtkey[FMT_TAIA_HEX];
 
 	while ((c = getopt(argc, argv, "b:ad:m:n:s:z:?h")) != -1) {
 		switch (c) {
@@ -114,12 +115,13 @@ int main(int argc, char **argv)
 			break;
 		case 'z':
 			str_copy(db, optarg);
-
-			break;
 		default:
 			print_help();
+			break;
 		}
 	}
+
 	return err;
 }
+
 #endif

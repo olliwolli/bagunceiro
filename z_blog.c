@@ -17,34 +17,21 @@
 #include "z_format.h"
 
 /* Parses query and fetches data from database */
-
-struct errors gerr = {
-	.note = "",
-	.error = 0,
-	.type = N_NONE
-};
-
 static int fetch_entry_ts(const blog_t * conf, array * blog)
 {
 	array *day_items;
 	struct day_entry *day = malloc(sizeof(struct day_entry));
 	struct caltime *day_time = malloc(sizeof(struct caltime));
 	struct nentry e;
-	struct eops ops;
 
 	byte_zero(&e, sizeof(e));
-
-	ops.add_key = e_add_key;
-	ops.add_val = e_add_val;
-	ops.add_to_array = e_add_to_array;
-	ops.alloc = e_malloc;
 
 	scan_time_hex(conf->qry.ts, &e.k);
 	show_entry(conf->db, &e);
 	caltime_utc(day_time, &e.k.sec, (int *)0, (int *)0);
 
-	day_items = ops.alloc();
-	ops.add_to_array(&e, day_items);
+	day_items = e_malloc();
+	e_add_to_array(&e, day_items);
 	day->es = day_items;
 	day->date = &day_time->date;
 
@@ -78,8 +65,10 @@ static int fetch_entries_days(const blog_t * conf, array * blog)
 		//TODO check if file exists in order to avoid mallocs above
 		/* get entries for calculated day */
 		err = show_day(conf->db, day_items, &tday);
+
 		if (err <= 0)	/* File not found or 0 entries */
 			goto sub;
+
 		caltime_utc(day_time, &tday.sec, (int *)0, (int *)0);
 
 		/* fill in the entries and date */
@@ -106,7 +95,7 @@ int handle_query(blog_t * conf)
 	int err;
 
 	byte_zero(&n.e, sizeof(array));
-	byte_zero(&blog, sizeof(blog));
+	byte_zero(&blog, sizeof(array));
 
 	switch (conf->qry.action) {
 	case QA_SHOW:
@@ -128,8 +117,7 @@ int handle_query(blog_t * conf)
 			print_add_entry(conf);
 			/* add a new entry */
 		} else {
-			gerr.type = N_NOTE;
-			str_copy(gerr.note, "Entry added");
+			set_err("Entry added", 0, N_NOTE);
 			array_cats0(&n.e, conf->input.p);
 			add_entry_now(conf->db, &n);
 			err = fetch_entries_days(conf, &blog);
@@ -140,13 +128,9 @@ int handle_query(blog_t * conf)
 		scan_time_hex(conf->qry.ts, &n.k);
 		err = delete_entry(conf->db, &n);
 		if (err < 0) {
-			gerr.type = N_ERROR;
-			gerr.error = errno;
-			str_copy(gerr.note, conf->qry.ts);
+			set_err(conf->qry.ts, errno, N_ERROR);
 		} else {
-			gerr.type = N_NOTE;
-			str_copy(gerr.note, "Entry deleted");
-
+			set_err("Entry deleted", 0, N_NOTE);
 		}
 		fetch_entries_days(conf, &blog);
 		print_show(&blog, conf);
@@ -157,14 +141,18 @@ int handle_query(blog_t * conf)
 			print_mod_entry(conf, &n);
 			/* add a new entry */
 		} else {
-			gerr.type = N_NOTE;
-			str_copy(gerr.note, "Entry modified");
+			set_err("Entry modified", 0, N_NOTE);
 			array_cats0(&n.e, conf->input.p);
 			modify_entry(conf->db, &n);
 
 			err = fetch_entries_days(conf, &blog);
 			print_show(&blog, conf);
 		}
+		break;
+#endif
+#ifdef ADMIN_MODE_PASS
+	case QA_LOGIN:
+		print_login(conf);
 		break;
 #endif
 	}

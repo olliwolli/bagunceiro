@@ -35,7 +35,7 @@ inline static int exists(const char *file)
 	return 0;
 }
 
-inline static size_t __make_tmp_name(char * tmpname, const char * file)
+inline static size_t __make_tmp_name(char *tmpname, const char *file)
 {
 	str_copy(tmpname, file);
 	strcat(tmpname, ".tmp");
@@ -43,7 +43,7 @@ inline static size_t __make_tmp_name(char * tmpname, const char * file)
 	return 0;
 }
 
-int cdb_init_file(const char * file)
+int cdb_init_file(const char *file)
 {
 	int fp;
 	struct cdb_make cdbm;
@@ -167,13 +167,14 @@ finish:
 	return numrec;
 }
 
-static int __cdb_remake(const char * file, const char * k, const size_t ks, const array * v,
-	enum cop op)
+static int __cdb_remake(const char *file, const char *k, const size_t ks,
+	const array * v, enum cop op)
 {
 	//static array tmpfile;
-	char tmpfile[str_len(file)+1];
+	char tmpfile[str_len(file) + 1];
 	int err;
 
+	cdb_init_file(file);
 	__make_tmp_name(tmpfile, file);
 
 	if (v != NULL) {
@@ -202,24 +203,24 @@ static int __cdb_remake(const char * file, const char * k, const size_t ks, cons
 	return err;
 }
 
-int cdb_mod(const char * file, const char * k, const size_t ks, const array * v)
+int cdb_mod(const char *file, const char *k, const size_t ks, const array * v)
 {
 	return __cdb_remake(file, k, ks, v, OP_MOD);
 }
 
-int cdb_add(const char * file, const char * k, size_t ks, const array * v)
+int cdb_add(const char *file, const char *k, size_t ks, const array * v)
 {
 	return __cdb_remake(file, k, ks, v, OP_ADD);
 }
 
-int cdb_del(const char * file, const char * k, const size_t ks)
+int cdb_del(const char *file, const char *k, const size_t ks)
 {
 	return __cdb_remake(file, k, ks, NULL, OP_DEL);
 }
 
 #endif
 
-int cdb_get(const char * file, const char * k, const size_t ks, array * v)
+int cdb_get(const char *file, const char *k, const size_t ks, array * v)
 {
 	struct cdb result;
 	int err, fd, len;
@@ -244,10 +245,11 @@ int cdb_get(const char * file, const char * k, const size_t ks, array * v)
 		if (err < 0) {
 			return -2;
 		}
-		array_allocate(v, 1, len + 1);
+		array_catb(v, (char *) buf, len);
 		return 1;
 	}
 }
+
 int cdb_read_all(const char *name, array * entries, struct eops *ops)
 {
 	int numdump = 0;
@@ -279,7 +281,7 @@ int cdb_read_all(const char *name, array * entries, struct eops *ops)
 		cdb_read(&c, data, dlen, dp);
 
 		/* key not found */
-		if (klen == 0) {
+		if (__unlikely(klen == 0)) {
 			return -2;
 		}
 
