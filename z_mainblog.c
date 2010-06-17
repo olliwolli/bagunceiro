@@ -70,7 +70,7 @@ static void debug_print(const blog_t * conf, array * ps, array * qs)
 static void get_post_string(array * ps)
 {
 	byte_zero(ps, sizeof(array));
-	array_cats0(ps, "log=halihalo44");
+	array_cats0(ps, "log=sdfds");
 }
 #endif
 
@@ -199,7 +199,7 @@ static void do_admin_pass_mode(blog_t * conf, array * co, array * pd, array * qs
 
 	/*  parse postdata */
 	char tmptoken[SHA256_DIGEST_LENGTH * 2 + 1];
-	err = get_param_char(pd, -1, "log", tmptoken,
+	err = get_param_char(pd, -1, "login", tmptoken,
 		SHA256_DIGEST_LENGTH * 2 + 1, "&");
 	if (!err) {
 		conf->authpost = 1;
@@ -209,11 +209,17 @@ static void do_admin_pass_mode(blog_t * conf, array * co, array * pd, array * qs
 	}
 
 	/* parse query string */
-	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "log", conf->qry.ts,
+	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "login", conf->qry.ts,
 		MAX_KEY_LENGTH_STR, "&");
 	if (err == -2) {
 		conf->qry.type = QRY_TS;
 		conf->qry.action = QA_LOGIN;
+	}
+
+	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "logout", conf->qry.ts,
+		MAX_KEY_LENGTH_STR, "&");
+	if (err == -2) {
+		conf->qry.action = QA_LOGOUT;
 	}
 
 	/* check ssl status */
@@ -305,6 +311,16 @@ static void get_cookie_string(array * co)
 	}
 }
 
+static int verify_ts(char * ts)
+{
+	int i;
+	for(i = 0; i < FMT_TAIA_HEX; i++){
+		if( ts[i] < '0' || (ts[i] > '9' && ts[i] < 'a') || ts[i] > 'f')
+			return 0;
+	}
+	return 1;
+}
+
 int main()
 {
 	array qs;		/* query string */
@@ -349,6 +365,14 @@ int main()
 #ifdef ADMIN_MODE_PASS
 	do_admin_pass_mode(&conf, &co, &ps, &qs);
 #endif
+
+	if(conf.qry.type == QRY_TS && !verify_ts(conf.qry.ts) ){
+		conf.qry.action = QA_SHOW;
+		conf.qry.type = QRY_WEEK;
+#ifdef WANT_ERROR_PRINT
+		set_err("Not a valid timestamp", 0, N_ERROR);
+#endif
+	}
 
 	/* set a cookie */
 	if (conf.csstype != CSS_DEFAULT && conf.csstype != CSS_RESET) {

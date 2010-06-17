@@ -17,7 +17,7 @@ enum notice { N_ERROR, N_NOTE, N_NONE, N_ACTION };
  * Adds approx. 4k
  * TODO: this also removes some useful notices.
  * */
-//#define WANT_ERROR_PRINT
+#define WANT_ERROR_PRINT
 
 /* This removes uneeded part from the timestamp
  * when printing and parsing it from web page i/o */
@@ -34,10 +34,8 @@ enum notice { N_ERROR, N_NOTE, N_NONE, N_ACTION };
 
 /* Admin mode pass allows password authentication
  * This mode only works over https. Since cookies may be
- * sniffed otherwise. It provides that action ?log.
+ * sniffed otherwise. It provides that action ?login.
  * For login with a password.
- * Note cookies may still be sniffed when browsing the page
- * in http mode while you still have a cookie.
  * */
 //#define ADMIN_MODE_PASS
 
@@ -84,7 +82,7 @@ struct errors {
 	enum notice type;
 } gerr;
 
-inline void set_err(char *msg, int num, enum notice type)
+static inline void set_err(char *msg, int num, enum notice type)
 {
 	str_copy(gerr.note, msg);
 	gerr.error = num;

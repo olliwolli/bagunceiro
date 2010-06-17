@@ -14,12 +14,12 @@
 
 typedef struct query {
 	enum qtype { QRY_TS, QRY_WEEK } type;
-	enum qaction { QA_SHOW,
+	enum qaction { QA_SHOW, 
 #ifdef ADMIN_MODE
 			QA_DELETE, QA_ADD, QA_MODIFY,
 #endif
 #ifdef ADMIN_MODE_PASS
-		QA_LOGIN,
+		QA_LOGIN, QA_LOGOUT
 #endif
 	} action;
 	unsigned int start;	/* offset from today, positive */

@@ -4,7 +4,7 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.8	//
-ADMIN_MODE	z_features.h	62;"	d
+ADMIN_MODE	z_features.h	60;"	d
 BLOGGER_O	Makefile	/^BLOGGER_O=z_blogger.adm.o z_time.adm.o z_cdb.adm.o z_entry.adm.o $/;"	m
 BLOG_O	Makefile	/^BLOG_O=z_mainblog.o z_blog.o z_entry.o z_time.o z_cdb.o z_format.o z_conf.o$/;"	m
 BLOG_O_ADM	Makefile	/^BLOG_O_ADM=$(SOURCES:%.c=%.adm.o)$/;"	m
@@ -16,7 +16,7 @@ CLOG_TYPE_HTML	z_blog.h	11;"	d
 CLOG_TYPE_RSS_2_0	z_blog.h	10;"	d
 CONF_FILE	z_conf.h	4;"	d
 CONTENT_TYPE_HTML	z_format.c	89;"	d	file:
-CONTENT_TYPE_RSS	z_format.c	272;"	d	file:
+CONTENT_TYPE_RSS	z_format.c	284;"	d	file:
 COOKIE_MAX	z_features.h	10;"	d
 CP_NOP	z_cdb.c	26;"	d	file:
 CP_PAR	z_cdb.c	27;"	d	file:
@@ -58,9 +58,10 @@ POSTDATA_MAX	z_features.h	8;"	d
 PROGRAM_NAME	z_features.h	12;"	d
 QA_ADD	z_blog.h	/^			QA_DELETE, QA_ADD, QA_MODIFY,$/;"	e	enum:query::qaction
 QA_DELETE	z_blog.h	/^			QA_DELETE, QA_ADD, QA_MODIFY,$/;"	e	enum:query::qaction
-QA_LOGIN	z_blog.h	/^		QA_LOGIN,$/;"	e	enum:query::qaction
+QA_LOGIN	z_blog.h	/^		QA_LOGIN, QA_LOGOUT$/;"	e	enum:query::qaction
+QA_LOGOUT	z_blog.h	/^		QA_LOGIN, QA_LOGOUT$/;"	e	enum:query::qaction
 QA_MODIFY	z_blog.h	/^			QA_DELETE, QA_ADD, QA_MODIFY,$/;"	e	enum:query::qaction
-QA_SHOW	z_blog.h	/^	enum qaction { QA_SHOW,$/;"	e	enum:query::qaction
+QA_SHOW	z_blog.h	/^	enum qaction { QA_SHOW, $/;"	e	enum:query::qaction
 QRY_TS	z_blog.h	/^	enum qtype { QRY_TS, QRY_WEEK } type;$/;"	e	enum:query::qtype
 QRY_WEEK	z_blog.h	/^	enum qtype { QRY_TS, QRY_WEEK } type;$/;"	e	enum:query::qtype
 QUERY_MAX	z_features.h	9;"	d
@@ -70,6 +71,7 @@ SOURCES	Makefile	/^SOURCES=z_blog.c z_cdb.c z_conf.c z_entry.c z_format.c z_main
 S_HTML	z_blog.h	/^	enum stype { S_HTML, S_RSS } stype;$/;"	e	enum:blog::stype
 S_RSS	z_blog.h	/^	enum stype { S_HTML, S_RSS } stype;$/;"	e	enum:blog::stype
 TARGETS	Makefile	/^TARGETS=blog.cgi blogger blog.cgi.adm blog.cgi.strip$/;"	m
+WANT_ERROR_PRINT	z_features.h	20;"	d
 _Z_BLOG_H	z_blog.h	2;"	d
 _Z_CDB_H	z_cdb.h	2;"	d
 _Z_ENTRY_H	z_entry.h	2;"	d
@@ -177,14 +179,14 @@ eops::add_to_array	z_cdb.h	/^	void (*add_to_array) (void *e, array * arr);$/;"	m
 eops::add_val	z_cdb.h	/^	void (*add_val) (void *e, unsigned char *s, size_t l);$/;"	m	struct:eops	access:public
 eops::alloc	z_cdb.h	/^	void *(*alloc) ();$/;"	m	struct:eops	access:public
 eops_t	z_cdb.h	/^} eops_t;$/;"	t	typeref:struct:eops
-eprint	z_features.h	69;"	d
-eprint	z_features.h	74;"	d
-eprintf	z_features.h	71;"	d
-eprintf	z_features.h	76;"	d
-eprintm	z_features.h	70;"	d
-eprintm	z_features.h	75;"	d
-eprintmf	z_features.h	72;"	d
-eprintmf	z_features.h	77;"	d
+eprint	z_features.h	67;"	d
+eprint	z_features.h	72;"	d
+eprintf	z_features.h	69;"	d
+eprintf	z_features.h	74;"	d
+eprintm	z_features.h	68;"	d
+eprintm	z_features.h	73;"	d
+eprintmf	z_features.h	70;"	d
+eprintmf	z_features.h	75;"	d
 error	z_features.h	/^	int error;$/;"	m	struct:errors	access:public
 errors	z_features.h	/^struct errors {$/;"	s
 errors::error	z_features.h	/^	int error;$/;"	m	struct:errors	access:public
@@ -260,20 +262,21 @@ print_show	z_format.c	/^void print_show(array * blog, blog_t * conf)$/;"	f	signa
 print_show	z_format.h	/^void print_show(array * blog, blog_t * conf);$/;"	p	signature:(array * blog, blog_t * conf)
 print_time	z_time.h	/^size_t print_time(const struct taia *time);$/;"	p	signature:(const struct taia *time)
 ptime	z_blog.h	/^	struct timeval ptime;$/;"	m	struct:blog	typeref:struct:blog::timeval	access:public
-qaction	z_blog.h	/^	enum qaction { QA_SHOW,$/;"	g	struct:query	access:public
+qaction	z_blog.h	/^	enum qaction { QA_SHOW, $/;"	g	struct:query	access:public
 qry	z_blog.h	/^	query_t qry;$/;"	m	struct:blog	access:public
 qtype	z_blog.h	/^	enum qtype { QRY_TS, QRY_WEEK } type;$/;"	g	struct:query	access:public
 query	z_blog.h	/^typedef struct query {$/;"	s
 query::QA_ADD	z_blog.h	/^			QA_DELETE, QA_ADD, QA_MODIFY,$/;"	e	enum:query::qaction
 query::QA_DELETE	z_blog.h	/^			QA_DELETE, QA_ADD, QA_MODIFY,$/;"	e	enum:query::qaction
-query::QA_LOGIN	z_blog.h	/^		QA_LOGIN,$/;"	e	enum:query::qaction
+query::QA_LOGIN	z_blog.h	/^		QA_LOGIN, QA_LOGOUT$/;"	e	enum:query::qaction
+query::QA_LOGOUT	z_blog.h	/^		QA_LOGIN, QA_LOGOUT$/;"	e	enum:query::qaction
 query::QA_MODIFY	z_blog.h	/^			QA_DELETE, QA_ADD, QA_MODIFY,$/;"	e	enum:query::qaction
-query::QA_SHOW	z_blog.h	/^	enum qaction { QA_SHOW,$/;"	e	enum:query::qaction
+query::QA_SHOW	z_blog.h	/^	enum qaction { QA_SHOW, $/;"	e	enum:query::qaction
 query::QRY_TS	z_blog.h	/^	enum qtype { QRY_TS, QRY_WEEK } type;$/;"	e	enum:query::qtype
 query::QRY_WEEK	z_blog.h	/^	enum qtype { QRY_TS, QRY_WEEK } type;$/;"	e	enum:query::qtype
 query::action	z_blog.h	/^	} action;$/;"	m	struct:query	typeref:enum:query::qaction	access:public
 query::end	z_blog.h	/^	unsigned int end;	\/* offset from today, positive *\/$/;"	m	struct:query	access:public
-query::qaction	z_blog.h	/^	enum qaction { QA_SHOW,$/;"	g	struct:query	access:public
+query::qaction	z_blog.h	/^	enum qaction { QA_SHOW, $/;"	g	struct:query	access:public
 query::qtype	z_blog.h	/^	enum qtype { QRY_TS, QRY_WEEK } type;$/;"	g	struct:query	access:public
 query::start	z_blog.h	/^	unsigned int start;	\/* offset from today, positive *\/$/;"	m	struct:query	access:public
 query::ts	z_blog.h	/^	char ts[FMT_TAIA_HEX];$/;"	m	struct:query	access:public
@@ -286,19 +289,19 @@ reduce_ts	z_time.h	/^void reduce_ts(char * src);$/;"	p	signature:(char * src)
 scan_time_hex	z_time.c	/^size_t scan_time_hex(const char *s, struct taia * time)$/;"	f	signature:(const char *s, struct taia * time)
 scan_time_hex	z_time.h	/^size_t scan_time_hex(const char * s, struct taia *time);$/;"	p	signature:(const char * s, struct taia *time)
 script	z_blog.h	/^	char *script;$/;"	m	struct:blog	access:public
-set_err	z_features.h	/^inline void set_err(char *msg, int num, enum notice type)$/;"	f	signature:(char *msg, int num, enum notice type)
-set_err	z_features.h	94;"	d
+set_err	z_features.h	/^static inline void set_err(char *msg, int num, enum notice type)$/;"	f	signature:(char *msg, int num, enum notice type)
+set_err	z_features.h	92;"	d
 show_day	z_entry.c	/^int show_day(const char *dbpath, array * entries, const struct taia *day)$/;"	f	signature:(const char *dbpath, array * entries, const struct taia *day)
 show_day	z_entry.h	/^int show_day(const char *dbpath, array * entries, const struct taia *tday);$/;"	p	signature:(const char *dbpath, array * entries, const struct taia *tday)
 show_entry	z_entry.c	/^int show_entry(const char *dbpath, struct nentry *entry)$/;"	f	signature:(const char *dbpath, struct nentry *entry)
 show_entry	z_entry.h	/^int show_entry(const char *dbpath, struct nentry *entry);$/;"	p	signature:(const char *dbpath, struct nentry *entry)
 show_file	z_entry.c	/^int show_file(array * entries, const char *file)$/;"	f	signature:(array * entries, const char *file)
 show_file	z_entry.h	/^int show_file(array * entries, const char *file);$/;"	p	signature:(array * entries, const char *file)
-sprint	z_features.h	54;"	d
-sprintf	z_features.h	56;"	d
-sprintm	z_features.h	55;"	d
-sprintmf	z_features.h	57;"	d
-sprintn	z_features.h	58;"	d
+sprint	z_features.h	52;"	d
+sprintf	z_features.h	54;"	d
+sprintm	z_features.h	53;"	d
+sprintmf	z_features.h	55;"	d
+sprintn	z_features.h	56;"	d
 ssl	z_blog.h	/^	int ssl;$/;"	m	struct:blog	access:public
 start	z_blog.h	/^	unsigned int start;	\/* offset from today, positive *\/$/;"	m	struct:query	access:public
 stype	z_blog.h	/^	enum stype { S_HTML, S_RSS } stype;$/;"	g	struct:blog	access:public
@@ -311,5 +314,6 @@ token	z_blog.h	/^	unsigned char token[SHA256_DIGEST_LENGTH];$/;"	m	struct:blog	a
 ts	z_blog.h	/^	char ts[FMT_TAIA_HEX];$/;"	m	struct:query	access:public
 type	z_blog.h	/^	enum qtype { QRY_TS, QRY_WEEK } type;$/;"	m	struct:query	typeref:enum:query::qtype	access:public
 type	z_features.h	/^	enum notice type;$/;"	m	struct:errors	typeref:enum:errors::notice	access:public
+verify_ts	z_mainblog.c	/^static int verify_ts(char * ts)$/;"	f	file:	signature:(char * ts)
 weekday	z_time.c	/^static int weekday(int month, int day, int year)$/;"	f	file:	signature:(int month, int day, int year)
 weekdays	z_time.c	/^char weekdays[7][4] = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };$/;"	v

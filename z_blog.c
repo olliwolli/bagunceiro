@@ -154,9 +154,12 @@ int handle_query(blog_t * conf)
 	case QA_LOGIN:
 		print_login(conf);
 		break;
+	case QA_LOGOUT:
+		print_show(&blog, conf);
+		break;
+
 #endif
 	}
-
 	/* TODO free day, day_items, blog */
 	array_reset(&blog);
 	array_reset(&n.e);

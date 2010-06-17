@@ -104,10 +104,13 @@ void print_header_html(const blog_t * conf)
 			break;
 		}
 	}
-
 #ifdef ADMIN_MODE_PASS
+	if (conf->qry.action == QA_LOGOUT) {
+		sprint("Set-Cookie: token=\n");
+	}
+
 	if (conf->authpost) {
-		char hexdump[SHA256_DIGEST_LENGTH*2+1];
+		char hexdump[SHA256_DIGEST_LENGTH * 2 + 1];
 
 		if (conf->csstype == CSS_SELECT)
 			sprint("; ");
@@ -115,8 +118,11 @@ void print_header_html(const blog_t * conf)
 			sprint("Set-Cookie: ");
 
 		sprint("token=");
-		fmt_hexdump(hexdump, (const char * )conf->token, SHA256_DIGEST_LENGTH);
-		sprintn((char *)hexdump, SHA256_DIGEST_LENGTH*2);
+		fmt_hexdump(hexdump, (const char *)conf->token,
+			SHA256_DIGEST_LENGTH);
+		sprintn((char *)hexdump, SHA256_DIGEST_LENGTH * 2);
+		/* make it a little more secure */
+		sprintm("; Secure; HttpOnly; Discard; Max-Age=300");
 		sprint("\n");
 	}
 #endif
@@ -148,13 +154,9 @@ void print_header_html(const blog_t * conf)
 		"<a href=\"", conf->script, "\">", conf->title, "</a></h1>\n");
 
 #ifdef ADMIN_MODE_PASS
-	if( !conf->ssl ){
+	if (!conf->ssl) {
 		sprintf("Need ssl connetion");
 		exit(1);
-	}
-
-	if (conf->authcache) {
-		sprint("Authenticated\n");
 	}
 #endif
 
@@ -183,8 +185,18 @@ void print_footer_html(const blog_t * conf)
 {
 
 #ifdef ADMIN_MODE
-	sprintm("<h1>"
-		"<a href=\"", conf->script, "?add\">" "Add" "</a></h1>\n");
+	sprintm("<h4>"
+		"<a href=\"", conf->script, "?add\">" "Add entry | " "</a>\n");
+#endif
+#ifdef ADMIN_MODE_PASS
+	sprintm("<a href=\"", conf->script, "?");
+	if (conf->authcache) {
+		sprint("logout\">" "Logout");
+	} else {
+		sprint("login\">" "Login");
+	}
+	sprint("</a></h4>\n");
+
 #endif
 	sprintmf("<h4>Please Note: ...  </span></h4>" "</body></html>\n");
 
@@ -254,7 +266,7 @@ void print_login(const blog_t * conf)
 
 	sprintm("<ul>\n"
 		"<form  method=\"post\" action=\"", conf->script, "\">\n",
-		"<input name=\"log\" type=\"password\" size=\"12\" maxlength=\"12\">\n");
+		"<input name=\"login\" type=\"password\" size=\"12\" maxlength=\"12\">\n");
 
 	sprintm("<p><input type=\"submit\" value=\"Login\"></p>"
 		"</form>" " </ul>\n");
