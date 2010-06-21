@@ -1,0 +1,7 @@
+You need a modified version of libowfat which supports
+caltime/caldate functions. You also might want to
+replace all calls to byte_{copy,zero,rcopy,equal,diff}
+with their mem{cpy,cmp,set} aquivalents since they are
+usually a lot faster and save space (several kilobytes).
+
+I suggest you link against the vanilla dietlibc

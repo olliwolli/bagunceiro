@@ -1,7 +1,7 @@
 #include <array.h>
-#include <byte.h>
 #include <str.h>
 
+#include <openssl/sha.h>
 #include "z_features.h"
 
 #include "z_cdb.h"
@@ -18,8 +18,8 @@ static int read_conf(blog_t * conf, char *key, size_t ks, char *dest)
 	int err;
 	array value, file;
 
-	byte_zero(&value, sizeof(array));
-	byte_zero(&file, sizeof(array));
+	memset(&value, 0, sizeof(array));
+	memset(&file, 0, sizeof(array));
 
 	choose_file(&file, conf->db);
 
@@ -27,7 +27,7 @@ static int read_conf(blog_t * conf, char *key, size_t ks, char *dest)
 	if (err < 0 )
 		return err;
 
-	byte_copy(dest, array_bytes(&value), value.p);
+	memcpy(dest, value.p, array_bytes(&value));
 	array_reset(&file);
 	array_reset(&value);
 
@@ -42,27 +42,11 @@ int auth_conf(blog_t * conf, unsigned char *in, size_t len)
 
 	read_conf(conf, "input", 5, (char *)pbuf);
 
-	auth = byte_equal(pbuf, SHA256_DIGEST_LENGTH, in);
-	byte_zero(pbuf, SHA256_DIGEST_LENGTH);
+	auth = !memcmp(pbuf, in, SHA256_DIGEST_LENGTH);
+	memset(pbuf, 0, SHA256_DIGEST_LENGTH);
 
 	return auth;
 }
-
-//void auth_init(blog_t * conf, unsigned char *in, size_t len)
-//{
-//	unsigned char tbuf[SHA256_DIGEST_LENGTH];
-//	array value, file;
-//
-//	byte_zero(&value, sizeof(array));
-//	byte_zero(&file, sizeof(array));
-//
-//	SHA256((unsigned char *)"passwordstring", 10, tbuf);
-//	array_catb(&value, (char *)tbuf, SHA256_DIGEST_LENGTH);
-//	cdb_add("db/bconf.db", "input", 5, &value);
-//
-//	array_reset(&file);
-//	array_reset(&value);
-//}
 
 #endif
 

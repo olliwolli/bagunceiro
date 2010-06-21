@@ -4,7 +4,6 @@
 
 #include <array.h>
 #include <ctype.h>
-#include <byte.h>
 #include <caltime.h>
 #include <errno.h>
 #include <str.h>
@@ -24,7 +23,7 @@ static int fetch_entry_ts(const blog_t * conf, array * blog)
 	struct caltime *day_time = malloc(sizeof(struct caltime));
 	struct nentry e;
 
-	byte_zero(&e, sizeof(e));
+	memset(&e, 0, sizeof(e));
 
 	scan_time_hex(conf->qry.ts, &e.k);
 	show_entry(conf->db, &e);
@@ -42,26 +41,29 @@ static int fetch_entry_ts(const blog_t * conf, array * blog)
 
 static int fetch_entries_days(const blog_t * conf, array * blog)
 {
-	int err, start, stop;
+	int err, start, offset, i;
 	struct day_entry *day;
 	struct caltime *day_time;
 	struct taia tday;
 	array *day_items;
 
 	start = conf->qry.start;
-	stop = conf->qry.end;
+	offset = conf->qry.doff;
 	taia_now(&tday);
+
+	for(i=0; i< start; i++)
+		ht_sub_days(&tday, 1);
 
 	err = 0;
 
-	for (; start < stop; start++) {
+	for (start = 0; start < offset; start++) {
 		/* allocate memory */
 		day = malloc(sizeof(struct day_entry));
 		day_items = malloc(sizeof(struct nentry));
 		day_time = malloc(sizeof(struct caltime));
 		day_items->allocated = 0;
 		day_items->initialized = 0;
-		byte_zero(day_items, sizeof(struct nentry));
+		memset(day_items, 0, sizeof(struct nentry));
 		//TODO check if file exists in order to avoid mallocs above
 		/* get entries for calculated day */
 		err = show_day(conf->db, day_items, &tday);
@@ -88,14 +90,56 @@ sub:
 	return err;
 }
 
+#ifdef WANT_MONTH_BROWSING
+/* TODO: optimize */
+/* this calculates offsets from today and calls fetch_entries_days */
+static int fetch_entries_month(blog_t *conf, array * blog)
+{
+	struct caltime ct;
+	struct taia now;
+	int err;
+	long jnow, start, offset;
+
+	err = 0;
+
+	taia_now(&now);
+	caltime_utc(&ct, &now.sec, (int *)0, (int *)0);
+	jnow = caldate_mjd(&ct.date);
+
+	caldate_scan(conf->qry.mon, &ct.date);
+
+	/* go to the last day of the selected month */
+	ct.date.month++;
+	ct.hour = 1;
+	ct.date.day--;
+
+	start =	caldate_mjd(&ct.date);
+	start = jnow - start;
+
+	/* if the date is in the future reset to 0 (current month) */
+	if(start <= 0)
+		start = 0;
+
+	ct.date.month--;
+	ct.date.day = 1;
+	offset = (jnow - caldate_mjd(&ct.date)) - start;
+
+	conf->qry.start = start;
+	conf->qry.doff = offset + 1; /* add one to also get first day of month */
+	fetch_entries_days(conf, blog);
+
+	return err;
+}
+#endif
+
 int handle_query(blog_t * conf)
 {
 	array blog;
 	struct nentry n;
 	int err;
 
-	byte_zero(&n.e, sizeof(array));
-	byte_zero(&blog, sizeof(array));
+	memset(&n.e, 0, sizeof(array));
+	memset(&blog, 0, sizeof(array));
 
 	switch (conf->qry.action) {
 	case QA_SHOW:
@@ -106,6 +150,13 @@ int handle_query(blog_t * conf)
 		case QRY_TS:
 			fetch_entry_ts(conf, &blog);
 			break;
+#ifdef WANT_MONTH_BROWSING
+		case QRY_MONTH:
+			fetch_entries_month(conf, &blog);
+			break;
+#endif
+		default:
+			return -1;
 		}
 		print_show(&blog, conf);
 		break;

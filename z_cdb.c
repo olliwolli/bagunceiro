@@ -1,11 +1,11 @@
 #include <unistd.h>
 #include <stdio.h>
+#include <dirent.h>
 
 #include <cdb_make.h>
 #include <str.h>
 #include <cdb.h>
 #include <open.h>
-#include <byte.h>
 #include <alloca.h>
 #include <array.h>
 #include <errno.h>
@@ -111,16 +111,16 @@ static int __cdb_remake_real(const char *name, const char *newname,
 		/* if the key is the same modifiy the entry */
 		switch (op) {
 		case OP_MOD:
-			if (!byte_diff
-				((const char *)key, klen, (const char *)skey)) {
+			if (!memcmp
+				((const char *)key, (const char *)skey, klen)) {
 				found = 1;
 				loop_copy_src = CP_PAR;
 			}
 
 			break;
 		case OP_DEL:
-			if (!byte_diff
-				((const char *)key, klen, (const char *)skey)) {
+			if (!memcmp
+				((const char *)key, (const char *)skey, klen)) {
 				loop_copy_src = CP_NOP;
 				found = 1;
 			}
@@ -224,9 +224,10 @@ int cdb_get(const char *file, const char *k, const size_t ks, array * v)
 {
 	struct cdb result;
 	int err, fd, len;
-
+	int first;
 	unsigned char buf[MAX_ENTRY_SIZE];
 
+	first = 1;
 	fd = open_read(file);
 	if (fd <= 0) {
 		return -1;
@@ -240,12 +241,21 @@ int cdb_get(const char *file, const char *k, const size_t ks, array * v)
 	} else if (err == -1) {
 		return -1;
 	} else {
-		len = cdb_datalen(&result);
-		err = cdb_read(&result, buf, len, cdb_datapos(&result));
-		if (err < 0) {
-			return -2;
-		}
-		array_catb(v, (char *) buf, len);
+		do {
+
+			len = cdb_datalen(&result);
+			err = cdb_read(&result, buf, len, cdb_datapos(&result));
+			if (err < 0) {
+				return -2;
+			}
+			/* seperates records by ":" */
+			if (!first)
+				array_cats(v, ":");
+			array_catb(v, (char *)buf, len);
+			first = 0;
+
+		} while (cdb_findnext(&result, (unsigned char *)k, ks) > 0);
+
 		return 1;
 	}
 }
@@ -298,3 +308,88 @@ int cdb_read_all(const char *name, array * entries, struct eops *ops)
 
 	return numdump;
 }
+
+int cdb_search(const char *dbpath, const char *needle, array * entries)
+{
+	DIR *d;
+	struct dirent *dir;
+	d = opendir(dbpath);
+	if (d) {
+		while ((dir = readdir(d)) != NULL) {
+			if (dir->d_name[0] == '.'
+				|| !strcmp(dir->d_name, "bconf.db"))
+				continue;
+
+			printf("%s\n", dir->d_name);
+		}
+
+		closedir(d);
+	}
+
+	return 0;
+}
+
+int cdbm_index(struct cdb_make *cdbm, int (*idxfmt) (array * fmt,
+		unsigned char *key, size_t ks), unsigned char *key, size_t ks)
+{
+	static array fmt;
+
+	idxfmt(&fmt, key, ks);
+	cdb_make_add(cdbm, (unsigned char *)fmt.p, array_bytes(&fmt), key, ks);
+	array_reset(&fmt);
+	return 0;
+}
+
+int cdb_idx_find(const char *file, int (*idxfmt) (array * fmt,
+		unsigned char *key, size_t ks), unsigned char *key, size_t ks,
+	array * keys)
+{
+	static array fmt, v;
+	int err;
+
+	idxfmt(&fmt, key, ks);
+	err = cdb_get(file, fmt.p, array_bytes(&fmt), &v);
+	return err;
+}
+/*  use nentry */
+
+//#include <stdlib.h>
+//int _cdb_get(struct cdb *result, char *key, size_t ks, array * v)
+//{
+//	int err, len;
+//	array *newv;
+//
+//	err = cdb_find(result, (unsigned char *)key, ks);
+//
+//	if (err == 0) {
+//		return 0;
+//	} else if (err == -1) {
+//		return -1;
+//	} else {
+//		do {
+//			len = cdb_datalen(result);
+//
+//			newv = malloc(sizeof(array));
+//			memset(newv, 0, sizeof(array));
+//
+//			/* introspection...;-( */
+//			newv->p = malloc(len);
+//			newv->allocated = len;
+//			newv->initialized = len;
+//
+//			ops->add_key(tmp, key, klen);
+//			ops->add_to_array(tmp, entries);
+//
+//			err = cdb_read(result, (unsigned char *)newv->p, len,
+//				cdb_datapos(result));
+//
+//			if (err < 0) {
+//				return -2;
+//			}
+//
+//			array_catb(v, (char *)newv, sizeof(array));
+//		} while (cdb_findnext(result, (unsigned char *)key, ks) > 0);
+//
+//	}
+//	return 1;
+//}

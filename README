@@ -1,0 +1,20 @@
+ - A blog system
+
+This is a blog system written in C designed to be a single small cgi script run
+by a webserver. It was written using a (link)modified version of libowfat,
+which, included cdb, the database I use to store the blog entries.
+
+Questions and answers
+Q: Why another blog system?
+A: Because everybody needs an "Extrawurscht"!
+
+Q: Why do you use cdb, it does not seem to be a good choice for a blog system?
+A: Because it is small an part of libowfat. The focus of this blog was not to
+have a whole lot of features but to make it small and fast. I figured that on
+a blog modifications and insertions are much less used as data querying.
+For the purpose of showing small texts chronologically cdb is totally ok.
+Using cdb it is possible to not overcomplicate the blog.
+One features that is awkward to implement though is searching through
+the blog. So thats missing right now, and yes I agree this hurts!
+
+Q: So how do you use cdb to store your blog?

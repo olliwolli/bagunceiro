@@ -2,7 +2,6 @@
 #include <scan.h>
 #include <tai.h>
 #include <taia.h>
-#include <byte.h>
 #include <array.h>
 #include <textcode.h>
 #include <str.h>
@@ -14,21 +13,23 @@
 #ifdef WANT_REDUCE_TS
 void reduce_ts(char *src)
 {
-	byte_copy(src, 4, src + REDUCE_OFFSET);
-	byte_copy(src + 4, 4, src + REDUCE_OFFSET + 4);
-	byte_copy(src + 8, 4, src + REDUCE_OFFSET + 8);
-	byte_copy(src + 12, 4, src + REDUCE_OFFSET + 12);
-	byte_zero(src + REDUCE_SIZE, REDUCE_SIZE);
-}
+	char tmp[FMT_TAIA_HEX];
 
+	memset(tmp, '0', FMT_TAIA_HEX-1);
+	memcpy(tmp, src + REDUCE_OFFSET, REDUCE_SIZE);
+	memcpy(src, tmp, FMT_TAIA_HEX);
+	src[REDUCE_SIZE] = 0;
+}
+//
+// TODO remove fixed string 4000000..
 void inflate_ts(char *src)
 {
-	byte_copy(src + REDUCE_OFFSET + 12, 4, src + 12);
-	byte_copy(src + REDUCE_OFFSET + 8, 4, src + 8);
-	byte_copy(src + REDUCE_OFFSET + 4, 4, src + 4);
-	byte_copy(src + REDUCE_OFFSET, 4, src);
-	byte_copy(src, 8, "40000000");
-	memset(src + REDUCE_SIZE + REDUCE_OFFSET, '0', 8);
+	char tmp[FMT_TAIA_HEX];
+	memset(tmp, '0', FMT_TAIA_HEX);
+	memcpy(tmp + REDUCE_OFFSET, src, REDUCE_SIZE);
+	memcpy(tmp, "40000000", REDUCE_OFFSET);
+
+	memcpy(src, tmp, FMT_TAIA_HEX);
 }
 #else
 void reduce_ts(char *src)
@@ -215,7 +216,7 @@ void time_stop_print(struct timeval *time)
 	sprintmf(fmtnsec, "s --/>");
 }
 
-#ifndef USE_COHERENT_TIME
+#ifndef WANT_COHERENT_TIME
 size_t fmt_time_str(char *s, const struct taia *time)
 {
 	struct caltime ct;

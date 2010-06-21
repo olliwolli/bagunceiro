@@ -13,8 +13,8 @@
 #define FILE_BUFFER_SIZE 100
 
 typedef struct query {
-	enum qtype { QRY_TS, QRY_WEEK } type;
-	enum qaction { QA_SHOW, 
+	enum qtype { QRY_TS, QRY_WEEK, QRY_MONTH } type;
+	enum qaction { QA_SHOW,
 #ifdef ADMIN_MODE
 			QA_DELETE, QA_ADD, QA_MODIFY,
 #endif
@@ -23,8 +23,10 @@ typedef struct query {
 #endif
 	} action;
 	unsigned int start;	/* offset from today, positive */
-	unsigned int end;	/* offset from today, positive */
+	unsigned int doff;	/* offset from start, positive */
 	char ts[FMT_TAIA_HEX];
+#define FMT_CALDATE	10 /* enough for some years to come */
+	char mon[FMT_CALDATE];
 } query_t;
 
 typedef struct blog {

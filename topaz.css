@@ -1,0 +1,173 @@
+/* IE6/7/8 */
+
+@font-face {
+  font-family:Topaz;
+  src: url(topaz1200dmg.eot);
+}
+
+/* FF3.5+/Safari/Opera10 */
+@font-face {
+  font-family:Topaz;
+  src: url(topaz1200dmg.ttf);
+}
+
+* {
+  color: #ccc;
+  font-size: 16px;
+  line-height: 18px;
+  font-family: Topaz;
+  font-weight: normal;
+  text-decoration: none;
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  counter-reset: bulletin;
+  counter-reset: day;
+  max-width: 40em;
+  margin: 20px auto 20px auto;
+  background-color: #000;
+  /* background-color: #0055AA;  */
+  /* background-image: url(scanlines.png); */
+}
+
+b,s {
+  color: #00f;
+  background-color: #ccc;
+}
+
+body > h2 > a:after {
+  display: block;
+  text-align: center;
+  color: #f00;
+  background-color: #08f;
+  background-image: url(scanlines.png);
+  white-space: pre;
+  /* content: "__________    ________                ______________ ________________\A___  ____/_______  __/____________    ___  __ )__  / __  __ \\_  ____/\A __  /_   _  _ \\_  /_ _  _ \\_  ___/    __  __  |_  /  _  / / /  / __  \A _  __/   /  __/  __/ /  __/(__  )     _  /_/ /_  /___/ /_/ // /_/ /  \A /_/      \\___//_/    \\___//____/      /_____/ /_____/\\____/ \\____/   \A \A"; */
+  content: "__________    ________                ______________ ________________\A___  ____/_______  __/____________    ___  __ )__  / __  __ \\_  ____/\A";
+                                                                      
+}
+
+body > h2:after {
+  display: block;
+  text-align: center;
+  color: #f80;
+  background-color: #00f;
+  background-image: url(scanlines.png);
+  white-space: pre;
+  content: " __  /_   _  _ \\_  /_ _  _ \\_  ___/    __  __  |_  /  _  / / /  / __   \A _  __/   /  __/  __/ /  __/(__  )     _  /_/ /_  /___/ /_/ // /_/ /  \A";
+                                                                      
+}
+
+body > h2 + b:before {
+  display: block;
+  text-align: center;
+  color: #ff0;
+  background-color: #008;
+  background-image: url(scanlines.png);
+  white-space: pre;
+  content: " /_/      \\___//_/    \\___//____/      /_____/ /_____/\\____/ \\____/    \A \A";
+                                                                      
+}
+
+body > h2 + b {
+  background-color: #008;
+  background-image: url(scanlines.png);
+  color: #0ff;
+  display:block;
+  text-align: center;
+}
+
+body > h2 > a {
+  display: block;
+  color: #000;
+}
+
+a {
+  color: #ff8800;
+}
+
+a:hover {
+  background-color: #f80;
+  background-image: url(scanlines.png);
+  color: #fff;
+}
+
+h3 {
+  margin-top: 16px;
+  background-color: #808;
+  background-image: url(scanlines.png);
+  counter-increment: day;
+  counter-reset: bulletin;
+}
+
+ol,ul {
+  padding-left: 24px;
+}
+
+body > ul {
+  margin-top: 0px;
+  padding-left: 0px;
+  list-style-type: none;
+}
+
+body > ul > li:before {
+  display: block;
+  margin-top: 16px;
+  color: #ff0;
+  background-color: #088;
+  background-image: url(scanlines.png);
+  text-align: justify;
+  overflow: hidden;
+  white-space: nowrap;
+  content: "fefe" counter(day) "-" counter(bulletin) ".txt: ----------------------------------------------------------------------------------------------------------------------------------------------------------------";
+  counter-increment: bulletin;
+}
+
+body > ul > li:after {
+  color: #088;
+  content: "(o)";
+  text-decoration: blink;
+}
+
+body > ul + p:before {
+  display: block;
+  color: #08f;
+  white-space: pre;
+  overflow: hidden;
+  content: "\A\A         \\|||/\A         (o o)\A ----ooO--(_)--Ooo------------------------------------------------------------------------------------------------------------------------------------";
+
+}
+
+blockquote {
+  margin-left: 32px;
+  margin-right: 32px;
+  background-color: #008;
+  background-image: url(scanlines.png);
+}
+
+blockquote:before {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  color: #ff0;
+  background-color: #00f;
+  background-image: url(scanlines.png);
+  content: "__.oOo._____.oOo._____.oOo._____.oOo._____.oOo._____.oOo._____.oOo._____.oOo._____.oOo._____.oOo._____.oOo._____.oOo._____.oOo._____.oOo._____.oOo._____.oOo._____.oOo._____.oOo._____.oOo._____.oOo._____";
+}
+
+blockquote:after {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  color: #ff0;
+  background-color: #00f;
+  background-image: url(scanlines.png);
+  content: "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+}
+
+p {
+  text-indent: 16px;
+}
+

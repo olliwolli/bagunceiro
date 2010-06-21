@@ -1,5 +1,20 @@
-s/MAX_KEY_LENGTH_STR/FMT_TAIA_STR
-
-indent breaks formatting arguments of print functions;
+* indent breaks formatting arguments of print functions;
 makes it kinda hard to read after writing
 
+* the current implementation makes assumptions on the order of the keys in the
+  database. It works for now.
+
+* Implement index function that maps day->keys. So we can use only one file
+  for the whole blog. For now we have the naive implementation where one file
+  represents one day. The order of data in the day-database is the chronological
+  order. So we can easily support following types of queries:
+	- show me the last 7 days in chronological order
+	- show me a range of days in chronological order
+	- show me a certain day/month/year
+	- show me a certain entry
+  Note that this implementation needs to open a file for each day selected
+  by the query.
+
+  Following types of queries are not supported:
+	- search the blog for a certain string
+	- arbitrary sql like queries

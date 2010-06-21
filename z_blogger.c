@@ -2,7 +2,6 @@
 
 #include <array.h>
 #include <str.h>
-#include <byte.h>
 #include <taia.h>
 
 #include "z_features.h"
@@ -30,7 +29,23 @@ void print_help()
 		"  -m key      modify key to value from stdin\n"
 		"  -s key      show entry\n"
 		"  -z file     dump database file\n"
+		"  -p file     read password from stdin\n"
+		"  -f term     find term in db/\n"
 		"  -h          print help\n");
+}
+
+static void auth_init(char *file, char *in, size_t len)
+{
+	unsigned char tbuf[SHA256_DIGEST_LENGTH];
+	array value;
+
+	memset(&value, 0, sizeof(array));
+
+	SHA256((unsigned char *)in, len, tbuf);
+	array_catb(&value, (char *)tbuf, SHA256_DIGEST_LENGTH);
+	cdb_add(file, "input", 5, &value);
+
+	array_reset(&value);
 }
 
 /* options */
@@ -43,8 +58,10 @@ int main(int argc, char **argv)
 	char db[32] = "db/";
 	char pkey[FMT_TAIA_HEX];
 	char fmtkey[FMT_TAIA_HEX];
+	static  array entries;
+	struct eops ops;
 
-	while ((c = getopt(argc, argv, "b:ad:m:n:s:z:?h")) != -1) {
+	while ((c = getopt(argc, argv, "b:ad:m:n:f:s:z:p:?h")) != -1) {
 		switch (c) {
 		case 'b':
 			if (str_len(db) > 31) {
@@ -66,9 +83,7 @@ int main(int argc, char **argv)
 				eprintf("Key must by 32 hex characters wide\n");
 				return 2;
 			}
-			str_copy(pkey, optarg);
-			scan_time_hex(pkey, &key);
-			entry.k = key;
+			scan_time_hex(optarg, &entry.k);
 			read_stdin(&entry.e);
 
 			err = add_entry(db, &entry);
@@ -114,13 +129,27 @@ int main(int argc, char **argv)
 			eprintmf(fmtkey, ":", entry.e.p, "\n");
 			break;
 		case 'z':
+
+			ops.add_key = e_add_key;
+			ops.add_val = e_add_val;
+			ops.add_to_array = e_add_to_array;
+			ops.alloc = e_malloc;
+			cdb_read_all(optarg, &entries, &ops);
+			dump_entries(&entries);
+			break;
+		case 'p':
+			read_stdin(&entry.e);
 			str_copy(db, optarg);
+			auth_init(db, entry.e.p, strlen(entry.e.p));
+			break;
+		case 'f':
+			cdb_search("db/", "on" , &entries);
+			break;
 		default:
 			print_help();
 			break;
 		}
 	}
-
 	return err;
 }
 

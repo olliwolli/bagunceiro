@@ -1,16 +1,20 @@
 .SUFFIXES: .adm.o .o .c
 DIET=/opt/diet
 DIET_INCLUDE=$(DIET)/include
-CC=$(DIET)/bin/diet gcc
+LIB=lib
+DBIN=$(DIET)/bin/diet
+CC=$(DBIN) gcc
 
-CFLAGS=-Wall -I$(DIET_INCLUDE) -g -DNO_ADMIN_MODE
-LDFLAGS=-lowfat -L$(DIET)/lib -static
+#ADD=-lfcgi
 
-#CFLAGS=-Wall -I$(DIET_INCLUDE) -Os -fomit-frame-pointer
-#LDFLAGS=-lowfat -L$(DIET)/lib -static -s 
+#CFLAGS=-Wall -I$(DIET_INCLUDE) -g -DNO_ADMIN_MODE $(ADD)
+#LDFLAGS=-lowfat -L$(DIET)/$(LIB) -static $(ADD)
 
-CFLAGS_ADMIN=-Wall -I$(DIET_INCLUDE) -DADMIN_MODE -DADMIN_MODE_PASS -g
-LDFLAGS_ADMIN=$(LDFLAGS) -lcrypto
+CFLAGS=-Wall -I$(DIET_INCLUDE) -Os -fomit-frame-pointer
+LDFLAGS=-lowfat -L$(DIET)/$(LIB) -static -s 
+
+CFLAGS_ADMIN=-Wall -I$(DIET_INCLUDE) -DADMIN_MODE -DADMIN_MODE_PASS -g $(ADD)
+LDFLAGS_ADMIN=$(LDFLAGS) -lcrypto $(ADD)
 
 TARGETS=blog.cgi blogger blog.cgi.adm blog.cgi.strip
 
@@ -48,7 +52,7 @@ blog.cgi.strip: blog.cgi
 	-strip -R .note -R .comment $@
 
 blogger: $(BLOGGER_O)
-	$(CC) -o $@ $(BLOGGER_O) $(LDFLAGS)
+	$(CC) -o $@ $(BLOGGER_O) $(LDFLAGS) -lcrypto
 
 clean:
-	rm -f $(TARGETS) *~ *.o
+	rm -f $(TARGETS) *~ *.o cscope.out tags

@@ -5,7 +5,6 @@
 #include <str.h>
 #include <taia.h>
 #include <array.h>
-#include <byte.h>
 
 #include "z_cdb.h"
 #include "z_entry.h"
@@ -17,9 +16,8 @@ inline static void choose_file(array * file, const char *dbpath,
 {
 	int len;
 	char buf[FMT_TAIA_STR];
-	byte_zero(&buf, sizeof(buf));
 
-#ifdef USE_COHERENT_TIME
+#ifdef WANT_COHERENT_TIME
 #include <caltime.h>
 	char dfmt[20];
 	struct caltime cd;
@@ -37,7 +35,7 @@ inline static void choose_file(array * file, const char *dbpath,
 // if not exists ..
 #define CHOOSE_DB_FILE(f,a,e) \
 	array (f); \
-	byte_zero(&(f), sizeof((f))); \
+	memset(&(f), 0, sizeof((f))); \
 	choose_file(&(f), (a), (&e->k)); 
 
 #ifdef ADMIN_MODE
@@ -90,17 +88,14 @@ int delete_entry(const char *dbpath, struct nentry *entry)
 	return err;
 }
 #endif
-#ifdef DEBUG_ENTRY
-
+#ifdef ADMIN_MODE
 void entry_dump(const struct nentry *e)
 {
-	static array b;
 
-	fmt_time_hex(&b, &e->k);
-	array_cat0(&b);
-	sprintm("Dump: ", b.p, "->", e->e.p, "\n");
-	print_time(&e->k);
-	array_reset(&b);
+	char b[FMT_TAIA_HEX];
+	fmt_time_hex(b, &e->k);
+	sprintmf("Dump: ", b, "->", e->e.p, "\n");
+
 }
 
 void dump_entries(array * entries)
@@ -168,7 +163,7 @@ void *e_malloc()
 	struct nentry *tmp;
 
 	tmp = malloc(sizeof(struct nentry));
-	byte_zero(&tmp->e, sizeof(array));
+	memset(&tmp->e, 0, sizeof(array));
 
 	return tmp;
 }
@@ -185,8 +180,8 @@ int show_day(const char *dbpath, array * entries, const struct taia *day)
 	ops.add_to_array = e_add_to_array;
 	ops.alloc = e_malloc;
 
-	byte_zero(&dbfile, sizeof(dbfile));
-	byte_zero(&key, sizeof(key));
+	memset(&dbfile, 0, sizeof(dbfile));
+	memset(&key, 0, sizeof(key));
 	choose_file(&dbfile, dbpath, day);
 	err = cdb_read_all(dbfile.p, entries, &ops);
 	if (err == -2) {
@@ -211,4 +206,47 @@ int show_file(array * entries, const char *file)
 	err = cdb_read_all(file, entries, &ops);
 
 	return err;
+
 }
+
+int do_day_index(array * fmt, unsigned char * key, size_t ks)
+{
+	char buf[FMT_TAIA_STR];
+	struct taia l;
+	int len;
+
+	taia_unpack( (char *)key, &l);
+
+	len = fmt_time_str(buf, &l);
+
+	array_catb(fmt,buf, len);
+	array_cats(fmt, "@");
+
+	return 0;
+}
+
+//#include <stdlib.h>
+//int _show_day(struct cdb * result, array * entries, const struct taia * day)
+//{
+//	array * key;
+//	int err,len,i;
+//	char buf[FMT_TAIA_STR+1] = "";
+//
+//	len= fmt_time_str(buf, day);
+//	strcat(buf, "@");
+//
+//	array hashes;
+//	memset(&hashes, 0, sizeof(array));
+//
+//	/* lookup all entries for that day */
+//	err = _cdb_get(result,buf,len,&hashes);
+//
+//	/*  iterate of hashes */
+//	for(i = 0; i < array_length(&hashes, sizeof(array)); i++){
+//		key = array_get(&hashes, sizeof(array), i);
+//		_cdb_get(result, key->p, array_bytes(key), entries);
+//	}
+//
+//	return err;
+//
+//}

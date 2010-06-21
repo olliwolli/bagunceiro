@@ -11,6 +11,9 @@
 #include <stdlib.h>
 #endif
 
+#define CONTENT_TYPE_HTML "Content-type: text/html; charset=UTF-8\r\n\r\n"
+#define DOCTYPE "<!doctype html>\n"
+
 /* Formatting of the output */
 
 /* GENERAL */
@@ -47,6 +50,39 @@ static void print_key_html(struct nentry *e)
 #endif
 }
 
+#if defined(ADMIN_MODE) && defined(WANT_TINY_HTML_EDITOR)
+void print_tiny_html_editor()
+{
+	sprintm(
+	"<script type=\"text/javascript\">"
+	"new TINY.editor.edit('editor',{"
+	"	id:'input',"
+	"	width:800,"
+	"	height:175,"
+	"	cssclass:'te',"
+	"	controlclass:'tecontrol',"
+	"	rowclass:'teheader',"
+	"	dividerclass:'tedivider',"
+	"	controls:['bold','italic','underline','strikethrough','|','subscript','superscript','|',"
+	"			  'orderedlist','unorderedlist','|','outdent','indent','|','leftalign',"
+	"			  'centeralign','rightalign','blockjustify','|','unformat','|','undo','redo','n',"
+	"			  'font','size','style','|','image','hr','link','unlink','|','cut','copy','paste','print'],"
+	"	footer:true,"
+	"	fonts:['Verdana','Arial','Georgia','Trebuchet MS'],"
+	"	xhtml:true,"
+	"	cssfile:'style.css',"
+	"	bodyid:'editor',"
+	"	footerclass:'tefooter',"
+	"	toggle:{text:'source',activetext:'wysiwyg',cssclass:'toggle'},"
+	"	resize:{cssclass:'resize'}"
+	"});"
+	"</script>"
+	);
+}
+#else
+void print_tiny_html_editor(){}
+#endif
+
 static void print_date_html(struct day_entry *e)
 {
 	char dfmt[20];
@@ -54,7 +90,7 @@ static void print_date_html(struct day_entry *e)
 	// TODO temporary here
 	dlen = caldate_fmtn(dfmt, e->date);
 	dfmt[dlen] = '\0';
-	sprintm("<h3>", dfmt, "</h3>\n" " <ul>\n");
+	sprintm("<h3>", dfmt, "</h3>\n\n");
 }
 
 #ifdef WANT_ERROR_PRINT
@@ -86,24 +122,20 @@ static void print_notice_html(const blog_t * conf)
 }
 #endif
 
-#define CONTENT_TYPE_HTML "Content-type: text/html; charset=UTF-8\r\n\r\n"
-#define DOCTYPE "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n"
-
-void print_header_html(const blog_t * conf)
+static void print_header_html(const blog_t * conf)
 {
-	if (conf->csstype == CSS_SELECT) {
-		/* set a cookie */
-		switch (conf->csstype) {
-		case CSS_SELECT:
-			sprintm("Set-Cookie: css=", conf->css, "\n");
-			break;
-		case CSS_RESET:
-			sprintm("Set-Cookie: css=\n");
-			break;
-		default:
-			break;
-		}
+	/* set a cookie */
+	switch (conf->csstype) {
+	case CSS_SELECT:
+		sprintm("Set-Cookie: css=", conf->css, "\n");
+		break;
+	case CSS_RESET:
+		sprintm("Set-Cookie: css=\n");
+		break;
+	default:
+		break;
 	}
+
 #ifdef ADMIN_MODE_PASS
 	if (conf->qry.action == QA_LOGOUT) {
 		sprint("Set-Cookie: token=\n");
@@ -138,20 +170,21 @@ void print_header_html(const blog_t * conf)
 	sprintm("<link rel=\"alternate\" type=\"application/rss+xml\" title=\"",
 		conf->title, " in rss\" href=\"", conf->host, "/rss.xml\">\n");
 
-#ifdef ADMIN_MODE
+#if defined(ADMIN_MODE) && defined(WANT_TINY_HTML_EDITOR)
 	if (conf->qry.action == QA_ADD || conf->qry.action == QA_MODIFY) {
-		// TODO !!11
-		sprintm("<script type=\"text/javascript\""
-			"src=\"/wysiwyg/wysiwyg.js\"></script>"
-			"<link rel=\"stylesheet\" type=\"text/css\""
-			"href=\"/wysiwyg/wysiwyg.css\" />");
+		sprintm("<link rel=\"stylesheet\" href=\""
+			TINY_HTML_PATH
+			"style.css\" />\n"
+			"<script type=\"text/javascript\" src=\""
+			TINY_HTML_PATH
+			"packed.js\"></script>\n\n"
+		);
 	}
 #endif
 
-	sprintm("<title>", conf->title, "</title>"
-		"<div id=\"wrapper\"><div id=\"wrapper2\">"
-		"<h1>",
-		"<a href=\"", conf->script, "\">", conf->title, "</a></h1>\n");
+	sprintm("<title>", conf->title, "</title>\n"
+		"<div id=\"wrapper\"><div id=\"wrapper2\">\n"
+		"<h1><a href=\"", conf->script, "\">", conf->title, "</a></h1>\n\n");
 
 #ifdef ADMIN_MODE_PASS
 	if (!conf->ssl) {
@@ -163,25 +196,26 @@ void print_header_html(const blog_t * conf)
 	print_notice_html(conf);
 }
 
-void day_entries_html(const blog_t * conf, struct day_entry *de, size_t elen)
+static void day_entries_html(const blog_t * conf, struct day_entry *de, size_t elen)
 {
 	int i;
 	struct nentry *e;
 
 	print_date_html(de);
+	sprint("<ul>\n");
 	for (i = 0; i < elen; i++) {
 		e = array_get(de->es, sizeof(struct nentry), i);
-		sprint("<li>");
+		sprint(" <li>");
 
 		sprintm("<span class=\"c\">", e->e.p, "</span>");
 
 		print_key_html(e);
 		sprint("</li>\n");
 	}
-	sprint(" </ul>\n");
+	sprint("</ul>\n");
 }
 
-void print_footer_html(const blog_t * conf)
+static void print_footer_html(const blog_t * conf)
 {
 
 #ifdef ADMIN_MODE
@@ -198,10 +232,39 @@ void print_footer_html(const blog_t * conf)
 	sprint("</a></h4>\n");
 
 #endif
+#ifdef WANT_MONTH_BROWSING
+	/* TODO optimize */
+	/* print month selection */
+	char older[FMT_CALDATE];
+	char newer[FMT_CALDATE];
+	struct taia now;
+	struct caltime ct;
+
+	if(str_equal(conf->qry.mon, "")){
+		taia_now(&now);
+		caltime_utc(&ct, &now.sec, (int *)0, (int *)0);
+	}else{
+		caldate_scan(conf->qry.mon , &ct.date);
+	}
+
+	ct.date.month--;
+	caldate_normalize(&ct.date);
+	older[caldate_fmt(older, &ct.date)] = 0;
+	older[str_rchr(older, '-')] = 0;
+
+	ct.date.month+= 2;
+	caldate_normalize(&ct.date);
+	newer[caldate_fmt(newer, &ct.date)] = 0;
+	newer[str_rchr(newer, '-')] = 0;
+
+	sprintm("\n\n<a href=\"?mn=", older, "\">older</a> -");
+	if(conf->script)
+		sprintm("<a href=\"", conf->script, "\">now</a>");
+
+	sprintm("- <a href=\"?mn=", newer, "\">later</a>\n");
 	sprintmf("<h4>Please Note: ...  </span></h4>" "</body></html>\n");
-
+#endif
 }
-
 #ifdef ADMIN_MODE
 /*  HTML MODE ONLY */
 int print_add_entry(const blog_t * conf)
@@ -213,12 +276,13 @@ int print_add_entry(const blog_t * conf)
 	print_notice_html(conf);
 
 	sprintm("<ul>\n"
-		"<form  method=\"post\" action=\"", conf->script, "\">"
-		"<input type=\"hidden\" name=\"action\" value=\"add\">,"
-		"<textarea class=\"wysiwyg\" name=\"input\" cols=\"100\" rows=\"30\">",
-		"",
-		"</textarea>" "<p><input type=\"submit\" value=\"Add\"></p>"
-		"</form>" " </ul>\n");
+		"<form  onsubmit='editor.post();' method=\"post\" action=\"", conf->script, "\">\n"
+		"<input type=\"hidden\" name=\"action\" value=\"add\">\n"
+		"<textarea name=\"input\" id=\"input\" style=\"width:400px; height:200px\"></textarea>\n"
+		"<p><input type=\"submit\" value=\"Add\"></p> \n"
+		"</form>" "</ul>\n"
+		);
+	print_tiny_html_editor();
 
 	print_footer_html(conf);
 	return 0;
@@ -242,15 +306,17 @@ int print_mod_entry(const blog_t * conf, struct nentry *n)
 	print_key_plain(n);
 	sprint("\">\n");
 
-	sprint("<textarea class=\"wysiwyg\" name=\"input\" cols=\"80\" rows=\"10\">");
+	sprint("<textarea name=\"input\" id=\"input\" style=\"width:400px; height:200px\">");
 	if (n->e.p)
 		sprint(n->e.p);
 	else
 		sprint("Entry not found");
-	sprint("</textarea>");
+	sprint("</textarea>\n");
+
+	print_tiny_html_editor();
 
 	sprintm("<p><input type=\"submit\" value=\"Modify\"></p>"
-		"</form>" " </ul>\n");
+		"</form>" "</ul>\n");
 
 	print_footer_html(conf);
 	return 0;
@@ -269,7 +335,7 @@ void print_login(const blog_t * conf)
 		"<input name=\"login\" type=\"password\" size=\"12\" maxlength=\"12\">\n");
 
 	sprintm("<p><input type=\"submit\" value=\"Login\"></p>"
-		"</form>" " </ul>\n");
+		"</form>" "</ul>\n");
 
 	print_footer_html(conf);
 }
@@ -282,7 +348,7 @@ static void print_date_rss(struct day_entry *de)
 }
 
 #define CONTENT_TYPE_RSS "Content-type: application/rss+xml; charset=UTF-8\r\n" "\r\n"
-void print_header_rss(const blog_t * conf)
+static void print_header_rss(const blog_t * conf)
 {
 	sprintm(CONTENT_TYPE_RSS
 		"<?xml version=\"1.0\"?>\n"
@@ -302,7 +368,7 @@ void print_header_rss(const blog_t * conf)
 
 }
 
-void day_entries_rss(const blog_t * conf, struct day_entry *de, size_t elen)
+static void day_entries_rss(const blog_t * conf, struct day_entry *de, size_t elen)
 {
 	int i;
 	struct nentry *e;
@@ -320,7 +386,7 @@ void day_entries_rss(const blog_t * conf, struct day_entry *de, size_t elen)
 	}
 }
 
-void print_footer_rss(const blog_t * conf)
+static void print_footer_rss(const blog_t * conf)
 {
 	sprint("\n</channel></rss>");
 }
@@ -367,6 +433,9 @@ void print_show(array * blog, blog_t * conf)
 		de = array_get(blog, sizeof(struct day_entry), i);
 		elen = array_length(de->es, sizeof(struct nentry));
 		conf->fmt->day_entries(conf, de, elen);
+	}
+	if( i == 0){
+		sprint("No entries found");
 	}
 
 	if (conf->fmt->footer)

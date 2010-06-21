@@ -5,11 +5,20 @@
 #include <taia.h>
 #include <array.h>
 #include <caldate.h>
-
+#include <caltime.h>
 #include "z_features.h"
 
-#define REDUCE_OFFSET 8
+/* these functions reduce the time stamp for presentation purposes
+ * they will break on 2106-02-07 by overflowing after this reduction:
+ * 40000000ffffffffffffffff00000000 -> ffffffffffffffff
+ * If you want to be safe for the future, increase REDUCE_SIZE
+ */
+
+/* MAX is 24 */
 #define REDUCE_SIZE 16
+#define REDUCE_OFFSET (24 - REDUCE_SIZE)
+void reduce_ts(char * src);
+void inflate_ts(char * src);
 
 #define FMT_TAIA_HEX TAIA_PACK * 2
 size_t fmt_time_hex(char * s, const struct taia *time);
@@ -27,9 +36,4 @@ unsigned int caldate_fmtn(char *s, const struct caldate *cd);
 
 /* for benchmarking */
 void time_stop_print(struct timeval *time);
-
-
-void reduce_ts(char * src);
-void inflate_ts(char * src);
-
 #endif

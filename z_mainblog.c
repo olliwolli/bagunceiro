@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <unistd.h>
-#include <byte.h>
 #include <str.h>
 #include <textcode.h>
 
@@ -69,16 +68,23 @@ static void debug_print(const blog_t * conf, array * ps, array * qs)
 #ifdef DEBUG_PARSE_POST
 static void get_post_string(array * ps)
 {
-	byte_zero(ps, sizeof(array));
-	array_cats0(ps, "log=sdfds");
+	memset(ps, 0, sizeof(array));
+	array_cats0(ps, DEBUG_PARSE_POST);
 }
 #endif
 
 #ifdef DEBUG_PARSE_QUERY
 static void get_query_string(array * qs)
 {
-	byte_zero(qs, sizeof(array));
-	array_cats0(qs, "css=style.css");
+	memset(qs, 0, sizeof(array));
+	array_cats0(qs, DEBUG_PARSE_QUERY);
+}
+#endif
+#ifdef DEBUG_PARSE_COOKIE
+static void get_cookie_string(array * co)
+{
+	memset(co, 0, sizeof(array));
+	array_cats0(co, DEBUG_PARSE_COOKIE);
 }
 #endif
 
@@ -104,7 +110,7 @@ static int get_param_char(array * q_str, size_t qmax, char *search, char *ret,
 		return -1;
 	}
 
-	byte_copy(buf, qlen, q_str->p);
+	memcpy(buf, q_str->p, qlen);
 	buf[qlen] = 0;
 
 	for (query = strtok_r(buf, sep, &tokptr);
@@ -121,6 +127,7 @@ static int get_param_char(array * q_str, size_t qmax, char *search, char *ret,
 			/* not complying to length rules */
 			if (str_len(val) >= n && n != -1) {
 				str_copy(ret, "bad");
+				set_err("Invalid input", 0, N_ERROR);
 				return -3;
 			}
 			qlen = scan_urlencoded(val, ret, &destlen);
@@ -147,6 +154,7 @@ static void parse_query(blog_t * conf, array * qs)
 	char tmpcss[MAX_CSS_ARG];
 	char type[MAX_FMT_LENGTH];
 
+	/* TIMESTAMP */
 	err = get_param_char(qs, QUERY_MAX, "ts", conf->qry.ts,
 		MAX_KEY_LENGTH_STR, "&");
 	if (!err) {
@@ -154,6 +162,7 @@ static void parse_query(blog_t * conf, array * qs)
 		conf->qry.action = QA_SHOW;
 	}
 
+	/* CSS STYLESHEET */
 	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "css", tmpcss,
 		MAX_KEY_LENGTH_STR, "&");
 
@@ -171,16 +180,29 @@ static void parse_query(blog_t * conf, array * qs)
 		break;
 	}
 
+	/* FORMAT (HTML/RSS) */
 	err = get_param_char(qs, MAX_FMT_LENGTH + 4, "fmt", type,
 		MAX_FMT_LENGTH, "&");
 	if (err == 0 && str_equal(type, "rss")) {
 		conf->stype = S_RSS;
 	}
+
+	/* MONTH SELECTION */
+	err = get_param_char(qs, QUERY_MAX, "mn", conf->qry.mon, FMT_CALDATE,
+		"&");
+	if (!err) {
+		conf->qry.type = QRY_MONTH;
+		conf->qry.action = QA_SHOW;
+		/* append -01 (day), to make it compatible with conversion functions */
+		strcat(conf->qry.mon, "-01");
+	}
+
 }
 
 /* keep that stuff in one function to not have ifdefs all around */
 #ifdef ADMIN_MODE_PASS
-static void do_admin_pass_mode(blog_t * conf, array * co, array * pd, array * qs)
+static void do_admin_pass_mode(blog_t * conf, array * co, array * pd,
+	array * qs)
 {
 	int err;
 
@@ -205,7 +227,7 @@ static void do_admin_pass_mode(blog_t * conf, array * co, array * pd, array * qs
 		conf->authpost = 1;
 		SHA256((unsigned char *)tmptoken, strlen(tmptoken),
 			conf->token);
-		byte_zero(tmptoken, SHA256_DIGEST_LENGTH * 2);
+		memset(tmptoken, 0, SHA256_DIGEST_LENGTH * 2);
 	}
 
 	/* parse query string */
@@ -232,7 +254,7 @@ static void do_admin_pass_mode(blog_t * conf, array * co, array * pd, array * qs
 #endif
 
 #ifdef ADMIN_MODE
-static void do_admin_mode(blog_t *conf, array * co, array * pd,  array * qs)
+static void do_admin_mode(blog_t * conf, array * co, array * pd, array * qs)
 {
 	/*  query */
 	int err;
@@ -281,7 +303,7 @@ static void do_admin_mode(blog_t *conf, array * co, array * pd,  array * qs)
 #ifndef DEBUG_PARSE_QUERY
 static void get_query_string(array * qs)
 {
-	byte_zero(qs, sizeof(array));
+	memset(qs, 0, sizeof(array));
 	if (getenv("QUERY_STRING") != NULL)
 		array_cats0(qs, getenv("QUERY_STRING"));
 
@@ -291,7 +313,7 @@ static void get_query_string(array * qs)
 static void get_post_string(array * ps)
 {
 	char *len;
-	byte_zero(ps, sizeof(array));
+	memset(ps, 0, sizeof(array));
 
 	len = getenv("CONTENT_LENGTH");
 	if (len != 0) {
@@ -302,20 +324,25 @@ static void get_post_string(array * ps)
 	}
 }
 #endif
-
+#ifndef DEBUG_PARSE_COOKIE
 static void get_cookie_string(array * co)
 {
-	byte_zero(co, sizeof(array));
+	memset(co, 0, sizeof(array));
 	if (getenv("HTTP_COOKIE") != NULL) {
 		array_cats0(co, getenv("HTTP_COOKIE"));
 	}
 }
+#endif
 
-static int verify_ts(char * ts)
+static int verify_ts(char *ts)
 {
 	int i;
-	for(i = 0; i < FMT_TAIA_HEX; i++){
-		if( ts[i] < '0' || (ts[i] > '9' && ts[i] < 'a') || ts[i] > 'f')
+#ifdef WANT_REDUCE_TS
+	for (i = 0; i < REDUCE_SIZE; i++) {
+#else
+	for (i = 0; i < FMT_TAIA_HEX; i++) {
+#endif
+		if (ts[i] < '0' || (ts[i] > '9' && ts[i] < 'a') || ts[i] > 'f')
 			return 0;
 	}
 	return 1;
@@ -329,18 +356,23 @@ int main()
 
 	/* default configuration and parameters */
 	static blog_t conf = {
-		.title = "Blog",
+		.title = "...",
 		.db = "db/",
 		.qry = {
 				.ts = "",
 				.type = QRY_WEEK,
 				.start = 0,
-			.end = 8},
+				.doff = 8,
+			.mon = ""},
 		.stype = S_HTML,
-		.cookie = NULL,
+		//.cookie = NULL, TODO: check for null in code
 		.csstype = CSS_DEFAULT,
 	};
-	byte_zero(&conf.input, sizeof(array));
+
+#ifdef WANT_FAST_CGI
+	while(FCGI_Accept() >= 0){
+#endif
+	memset(&conf.input, 0, sizeof(array));
 
 	gettimeofday(&conf.ptime, NULL);
 
@@ -366,7 +398,7 @@ int main()
 	do_admin_pass_mode(&conf, &co, &ps, &qs);
 #endif
 
-	if(conf.qry.type == QRY_TS && !verify_ts(conf.qry.ts) ){
+	if (conf.qry.type == QRY_TS && !verify_ts(conf.qry.ts)) {
 		conf.qry.action = QA_SHOW;
 		conf.qry.type = QRY_WEEK;
 #ifdef WANT_ERROR_PRINT
@@ -393,8 +425,11 @@ int main()
 
 	time_stop_print(&conf.ptime);
 
+#ifdef WANT_FAST_CGI
 	array_reset(&qs);
 	array_reset(&ps);
 	array_reset(&co);
+	}
+#endif
 	return 0;
 }
