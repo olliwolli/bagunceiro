@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <dirent.h>
 
@@ -10,22 +11,77 @@
 #include <array.h>
 #include <errno.h>
 
+#include "z_time.h"
 #include "z_cdb.h"
 #include "z_entry.h"
 #include "z_features.h"
+
+inline struct cdb * cdb_open_read(const char * file)
+{
+	struct cdb * result;
+	result = malloc(sizeof(struct cdb));
+
+	int fd = open_read(file);
+	if (fd <= 0) {
+		return NULL;
+	}
+
+	cdb_init(result, fd);
+	return result;
+}
+
+inline void cdb_close(struct cdb * result)
+{
+	close(result->fd);
+	cdb_free(result);
+	free(result);
+}
+
+int do_day_index(array * fmt, const unsigned char * key, const size_t ks)
+{
+	char buf[FMT_TAIA_STR];
+	struct taia l;
+	int len;
+
+	taia_unpack( (char *)key, &l);
+
+	len = fmt_time_str(buf, &l);
+
+	array_catb(fmt,buf, len);
+	array_cats(fmt, "@");
+
+	return 0;
+}
 
 #ifdef ADMIN_MODE
 typedef enum cop {
 	OP_CPY, OP_MOD, OP_DEL, OP_ADD
 } cop_t;
 
-#define OP_CPY 0x00
-#define OP_MOD 0x01
-#define OP_DEL 0x02
-#define OP_ADD 0x03
-#define CP_NOP 0x00
-#define CP_PAR 0x01
-#define CP_SRC 0x02
+typedef enum mop {
+	CP_NOP, CP_PAR, CP_SRC, CP_IDX
+} mop_t;
+
+
+
+inline struct cdb_make * cdb_open_write(const char * file)
+{
+	int fp;
+	struct cdb_make * cdbm;
+	cdbm = malloc(sizeof(struct cdb_make));
+	fp = open_write(file);
+
+	if (fp <= 0) {
+		return NULL;
+	}
+	cdb_make_start(cdbm, fp);
+	return cdbm;
+}
+
+inline void cdbm_make_close(struct cdb_make * cdbm){
+	cdb_make_finish(cdbm);
+	free(cdbm);
+}
 
 inline static int exists(const char *file)
 {
@@ -35,78 +91,54 @@ inline static int exists(const char *file)
 	return 0;
 }
 
-inline static size_t __make_tmp_name(char *tmpname, const char *file)
-{
-	str_copy(tmpname, file);
-	strcat(tmpname, ".tmp");
-
-	return 0;
-}
-
-int cdb_init_file(const char *file)
-{
-	int fp;
-	struct cdb_make cdbm;
-
-	if (exists(file)) {
-		return 0;
-	} else {
-		fp = open_write(file);
-		cdb_make_start(&cdbm, fp);
-		cdb_make_finish(&cdbm);
-		close(fp);
-		return 1;
-	}
-}
-
 /* dirty */
 static int __cdb_remake_real(const char *name, const char *newname,
 	const unsigned char *skey, const
 	size_t slen, unsigned char *value, size_t vlen, enum cop op)
 {
-	struct cdb_make cdbm;
+	struct cdb_make * cdbm;
+	struct cdb * c;
 	int numrec = 0;
-	int first, loop_copy_src, new, old;
-	struct cdb c;
-	uint32 kpos;
-	uint32 kp, klen, dp, dlen;
-	unsigned char *key, *data;
 	int found = 0;
+	int first;
+	uint32 kpos, kp, klen, dp, dlen;
+	enum mop loop_copy_src;
 
-	new = open_write(newname);
-	if (new == -1) {
-		exists(newname);
-	}
-	old = open_read(name);
-	if (old == -1) {
-		exists(name);
+	unsigned char *key, *data;
+	static array fmt;
+
+	do_day_index(&fmt, skey, TAIA_PACK);
+
+	cdbm = cdb_open_write(newname);
+	c = cdb_open_read(name);
+
+	if (c == NULL)
 		return -1;
-	}
 
-	cdb_init(&c, old);
-	first = cdb_firstkey(&c, &kpos);
-	cdb_make_start(&cdbm, new);
+	first = cdb_firstkey(c, &kpos);
 
 	if (OP_ADD == op) {
-		cdb_make_add(&cdbm, skey, slen, value, vlen);
+		cdb_make_add(cdbm, skey, slen, value, vlen);
+		/* add an index */
+		cdb_make_add(cdbm, (unsigned char * )fmt.p,
+				array_bytes(&fmt), skey, TAIA_PACK);
+
 		++numrec;
 
 		if (first == -1 || first == 0)
 			goto finish;
-
 	}
 
 	if (!first)
-		return 0;
+		goto finish;
+
 	do {
 		loop_copy_src = CP_SRC;
 
-		kp = cdb_keypos(&c);
-		klen = cdb_keylen(&c);
-
+		kp = cdb_keypos(c);
+		klen = cdb_keylen(c);
 		key = alloca(klen);
-
-		cdb_read(&c, key, klen, kp);
+		cdb_read(c, key, klen, kp);
 
 		/* if the key is the same modifiy the entry */
 		switch (op) {
@@ -116,7 +148,6 @@ static int __cdb_remake_real(const char *name, const char *newname,
 				found = 1;
 				loop_copy_src = CP_PAR;
 			}
-
 			break;
 		case OP_DEL:
 			if (!memcmp
@@ -124,6 +155,12 @@ static int __cdb_remake_real(const char *name, const char *newname,
 				loop_copy_src = CP_NOP;
 				found = 1;
 			}
+
+			/* remove index entry */
+			if(!memcmp(fmt.p, key, klen)){
+				loop_copy_src = CP_IDX;
+			}
+
 			break;
 		case OP_CPY:
 			/* fall-through */
@@ -135,7 +172,7 @@ static int __cdb_remake_real(const char *name, const char *newname,
 		case CP_PAR:
 			data = value;
 			dlen = str_len((const char *)value);
-			cdb_make_add(&cdbm, key, klen, data, dlen);
+			cdb_make_add(cdbm, key, klen, data, dlen);
 			++numrec;
 			break;
 		case CP_NOP:
@@ -145,18 +182,23 @@ static int __cdb_remake_real(const char *name, const char *newname,
 		default:
 			++numrec;
 			/* by default copy from src */
-			dp = cdb_datapos(&c);
-			dlen = cdb_datalen(&c);
+			dp = cdb_datapos(c);
+			dlen = cdb_datalen(c);
 			data = alloca(dlen);
-			cdb_read(&c, data, dlen, dp);
-			cdb_make_add(&cdbm, key, klen, data, dlen);
+			cdb_read(c, data, dlen, dp);
+
+			if(CP_IDX == loop_copy_src){
+				if(!memcmp(data, skey, slen)) /* if the key is the value ?!?1*/
+					continue;
+			}
+
+			cdb_make_add(cdbm, key, klen, data, dlen);
 		}
-	} while (cdb_nextkey(&c, &kpos) == 1);
+	} while (cdb_nextkey(c, &kpos) == 1);
 
 finish:
-	cdb_make_finish(&cdbm);
-	close(c.fd);
-	close(cdbm.fd);
+	cdb_close(c);
+	cdbm_make_close(cdbm);
 
 	if (op == OP_DEL || op == OP_MOD)
 		if (!found) {
@@ -164,232 +206,91 @@ finish:
 			return -2;
 		}
 
+	array_reset(&fmt);
+
 	return numrec;
 }
 
 static int __cdb_remake(const char *file, const char *k, const size_t ks,
-	const array * v, enum cop op)
+	const char * v, const size_t vs, enum cop op)
 {
-	//static array tmpfile;
-	char tmpfile[str_len(file) + 1];
 	int err;
+	char tmpfile[str_len(file) + 5];
 
-	cdb_init_file(file);
-	__make_tmp_name(tmpfile, file);
+	str_copy(tmpfile, file);
+	strcat(tmpfile, ".tmp");
 
 	if (v != NULL) {
 		err = __cdb_remake_real(file, tmpfile,
 			(unsigned char *)k, ks,
-			(unsigned char *)v->p, array_bytes(v), op);
+			(unsigned char *)v, vs, op);
 	} else {
 		err = __cdb_remake_real(file, tmpfile,
 			(unsigned char *)k, ks, NULL, 0, op);
 	}
 
-/*
- *	FIXME:
- * 	For reliability, dbmake first constructs the cdb database in a temporary
- * 	file.Then, after the temporary file is successfully written to disk,
- * 	it is "atomically" moved into the target output file location.
- *
- * 	So no temporary file on our part needed!
- */
-
 	rename(tmpfile, file);
 
-	if (err == 0) {
+	if (err == 0)
 		unlink(file);
-	}
+
 	return err;
 }
 
-int cdb_mod(const char *file, const char *k, const size_t ks, const array * v)
+/*  other */
+
+int cdb_mod(const char *file, const char *k, const size_t ks, const char * v,
+		const size_t vs)
 {
-	return __cdb_remake(file, k, ks, v, OP_MOD);
+	return __cdb_remake(file, k, ks, v, vs, OP_MOD);
 }
 
-int cdb_add(const char *file, const char *k, size_t ks, const array * v)
+int cdb_add(const char *file, const char *k, const size_t ks, const char * v,
+		const size_t vs)
 {
-	return __cdb_remake(file, k, ks, v, OP_ADD);
+	return __cdb_remake(file, k, ks, v, vs, OP_ADD);
 }
 
 int cdb_del(const char *file, const char *k, const size_t ks)
 {
-	return __cdb_remake(file, k, ks, NULL, OP_DEL);
+	return __cdb_remake(file, k, ks, NULL, 0,  OP_DEL);
 }
-
 #endif
 
-int cdb_get(const char *file, const char *k, const size_t ks, array * v)
+/* search key in result and write result as array in v
+ * NOTE: this if you have multiple values under the same hash
+ * this functions assumes that these values have a fixed length
+ * known to the caller (the data will be in newv->e)
+ *  */
+int _cdb_get(struct cdb *result, char *key, size_t ks, struct nentry * v)
 {
-	struct cdb result;
-	int err, fd, len;
-	int first;
-	unsigned char buf[MAX_ENTRY_SIZE];
+	int err, dlen;
 
-	first = 1;
-	fd = open_read(file);
-	if (fd <= 0) {
-		return -1;
-	}
+	err = cdb_find(result, (unsigned char *)key, ks);
 
-	cdb_init(&result, fd);
-	err = cdb_find(&result, (unsigned char *)k, ks);
+	if (err <= 0) {
+		return err;
+	}else{
+		/* set key */
+		v->kp = malloc(ks);
+		memcpy(v->kp, key, ks);
+		taia_unpack(key, &v->k);
 
-	if (err == 0) {
-		return 0;
-	} else if (err == -1) {
-		return -1;
-	} else {
+		/* hacky, some tricks to avoid copying */
 		do {
+			dlen = cdb_datalen(result);
+			v->e.p = realloc(v->e.p, v->e.allocated + dlen);
 
-			len = cdb_datalen(&result);
-			err = cdb_read(&result, buf, len, cdb_datapos(&result));
-			if (err < 0) {
+			err = cdb_read(result, (unsigned char *)v->e.p + v->e.initialized, dlen,
+				cdb_datapos(result));
+
+			v->e.initialized += dlen;
+			v->e.allocated += dlen;
+
+			if (err < 0)
 				return -2;
-			}
-			/* seperates records by ":" */
-			if (!first)
-				array_cats(v, ":");
-			array_catb(v, (char *)buf, len);
-			first = 0;
 
-		} while (cdb_findnext(&result, (unsigned char *)k, ks) > 0);
-
-		return 1;
+		} while (cdb_findnext(result, (unsigned char *)key, ks) > 0);
 	}
+	return 1;
 }
-
-int cdb_read_all(const char *name, array * entries, struct eops *ops)
-{
-	int numdump = 0;
-	int first;
-	struct cdb c = { 0 };
-	uint32 kpos;
-	void *tmp;
-
-	uint32 kp, klen, dp, dlen;
-	unsigned char *key, *data;
-
-	int fd = open_read(name);
-	if (fd <= 0) {
-		return -1;
-	}
-	cdb_init(&c, fd);
-	first = cdb_firstkey(&c, &kpos);
-	if (!first)
-		return 0;
-	do {
-		kp = cdb_keypos(&c);
-		klen = cdb_keylen(&c);
-		dp = cdb_datapos(&c);
-		dlen = cdb_datalen(&c);
-
-		key = alloca(klen);
-		data = alloca(dlen + 4);
-		cdb_read(&c, key, klen, kp);
-		cdb_read(&c, data, dlen, dp);
-
-		/* key not found */
-		if (__unlikely(klen == 0)) {
-			return -2;
-		}
-
-		/* generic way */
-		tmp = ops->alloc();
-		ops->add_val(tmp, data, dlen);
-		ops->add_key(tmp, key, klen);
-		ops->add_to_array(tmp, entries);
-		++numdump;
-	} while (cdb_nextkey(&c, &kpos) == 1);
-
-	close(fd);
-	cdb_free(&c);
-
-	return numdump;
-}
-
-int cdb_search(const char *dbpath, const char *needle, array * entries)
-{
-	DIR *d;
-	struct dirent *dir;
-	d = opendir(dbpath);
-	if (d) {
-		while ((dir = readdir(d)) != NULL) {
-			if (dir->d_name[0] == '.'
-				|| !strcmp(dir->d_name, "bconf.db"))
-				continue;
-
-			printf("%s\n", dir->d_name);
-		}
-
-		closedir(d);
-	}
-
-	return 0;
-}
-
-int cdbm_index(struct cdb_make *cdbm, int (*idxfmt) (array * fmt,
-		unsigned char *key, size_t ks), unsigned char *key, size_t ks)
-{
-	static array fmt;
-
-	idxfmt(&fmt, key, ks);
-	cdb_make_add(cdbm, (unsigned char *)fmt.p, array_bytes(&fmt), key, ks);
-	array_reset(&fmt);
-	return 0;
-}
-
-int cdb_idx_find(const char *file, int (*idxfmt) (array * fmt,
-		unsigned char *key, size_t ks), unsigned char *key, size_t ks,
-	array * keys)
-{
-	static array fmt, v;
-	int err;
-
-	idxfmt(&fmt, key, ks);
-	err = cdb_get(file, fmt.p, array_bytes(&fmt), &v);
-	return err;
-}
-/*  use nentry */
-
-//#include <stdlib.h>
-//int _cdb_get(struct cdb *result, char *key, size_t ks, array * v)
-//{
-//	int err, len;
-//	array *newv;
-//
-//	err = cdb_find(result, (unsigned char *)key, ks);
-//
-//	if (err == 0) {
-//		return 0;
-//	} else if (err == -1) {
-//		return -1;
-//	} else {
-//		do {
-//			len = cdb_datalen(result);
-//
-//			newv = malloc(sizeof(array));
-//			memset(newv, 0, sizeof(array));
-//
-//			/* introspection...;-( */
-//			newv->p = malloc(len);
-//			newv->allocated = len;
-//			newv->initialized = len;
-//
-//			ops->add_key(tmp, key, klen);
-//			ops->add_to_array(tmp, entries);
-//
-//			err = cdb_read(result, (unsigned char *)newv->p, len,
-//				cdb_datapos(result));
-//
-//			if (err < 0) {
-//				return -2;
-//			}
-//
-//			array_catb(v, (char *)newv, sizeof(array));
-//		} while (cdb_findnext(result, (unsigned char *)key, ks) > 0);
-//
-//	}
-//	return 1;
-//}

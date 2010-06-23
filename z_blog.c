@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <open.h>
 #include <time.h>
 #include <string.h>
 
@@ -7,6 +8,7 @@
 #include <caltime.h>
 #include <errno.h>
 #include <str.h>
+#include <cdb.h>
 
 #include "z_cdb.h"
 #include "z_entry.h"
@@ -18,64 +20,58 @@
 /* Parses query and fetches data from database */
 static int fetch_entry_ts(const blog_t * conf, array * blog)
 {
-	array *day_items;
-	struct day_entry *day = malloc(sizeof(struct day_entry));
-	struct caltime *day_time = malloc(sizeof(struct caltime));
-	struct nentry e;
+	struct day_entry *day = new_day_entry();
+	struct nentry * e;
+	struct cdb * result;
 
-	memset(&e, 0, sizeof(e));
+	if( (result = cdb_open_read(conf->db)) == NULL)
+		return -1;
 
-	scan_time_hex(conf->qry.ts, &e.k);
-	show_entry(conf->db, &e);
-	caltime_utc(day_time, &e.k.sec, (int *)0, (int *)0);
+	e= new_nentry();
+	scan_time_hex(conf->qry.ts, &e->k);
 
-	day_items = e_malloc();
-	e_add_to_array(&e, day_items);
-	day->es = day_items;
-	day->date = &day_time->date;
+	_show_entry(result, e);
 
+	caltime_utc(&day->time, &e->k.sec, (int *)0, (int *)0);
+
+	array_catb(&day->es, (char *)e, sizeof(struct nentry));
 	array_catb(blog, (char *)day, sizeof(struct day_entry));
+
+	cdb_close(result);
 
 	return 0;
 }
 
+
 static int fetch_entries_days(const blog_t * conf, array * blog)
 {
-	int err, start, offset, i;
+	int err, start;
 	struct day_entry *day;
-	struct caltime *day_time;
 	struct taia tday;
-	array *day_items;
-
-	start = conf->qry.start;
-	offset = conf->qry.doff;
-	taia_now(&tday);
-
-	for(i=0; i< start; i++)
-		ht_sub_days(&tday, 1);
+	struct cdb * result;
 
 	err = 0;
+	if( (result = cdb_open_read(conf->db)) == NULL)
+		return -1;
 
-	for (start = 0; start < offset; start++) {
+	start = conf->qry.start;
+	taia_now(&tday);
+	ht_sub_days(&tday, start);
+
+	for (start = 0; start < conf->qry.doff; start++) {
 		/* allocate memory */
-		day = malloc(sizeof(struct day_entry));
-		day_items = malloc(sizeof(struct nentry));
-		day_time = malloc(sizeof(struct caltime));
-		day_items->allocated = 0;
-		day_items->initialized = 0;
-		memset(day_items, 0, sizeof(struct nentry));
-		//TODO check if file exists in order to avoid mallocs above
+		day = new_day_entry();
+
 		/* get entries for calculated day */
-		err = show_day(conf->db, day_items, &tday);
+		err = _show_day(result, &day->es, &tday);
 
-		if (err <= 0)	/* File not found or 0 entries */
+		if (err <= 0){	/* File not found or 0 entries */
+			free_day_entry(day);
 			goto sub;
+		}
 
-		caltime_utc(day_time, &tday.sec, (int *)0, (int *)0);
+		caltime_utc(&day->time, &tday.sec, (int *)0, (int *)0);
 
-		/* fill in the entries and date */
-		day->es = day_items;
-		day->date = &day_time->date;
 		/* add the day to the blog */
 		array_catb(blog, (char *)day, sizeof(struct day_entry));
 		if (array_failed(blog)) {
@@ -86,6 +82,7 @@ sub:
 		/* calculate day */
 		ht_sub_days(&tday, 1);
 	}
+	cdb_close(result);
 
 	return err;
 }
@@ -123,6 +120,10 @@ static int fetch_entries_month(blog_t *conf, array * blog)
 	ct.date.month--;
 	ct.date.day = 1;
 	offset = (jnow - caldate_mjd(&ct.date)) - start;
+
+	/* too far in future (next month) */
+	if(offset <= 0)
+		offset = -1;
 
 	conf->qry.start = start;
 	conf->qry.doff = offset + 1; /* add one to also get first day of month */
@@ -175,20 +176,30 @@ int handle_query(blog_t * conf)
 			print_show(&blog, conf);
 		}
 		break;
+
 	case QA_DELETE:
 		scan_time_hex(conf->qry.ts, &n.k);
 		err = delete_entry(conf->db, &n);
-		if (err < 0) {
+
+		if (err < 0)
 			set_err(conf->qry.ts, errno, N_ERROR);
-		} else {
+		else
 			set_err("Entry deleted", 0, N_NOTE);
-		}
+
 		fetch_entries_days(conf, &blog);
 		print_show(&blog, conf);
 		break;
+
 	case QA_MODIFY:
 		scan_time_hex(conf->qry.ts, &n.k);
 		if (!array_bytes(&conf->input)) {
+			/* fetch entry from db, one could call fetch_entry_ts */
+			struct cdb * result;
+			if( (result = cdb_open_read(conf->db)) == NULL)
+				return -1;
+			_show_entry(result, &n);
+			cdb_close(result);
+
 			print_mod_entry(conf, &n);
 			/* add a new entry */
 		} else {

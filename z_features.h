@@ -50,11 +50,6 @@
  * */
 //#define ADMIN_MODE_PASS
 
-/* The database files are named using the same Timestamp
- * format as the blog output uses. Not so nice for files, but
- * saves a function */
-//#define WANT_COHERENT_TIME
-
 /* Define this macro if you want to use the tiny html editor;
  * It has to be downloaded seperately from:
  * http://www.leigeber.com/2010/02/javascript-wysiwyg-editor/
@@ -81,7 +76,7 @@
 //#define DEBUG_ENTRY
 
 /* activate and set for input simulation */
-//#define DEBUG_PARSE_QUERY "css="
+//#define DEBUG_PARSE_QUERY "mn=2010-07"
 //#define DEBUG_PARSE_POST "log=sdsf"
 //#define DEBUG_PARSE_COOKIE "css=style.css"
 

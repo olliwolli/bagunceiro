@@ -17,6 +17,7 @@
 /* MAX is 24 */
 #define REDUCE_SIZE 16
 #define REDUCE_OFFSET (24 - REDUCE_SIZE)
+
 void reduce_ts(char * src);
 void inflate_ts(char * src);
 
@@ -28,8 +29,6 @@ size_t fmt_time_hex(char * s, const struct taia *time);
 size_t fmt_time_str(char * s, const struct taia *time);
 
 size_t scan_time_hex(const char * s, struct taia *time);
-
-size_t print_time(const struct taia *time);
 
 size_t ht_sub_days(struct taia *time, const unsigned int days);
 unsigned int caldate_fmtn(char *s, const struct caldate *cd);

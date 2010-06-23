@@ -32,13 +32,8 @@ void inflate_ts(char *src)
 	memcpy(src, tmp, FMT_TAIA_HEX);
 }
 #else
-void reduce_ts(char *src)
-{
-}
-
-void inflate_ts(char *src)
-{
-}
+void reduce_ts(char *src){}
+void inflate_ts(char *src){}
 #endif
 
 /* the following format functions null-terminate the resulting strings */
@@ -216,7 +211,6 @@ void time_stop_print(struct timeval *time)
 	sprintmf(fmtnsec, "s --/>");
 }
 
-#ifndef WANT_COHERENT_TIME
 size_t fmt_time_str(char *s, const struct taia *time)
 {
 	struct caltime ct;
@@ -228,4 +222,3 @@ size_t fmt_time_str(char *s, const struct taia *time)
 
 	return len;
 }
-#endif

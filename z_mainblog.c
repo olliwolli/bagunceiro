@@ -357,7 +357,7 @@ int main()
 	/* default configuration and parameters */
 	static blog_t conf = {
 		.title = "...",
-		.db = "db/",
+		.db = "db/db.cdb",
 		.qry = {
 				.ts = "",
 				.type = QRY_WEEK,

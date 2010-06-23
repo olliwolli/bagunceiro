@@ -43,7 +43,7 @@ static void auth_init(char *file, char *in, size_t len)
 
 	SHA256((unsigned char *)in, len, tbuf);
 	array_catb(&value, (char *)tbuf, SHA256_DIGEST_LENGTH);
-	cdb_add(file, "input", 5, &value);
+	cdb_add(file, "input", 5, value.p, array_bytes(&value));
 
 	array_reset(&value);
 }
@@ -55,11 +55,10 @@ int main(int argc, char **argv)
 	struct taia key;
 	char c;
 	int err = 0;
-	char db[32] = "db/";
+	char db[32] = "db/db.cdb";
 	char pkey[FMT_TAIA_HEX];
 	char fmtkey[FMT_TAIA_HEX];
 	static  array entries;
-	struct eops ops;
 
 	while ((c = getopt(argc, argv, "b:ad:m:n:f:s:z:p:?h")) != -1) {
 		switch (c) {
@@ -124,17 +123,12 @@ int main(int argc, char **argv)
 			scan_time_hex(pkey, &key);
 			entry.k = key;
 
-			show_entry(db, &entry);
+			_show_entry(db, &entry);
 			fmt_time_hex(fmtkey, &entry.k);
 			eprintmf(fmtkey, ":", entry.e.p, "\n");
 			break;
 		case 'z':
-
-			ops.add_key = e_add_key;
-			ops.add_val = e_add_val;
-			ops.add_to_array = e_add_to_array;
-			ops.alloc = e_malloc;
-			cdb_read_all(optarg, &entries, &ops);
+			/* TODO */
 			dump_entries(&entries);
 			break;
 		case 'p':
@@ -143,7 +137,6 @@ int main(int argc, char **argv)
 			auth_init(db, entry.e.p, strlen(entry.e.p));
 			break;
 		case 'f':
-			cdb_search("db/", "on" , &entries);
 			break;
 		default:
 			print_help();

@@ -7,13 +7,9 @@
 #include "z_features.h"
 #include "z_time.h"
 
-#define CLOG_TYPE_RSS_2_0 1
-#define CLOG_TYPE_HTML 2
-
-#define FILE_BUFFER_SIZE 100
-
 typedef struct query {
 	enum qtype { QRY_TS, QRY_WEEK, QRY_MONTH } type;
+
 	enum qaction { QA_SHOW,
 #ifdef ADMIN_MODE
 			QA_DELETE, QA_ADD, QA_MODIFY,
@@ -22,6 +18,7 @@ typedef struct query {
 		QA_LOGIN, QA_LOGOUT
 #endif
 	} action;
+
 	unsigned int start;	/* offset from today, positive */
 	unsigned int doff;	/* offset from start, positive */
 	char ts[FMT_TAIA_HEX];
@@ -47,6 +44,7 @@ typedef struct blog {
 	char *script;
 	char *host;
 	char *cookie;
+
 /* parsed info */
 #define MAX_CSS_ARG	10
 	char css[MAX_CSS_ARG];
@@ -58,6 +56,7 @@ typedef struct blog {
 	array input;
 	struct timeval ptime;
 	struct fmting *fmt;
+
 } blog_t;
 
 int handle_query(blog_t * conf);

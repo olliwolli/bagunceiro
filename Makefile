@@ -7,16 +7,16 @@ CC=$(DBIN) gcc
 
 #ADD=-lfcgi
 
-#CFLAGS=-Wall -I$(DIET_INCLUDE) -g -DNO_ADMIN_MODE $(ADD)
-#LDFLAGS=-lowfat -L$(DIET)/$(LIB) -static $(ADD)
+CFLAGS=-Wall -I$(DIET_INCLUDE) -g -DNO_ADMIN_MODE $(ADD)
+LDFLAGS=-lowfat -L$(DIET)/$(LIB) -static $(ADD)
 
-CFLAGS=-Wall -I$(DIET_INCLUDE) -Os -fomit-frame-pointer
-LDFLAGS=-lowfat -L$(DIET)/$(LIB) -static -s 
+#CFLAGS=-Wall -I$(DIET_INCLUDE) -Os -fomit-frame-pointer
+#LDFLAGS=-lowfat -L$(DIET)/$(LIB) -static -s 
 
 CFLAGS_ADMIN=-Wall -I$(DIET_INCLUDE) -DADMIN_MODE -DADMIN_MODE_PASS -g $(ADD)
 LDFLAGS_ADMIN=$(LDFLAGS) -lcrypto $(ADD)
 
-TARGETS=blog.cgi blogger blog.cgi.adm blog.cgi.strip
+TARGETS=blog.cgi.adm blog.cgi blogger blog.cgi.strip
 
 BLOG_O=z_mainblog.o z_blog.o z_entry.o z_time.o z_cdb.o z_format.o z_conf.o
 BLOGGER_O=z_blogger.adm.o z_time.adm.o z_cdb.adm.o z_entry.adm.o 

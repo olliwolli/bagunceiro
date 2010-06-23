@@ -23,9 +23,10 @@ static int read_conf(blog_t * conf, char *key, size_t ks, char *dest)
 
 	choose_file(&file, conf->db);
 
-	err = cdb_get(file.p, key, ks, &value);
-	if (err < 0 )
-		return err;
+//	err = cdb_get(file.p, key, ks, &value);
+//	if (err < 0 )
+//		return err;
+	return -1;//FIXME
 
 	memcpy(dest, value.p, array_bytes(&value));
 	array_reset(&file);

@@ -88,7 +88,7 @@ static void print_date_html(struct day_entry *e)
 	char dfmt[20];
 	size_t dlen;
 	// TODO temporary here
-	dlen = caldate_fmtn(dfmt, e->date);
+	dlen = caldate_fmtn(dfmt, &e->time.date);
 	dfmt[dlen] = '\0';
 	sprintm("<h3>", dfmt, "</h3>\n\n");
 }
@@ -204,7 +204,7 @@ static void day_entries_html(const blog_t * conf, struct day_entry *de, size_t e
 	print_date_html(de);
 	sprint("<ul>\n");
 	for (i = 0; i < elen; i++) {
-		e = array_get(de->es, sizeof(struct nentry), i);
+		e = array_get(&de->es, sizeof(struct nentry), i);
 		sprint(" <li>");
 
 		sprintm("<span class=\"c\">", e->e.p, "</span>");
@@ -296,10 +296,8 @@ int print_mod_entry(const blog_t * conf, struct nentry *n)
 	set_err("Modify an entry", 0, N_ACTION);
 	print_notice_html(conf);
 
-	show_entry(conf->db, n);
-
 	sprintm("<ul>\n"
-		"<form  method=\"post\" action=\"", conf->script, "\">\n",
+		"<form  onsubmit='editor.post();' method=\"post\" action=\"", conf->script, "\">\n",
 		"<input type=\"hidden\" name=\"action\" value=\"mod\">\n"
 		"<input type=\"hidden\" name=\"key\" value=\"");
 
@@ -374,7 +372,7 @@ static void day_entries_rss(const blog_t * conf, struct day_entry *de, size_t el
 	struct nentry *e;
 
 	for (i = 0; i < elen; i++) {
-		e = array_get(de->es, sizeof(struct nentry), i);
+		e = array_get(&de->es, sizeof(struct nentry), i);
 		sprintm("<item>\n" "<title>\n", e->e.p, "</title>\n" "<link>");
 		print_perma_link(conf, e);
 		sprintm("</link>\n" "<description><![CDATA[",
@@ -431,7 +429,7 @@ void print_show(array * blog, blog_t * conf)
 
 	for (i = 0; i < blen; i++) {
 		de = array_get(blog, sizeof(struct day_entry), i);
-		elen = array_length(de->es, sizeof(struct nentry));
+		elen = array_length(&de->es, sizeof(struct nentry));
 		conf->fmt->day_entries(conf, de, elen);
 	}
 	if( i == 0){
