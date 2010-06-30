@@ -1,0 +1,82 @@
+/* TODO */
+/* layout */
+body {}
+#wrapper {}
+#wrapper2 {}
+
+/* elements */
+h1{}	
+h1 a:link{}
+h1 a:visited{} 
+h1 a:active{}
+h2 {}
+h3 {}
+h4 {}
+/* list of articles */
+ul {}
+/* one article */
+#wrapper2 li{}
+/* notes or errors */
+#wrapper2 #note{}
+#wrapper2 #error{}
+#wrapper #note #head {}
+/* links inside of articles */
+.c a:link{}
+.c a:visited{}
+.c a:hover {}
+/* navigation */
+#nav{}
+#nav a:link{}
+#nav a:visited{}
+/* login page */
+#login{}
+/* */
+.actions {}
+.mactions {}
+/* key for an article (permalink) */
+.k a {}
+/* box containg a day (date + list of articles ) */
+.day {}
+/* quotes inside articles */
+blockquote {}
+
+h1, .hd1 {
+	color: #333;
+	font-weight: normal;
+	font-size: 55px;
+
+}
+h2, .hd2 {
+	color: #333;
+	font-weight: normal;
+	font-size: 55px; 
+}
+
+li, .li {
+    color: #333;
+    font: normal 140% Arial, Helvetica, sans-serif;      
+}
+
+/* some useful classes, you may not need them */
+.opacity {
+    background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAABBJREFUeNpi/v//fyxAgAEACWgDXjXePfkAAAAASUVORK5CYII=);
+    background:rgba(255, 255, 255, 0.5);
+    /*filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=#75FFFFFF, endColorstr=#75FFFFFF);*/
+}
+.shadow {
+    box-shadow: 0px 0px 3px #aaa;
+    -moz-box-shadow: 0px 0px 3px #aaa;
+    -webkit-box-shadow: 0px 0px 3px #aaa
+}
+.box {
+    border-color:#aaa;
+    border-style:solid;
+    border-width:1px;
+    border-radius: 4px;
+    -moz-border-radius: 4px;
+    -khtml-border-radius: 4px;
+    -webkit-border-radius: 4px
+}
+.clear{
+clear: both;
+}

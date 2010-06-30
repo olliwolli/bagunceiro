@@ -13,7 +13,7 @@
 
 /* Adds error messages that are not for free.
  * Adds approx. 4k
- * TODO: this also removes some useful notices.
+ * this also removes some useful notices.
  * */
 //#define WANT_ERROR_PRINT
 
@@ -35,13 +35,15 @@
 #define REDUCE_OFFSET (24 - REDUCE_SIZE)
 #endif
 
+#ifdef ADMIN_MODE
+#define WANT_CGI_CONFIG
+#endif
 /* Admin mode includes functions to change the database.
  * Use this if you want a cgi that does not allow write
  * access to the database and is smaller. This cgi
  * presumes that you save access to it by some kind of
  * external authentication method (e.g. http basic auth)
  * Adds approx. 8k */
-
 //#define ADMIN_MODE
 
 /* Admin mode pass allows password authentication
@@ -59,10 +61,14 @@
 #define WANT_TINY_HTML_EDITOR
 #define TINY_HTML_PATH "/tinyeditor/"
 
+
+#define WANT_UPLOAD
+#define UPLOAD_JS "/upload.js"
+#define UPLOAD_CGI "/upload.pl"
 /* define in order to be able to browse months on the blog */
 #define WANT_MONTH_BROWSING
 
-/* TODO: unimplemented:
+/* TODO:unimplemented:
  * 	- free all malloced memory at each loop runtime
  * 	- exclude printf like function from fast cgi library
  * 	- reset variables at beginning of loop
@@ -76,9 +82,18 @@
 //#define DEBUG_ENTRY
 
 /* activate and set for input simulation */
-//#define DEBUG_PARSE_QUERY "mn=2010-07"
-//#define DEBUG_PARSE_POST "log=sdsf"
-//#define DEBUG_PARSE_COOKIE "css=style.css"
+//#define DEBUG_PARSE_QUERY "config"
+//#define DEBUG_PARSE_POST "action=config&title=Your+new+blog2&tagline=Your+tagline&input="
+//#define DEBUG_PARSE_COOKIE "sid=0a9b12e19184457041466032126e4655"
+
+//#define ADMIN_OVERRIDE
+#define SESSION_ID_LEN 32
+/*  validity in seconds, FIXME unify */
+#define SESSION_VTIME 43200
+#define SESSION_STR_VTIME "43200"
+
+#define DEFAULT_STYLESHEET "style.css"
+#define DB_FILE "db/db.inc"
 
 /* YOU SHOULDN'T EDIT BELOW THIS LINE */
 #ifdef WANT_FAST_CGI

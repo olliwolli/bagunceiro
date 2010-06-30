@@ -131,7 +131,7 @@ static int get_param_char(array * q_str, size_t qmax, char *search, char *ret,
 				return -3;
 			}
 			qlen = scan_urlencoded(val, ret, &destlen);
-			ret[qlen] = 0;
+			ret[destlen] = 0; /* make it a string */
 			return 0;	/* alright */
 		}
 	}
@@ -151,8 +151,7 @@ static void parse_cookie(blog_t * conf, array * co)
 static void parse_query(blog_t * conf, array * qs)
 {
 	int err;
-	char tmpcss[MAX_CSS_ARG];
-	char type[MAX_FMT_LENGTH];
+	char buf[MAX_CSS_ARG+MAX_FMT_LENGTH+MAX_FMT_LENGTH];
 
 	/* TIMESTAMP */
 	err = get_param_char(qs, QUERY_MAX, "ts", conf->qry.ts,
@@ -163,40 +162,34 @@ static void parse_query(blog_t * conf, array * qs)
 	}
 
 	/* CSS STYLESHEET */
-	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "css", tmpcss,
+	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "css", conf->css,
 		MAX_KEY_LENGTH_STR, "&");
 
-	switch (err) {
-		/* not found */
-	case -1:
-		break;
-		/* no argument */
-	case -2:
+	if(err == -2)
 		conf->csstype = CSS_RESET;
-		break;
-	default:
+	if(err == 0)
 		conf->csstype = CSS_SELECT;
-		str_copy(conf->css, tmpcss);
-		break;
-	}
 
 	/* FORMAT (HTML/RSS) */
-	err = get_param_char(qs, MAX_FMT_LENGTH + 4, "fmt", type,
+	err = get_param_char(qs, MAX_FMT_LENGTH + 4, "fmt", buf,
 		MAX_FMT_LENGTH, "&");
-	if (err == 0 && str_equal(type, "rss")) {
+	if (err == 0 && str_equal(buf, "rss")) {
 		conf->stype = S_RSS;
 	}
 
 	/* MONTH SELECTION */
-	err = get_param_char(qs, QUERY_MAX, "mn", conf->qry.mon, FMT_CALDATE,
+
+	err = get_param_char(qs, QUERY_MAX, "mn", buf, FMT_CALDATE,
 		"&");
 	if (!err) {
 		conf->qry.type = QRY_MONTH;
 		conf->qry.action = QA_SHOW;
 		/* append -01 (day), to make it compatible with conversion functions */
-		strcat(conf->qry.mon, "-01");
+		strcat(buf, "-01");
+		caldate_scan(buf, &conf->qry.mon.date);
+	}else{
+		caltime_utc(&conf->qry.mon, &conf->now.sec, (int *)0, (int *)0);
 	}
-
 }
 
 /* keep that stuff in one function to not have ifdefs all around */
@@ -205,36 +198,39 @@ static void do_admin_pass_mode(blog_t * conf, array * co, array * pd,
 	array * qs)
 {
 	int err;
+	char tmptoken[100];
 
 	/* initialization */
-	conf->authcache = 0;
-	conf->authpost = 0;
-	conf->ssl = 0;
-	str_copy((char *)conf->token, "");
+	conf->authtype = AUTH_NONE;
+	conf->ssl = SSL_OFF;
+
+	strcpy(conf->sessionid, "");
 
 	/* parse cookie */
-	char buf[SHA256_DIGEST_LENGTH * 2 + 1];
-	size_t len;
-	err = get_param_char(co, COOKIE_MAX, "token", buf,
-		SHA256_DIGEST_LENGTH * 2 + 1, "; ");
-	scan_hexdump(buf, (char *)conf->token, &len);
-
-	/*  parse postdata */
-	char tmptoken[SHA256_DIGEST_LENGTH * 2 + 1];
-	err = get_param_char(pd, -1, "login", tmptoken,
-		SHA256_DIGEST_LENGTH * 2 + 1, "&");
-	if (!err) {
-		conf->authpost = 1;
-		SHA256((unsigned char *)tmptoken, strlen(tmptoken),
-			conf->token);
-		memset(tmptoken, 0, SHA256_DIGEST_LENGTH * 2);
+	if(0 == get_param_char(co, COOKIE_MAX, "sid", conf->sessionid,
+		SESSION_ID_LEN + 1, "; ")){
+		conf->auth = validate_session_id(conf->sessionid);
+		conf->authtype = AUTH_SID;
 	}
 
+	/*  parse postdata */
+
+	err = get_param_char(pd, -1, "login", tmptoken, 100, "&");
+	if (!err) {
+		conf->auth = auth_conf(conf, (unsigned char*)tmptoken, strlen(tmptoken));
+		memset(tmptoken, 0, 20);
+		if(conf->auth)
+			add_session_id(conf->sessionid);
+
+		conf->authtype = AUTH_POST;
+	}
+
+// TODO streamline
 	/* parse query string */
 	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "login", conf->qry.ts,
 		MAX_KEY_LENGTH_STR, "&");
 	if (err == -2) {
-		conf->qry.type = QRY_TS;
+		conf->qry.type = QRY_NONE;
 		conf->qry.action = QA_LOGIN;
 	}
 
@@ -242,13 +238,11 @@ static void do_admin_pass_mode(blog_t * conf, array * co, array * pd,
 		MAX_KEY_LENGTH_STR, "&");
 	if (err == -2) {
 		conf->qry.action = QA_LOGOUT;
+		conf->auth = 0;
 	}
 
-	/* check ssl status */
 	if (getenv("HTTPS") != NULL)
-		conf->ssl = 1;
-
-	conf->authcache = auth_conf(conf, conf->token, SHA256_DIGEST_LENGTH);
+		conf->ssl = SSL_ON;
 
 }
 #endif
@@ -264,37 +258,57 @@ static void do_admin_mode(blog_t * conf, array * co, array * pd, array * qs)
 	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "del", conf->qry.ts,
 		MAX_KEY_LENGTH_STR, "&");
 	if (!err) {
-		conf->qry.type = QRY_TS;
 		conf->qry.action = QA_DELETE;
+		conf->qry.type = QRY_NONE;
 	}
 
 	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "add", NULL,
 		MAX_KEY_LENGTH_STR, "&");
-	if (err == -2)
+	if (err == -2){
 		conf->qry.action = QA_ADD;
+		conf->qry.type = QRY_NONE;
+	}
+
+#ifdef WANT_CGI_CONFIG
+	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "config", NULL,
+		MAX_KEY_LENGTH_STR, "&");
+	if (err == -2){
+		conf->qry.action = QA_CONFIG;
+		conf->qry.type = QRY_NONE;
+	}
+#endif
 
 	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "mod", conf->qry.ts,
 		MAX_KEY_LENGTH_STR, "&");
 	if (!err) {
-		conf->qry.type = QRY_TS;
+		conf->qry.type = QRY_NONE;
 		conf->qry.action = QA_MODIFY;
 	}
 
 	/*  postdata */
+	/* TODO REVIEW IF POST DOES NOT WORK */
 	if (array_bytes(pd) < POSTDATA_MAX && array_bytes(pd)) {
 		parg = alloca(array_bytes(pd));
-		get_param_char(pd, -1, "input", parg, -1, "&");
-		/*  TODO chek for error */
-		array_cats0(&conf->input, parg);
+		if(get_param_char(pd, -1, "input", parg, -1, "&")==0){
 
-		get_param_char(pd, -1, "key", conf->qry.ts, MAX_KEY_LENGTH_STR,
-			"&");
+			if (get_param_char(pd, -1, "action", tmp, 4, "&") == 0) {
+				if (str_equal(tmp, "add"))
+					conf->qry.action = QA_ADD;
+				if (str_equal(tmp, "mod"))
+					conf->qry.action = QA_MODIFY;
 
-		if (get_param_char(pd, -1, "action", tmp, 4, "&") == 0) {
-			if (str_equal(tmp, "add"))
-				conf->qry.action = QA_ADD;
-			if (str_equal(tmp, "mod"))
-				conf->qry.action = QA_MODIFY;
+			}
+
+			array_cats0(&conf->input, parg);
+			get_param_char(pd, -1, "key", conf->qry.ts, MAX_KEY_LENGTH_STR,
+				"&");
+		}else if (get_param_char(pd, -1, "action", tmp, 7, "&") == 0){
+			if (str_equal(tmp, "config"))
+				conf->qry.action = QA_CONFIG;
+
+			get_param_char(pd, -1, "title", conf->qry.title, MAX_CONF_STR, "&");
+			get_param_char(pd, -1, "tagline", conf->qry.tagline, MAX_CONF_STR, "&");
+			get_param_char(pd, -1, "input", conf->qry.pass, MAX_CONF_STR, "&");
 		}
 	}
 }
@@ -356,79 +370,88 @@ int main()
 
 	/* default configuration and parameters */
 	static blog_t conf = {
-		.title = "...",
-		.db = "db/db.cdb",
+		.title = "",
+		.tagline = "",
+		.db = DB_FILE,
 		.qry = {
 				.ts = "",
+#if defined(WANT_CGI_CONFIG) && defined(ADMIN_MODE)
+				.title = "",
+				.tagline = "",
+				.pass = "",
+#endif
 				.type = QRY_WEEK,
 				.start = 0,
-				.doff = 8,
-			.mon = ""},
+				.doff = 8},
 		.stype = S_HTML,
-		//.cookie = NULL, TODO: check for null in code
 		.csstype = CSS_DEFAULT,
 	};
 
 #ifdef WANT_FAST_CGI
-	while(FCGI_Accept() >= 0){
+	while (FCGI_Accept() >= 0) {
 #endif
-	memset(&conf.input, 0, sizeof(array));
+		memset(&conf.input, 0, sizeof(array));
+		memset(conf.qry.ts, 0, sizeof(conf.qry.ts));
+		taia_now(&conf.now);
 
-	gettimeofday(&conf.ptime, NULL);
+		gettimeofday(&conf.ptime, NULL);
 
-	load_config(&conf);
+		load_config(&conf);
 
-	conf.host = getenv("SERVER_NAME");
-	conf.script = getenv("SCRIPT_NAME");
+		conf.host = getenv("SERVER_NAME");
+		conf.script = getenv("SCRIPT_NAME");
 
-	/* get the strings */
-	get_cookie_string(&co);
-	get_post_string(&ps);
-	get_query_string(&qs);
+		/* get the strings */
+		get_cookie_string(&co);
+		get_post_string(&ps);
+		get_query_string(&qs);
 
-	/* parse cookie first */
-	parse_cookie(&conf, &co);
-	parse_query(&conf, &qs);
+		/* parse cookie first */
+		parse_cookie(&conf, &co);
+		parse_query(&conf, &qs);
 
 #ifdef ADMIN_MODE
-	do_admin_mode(&conf, &co, &ps, &qs);
+		do_admin_mode(&conf, &co, &ps, &qs);
 #endif
 
 #ifdef ADMIN_MODE_PASS
-	do_admin_pass_mode(&conf, &co, &ps, &qs);
+		do_admin_pass_mode(&conf, &co, &ps, &qs);
 #endif
 
-	if (conf.qry.type == QRY_TS && !verify_ts(conf.qry.ts)) {
-		conf.qry.action = QA_SHOW;
-		conf.qry.type = QRY_WEEK;
+		if (conf.qry.type == QRY_TS && !verify_ts(conf.qry.ts)) {
+			conf.qry.action = QA_SHOW;
+			conf.qry.type = QRY_WEEK;
 #ifdef WANT_ERROR_PRINT
-		set_err("Not a valid timestamp", 0, N_ERROR);
+			set_err("Not a valid timestamp", 0, N_ERROR);
 #endif
-	}
+		}
 
-	/* set a cookie */
-	if (conf.csstype != CSS_DEFAULT && conf.csstype != CSS_RESET) {
-		if (access(conf.css, F_OK) == -1)
-			conf.csstype = CSS_ERROR;
-	}
-	inflate_ts(conf.qry.ts);
+		/* set a cookie */
+		if (conf.csstype != CSS_DEFAULT && conf.csstype != CSS_RESET) {
+			if (access(conf.css, F_OK) == -1)
+				conf.csstype = CSS_ERROR;
+		}
+		inflate_ts(conf.qry.ts);
 
-	handle_query(&conf);
+		handle_query(&conf);
 
 #ifdef DEBUG_PARSING
-	debug_print(&conf, &ps, &qs);
-	array_cat0(&debugmsg);
-	sprintm("<div id=\"note\"><div id=\"head\">DEBUG</div>",
-		debugmsg.p, "</div>");
-	array_reset(&debugmsg);
+		debug_print(&conf, &ps, &qs);
+		array_cat0(&debugmsg);
+		sprintm("<div id=\"note\"><div id=\"head\">DEBUG</div>",
+			debugmsg.p, "</div>");
+		array_reset(&debugmsg);
 #endif
 
-	time_stop_print(&conf.ptime);
+		if (conf.stype != S_RSS)
+			time_stop_print(&conf.ptime);
+		else
+			sprintf("");
 
 #ifdef WANT_FAST_CGI
-	array_reset(&qs);
-	array_reset(&ps);
-	array_reset(&co);
+		array_reset(&qs);
+		array_reset(&ps);
+		array_reset(&co);
 	}
 #endif
 	return 0;

@@ -5,23 +5,33 @@ LIB=lib
 DBIN=$(DIET)/bin/diet
 CC=$(DBIN) gcc
 
-#ADD=-lfcgi
+# dynamic and static content in the same path
+INSTALL_DIR=/var/www/dynamic/blog
+BINDIR=/usr/bin
+DBDIR=$(INSTALL_DIR)/db
+TINYDIR=$(INSTALL_DIR)/tinyeditor
+WEBUSER=www-data
+WEBGRP=www-data
 
-CFLAGS=-Wall -I$(DIET_INCLUDE) -g -DNO_ADMIN_MODE $(ADD)
-LDFLAGS=-lowfat -L$(DIET)/$(LIB) -static $(ADD)
+CFLAGS=-Wall -I$(DIET_INCLUDE)
+LDFLAGS=-lowfat -L$(DIET)/$(LIB) -static
+LDFLAGS_ADMIN=$(LDFLAGS)
 
-#CFLAGS=-Wall -I$(DIET_INCLUDE) -Os -fomit-frame-pointer
-#LDFLAGS=-lowfat -L$(DIET)/$(LIB) -static -s 
+ifneq ($(DEBUG),)
+CFLAGS+=-g
+CFLAGS_ADMIN=$(CFLAGS) -DADMIN_MODE -DADMIN_MODE_PASS -g
+else
+CFLAGS+=-Os -fomit-frame-pointer
+LDFLAGS+=-s 
+CFLAGS_ADMIN=$(CFLAGS) -DADMIN_MODE -DADMIN_MODE_PASS
+endif
 
-CFLAGS_ADMIN=-Wall -I$(DIET_INCLUDE) -DADMIN_MODE -DADMIN_MODE_PASS -g $(ADD)
-LDFLAGS_ADMIN=$(LDFLAGS) -lcrypto $(ADD)
-
-TARGETS=blog.cgi.adm blog.cgi blogger blog.cgi.strip
+TARGETS=blog.cgi blogcmd admin.cgi
 
 BLOG_O=z_mainblog.o z_blog.o z_entry.o z_time.o z_cdb.o z_format.o z_conf.o
 BLOGGER_O=z_blogger.adm.o z_time.adm.o z_cdb.adm.o z_entry.adm.o 
-
 all: $(TARGETS)
+
 HEADERS=z_blog.h z_cdb.h z_conf.h z_entry.h z_features.h z_format.h z_time.h
 SOURCES=z_blog.c z_cdb.c z_conf.c z_entry.c z_format.c z_mainblog.c z_time.c
 
@@ -41,18 +51,54 @@ z_entry.o: z_entry.h z_entry.c z_cdb.h z_cdb.c z_entry.h z_entry.c z_time.h z_ti
 z_blogger.adm.o: z_blogger.c
 	$(CC) -c -o $@ $(CFLAGS_ADMIN) $(<:.adm.o=.c)
 
-blog.cgi.adm: $(BLOG_O_ADM) 
+_admin: $(BLOG_O_ADM) 
 	$(CC) -o $@ $(BLOG_O_ADM) $(LDFLAGS_ADMIN)
 
-blog.cgi: $(BLOG_O)
+_blog: $(BLOG_O)
 	$(CC) -o $@ $(BLOG_O) $(LDFLAGS)
 
-blog.cgi.strip: blog.cgi
+blog.cgi: _blog
+	cp -p $^ $@
+	-strip -R .note -R .comment $@
+	
+admin.cgi: _admin
 	cp -p $^ $@
 	-strip -R .note -R .comment $@
 
-blogger: $(BLOGGER_O)
-	$(CC) -o $@ $(BLOGGER_O) $(LDFLAGS) -lcrypto
+blogcmd: $(BLOGGER_O)
+	$(CC) -o $@ $(BLOGGER_O) $(LDFLAGS)
+	-strip -R .note -R .comment $@
 
 clean:
-	rm -f $(TARGETS) *~ *.o cscope.out tags
+	rm -f _* $(TARGETS) *~ *.o cscope.out tags
+
+install:
+# create used directories
+	install -d $(INSTALL_DIR)
+	install -d $(BIN_DIR)
+	install -d -o $(WEBUSER) -g $(WEBGRP) $(INSTALL_DIR)/img
+	install -d -o $(WEBUSER) -g $(WEBGRP) $(INSTALL_DIR)/db
+
+# initial database files
+	install -o $(WEBUSER) -g $(WEBGRP) db.init $(INSTALL_DIR)/db/db.inc
+	install -o $(WEBUSER) -g $(WEBGRP) session.init $(INSTALL_DIR)/db/session.inc
+	
+# wysiwyg editor
+	install -d $(TINYDIR) $(TINYDIR)/images
+	install tinyeditor/style.css $(TINYDIR)
+	install tinyeditor/packed.js $(TINYDIR)
+	install tinyeditor/images/* $(TINYDIR)/images
+
+# upload functionality
+	install upload.pl $(INSTALL_DIR)
+	install upload.js $(INSTALL_DIR)
+
+# install cgi scripts
+	install blog.cgi $(INSTALL_DIR)
+	install admin.cgi $(INSTALL_DIR)
+
+# command line configuration utility
+	install blogcmd $(BIN_DIR)
+
+# css stylesheets
+	install *css $(INSTALL_DIR)

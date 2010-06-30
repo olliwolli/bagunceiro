@@ -50,7 +50,7 @@ size_t fmt_time_hex(char *s, const struct taia *time)
 
 size_t scan_time_hex(const char *s, struct taia * time)
 {
-	char buf[TAIA_PACK];
+	char buf[FMT_TAIA_HEX];
 	size_t destlen = TAIA_PACK;
 	if (!s)
 		return 0;
@@ -208,7 +208,7 @@ void time_stop_print(struct timeval *time)
 	for (; len < 6; len++)
 		sprint("0");
 
-	sprintmf(fmtnsec, "s --/>");
+	sprintmf(fmtnsec, "s -->");
 }
 
 size_t fmt_time_str(char *s, const struct taia *time)

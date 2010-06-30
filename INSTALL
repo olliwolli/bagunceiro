@@ -1,7 +1,91 @@
+1. Compilation
+
 You need a modified version of libowfat which supports
 caltime/caldate functions. You also might want to
 replace all calls to byte_{copy,zero,rcopy,equal,diff}
 with their mem{cpy,cmp,set} aquivalents since they are
 usually a lot faster and save space (several kilobytes).
 
-I suggest you link against the vanilla dietlibc
+I suggest you link against the vanilla dietlibc.
+
+The makefile assumes that you have the dietlibc and libowfat
+installed to /opt
+
+Then type:
+	make
+
+2. Web server
+
+CGI must be enabled. Currently the blog system only works when
+served in the root path of a domain.
+
+Example for minimal lighttpd configuration with url rewriting.
+
+$HTTP["host"] =~ "(^|\.)sub\.mydomain\.com.*$" {
+    url.rewrite-once = ( "^/\?(.*)$" => "/blog.cgi/\?$1" , "^/$" => "/blog.cgi/")
+    server.document-root = "/var/www/dynamic/blog"
+    cgi.assign = ( "/blog.cgi" => "" , "/admin.cgi" => "", ".pl" => "/usr/bin/perl")
+}
+
+# Deny access to configuration and database files
+url.access-deny            = ( "~", ".inc" )
+
+If you use another webserver you should use its mechanism to deny access to .inc
+files. In apache you can use htaccess. If you webserver does not support this
+feature, you can recompile the the program, setting CONF_DB,SESSION_DB,
+SESSION_DB_TMP to be somewhere on the webserver where they can not be accessed
+via the http and put these files there. If you do not deny access to these
+files, anyone can modify your blog.
+
+3. Configuration
+
+The blog can be configured using the webinterface at:
+sub.mydomain.com/admin.cgi?login
+
+You need to enter the default passwordd (TODO). 
+
+On the following site you will find a link called config which will lead
+sub.mydomain.com/admin.cgi?config
+
+On that page you can change your password, the title and the tagline of the blog
+
+4. Command line tool
+The command line tool allows to change the blog databases without using the
+webinterface. It can be used to configure the blog. It is also possible to
+add, delete and modify blog entries using the command line tool.
+
+4.1 Command line tool configuration
+To set a blog title use:
+$ blogcmd -b /var/www/dynamic/blog/conf.inc -a -k title -v "My new Blog"
+
+To set a tagline (additional information concerning your blog)  which usually
+appears below the blog title on the web page use:
+
+$ blogcmd -b /var/www/dynamic/blog/conf.inc -a -k tagline -v "For comments write to me@me.com"
+
+You can also modify these values later by using -m instead of -a.
+
+4.2 Command line tool blogging
+
+Admin.cgi allows you to add, delete and modify blog posts and the blog configuration.
+You might not want to expose that functionality via http for security reasons.
+Maybe the fact that admin.cgi enforces ssl connections and only sends session
+information over ssl is not good enough for you.
+
+You also might prefer vim over your browser for editing articles.
+
+Here is how you add a new blog entry:
+
+$ cat blogpost | blogcmd -t -a -b db/db.inc
+
+You can also delete and modify if you know the key (timestamp) of your post.
+Creating post for specific date is not yet implemented.
+
+4. Blogging
+
+The blog is now accessible via http://sub.mydomain.com. If you want to write a
+new blog entry you have to navigate to the admin version of the blog.
+Which is here: https://sub.mydomain.com/admin.cgi?login .
+Note the "s" in https. This will direct you to the login page. After having
+provided the correct password you will be able to add, delete and modify blog
+posts.

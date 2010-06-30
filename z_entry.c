@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <ctype.h>
 
 #include <open.h>
 #include <cdb.h>
@@ -11,23 +12,23 @@
 #include "z_time.h"
 #include "z_features.h"
 
-struct nentry * new_nentry(void)
+struct nentry *new_nentry(void)
 {
-	struct nentry * n;
+	struct nentry *n;
 	n = malloc(sizeof(struct nentry));
 	memset(&n->e, 0, sizeof(array));
 	return n;
 }
 
-void free_nentry(struct nentry * n)
+void free_nentry(struct nentry *n)
 {
 	array_reset(&n->e);
 	free(n);
 }
 
-struct day_entry * new_day_entry()
+struct day_entry *new_day_entry()
 {
-	struct day_entry * d;
+	struct day_entry *d;
 	d = malloc(sizeof(struct day_entry));
 	memset(&d->es, 0, sizeof(array));
 	return d;
@@ -36,15 +37,26 @@ struct day_entry * new_day_entry()
 void free_day_entry(struct day_entry *d)
 {
 	int i;
-	struct nentry * n;
-	if(&d->es != NULL){
-		for(i = 0; i < array_length(&d->es, sizeof(struct nentry)); i++){
+	struct nentry *n;
+	if (&d->es != NULL) {
+		for (i = 0; i < array_length(&d->es, sizeof(struct nentry));
+			i++) {
 			n = array_get(&d->es, sizeof(struct nentry), i);
 			array_reset(&n->e);
 		}
 		array_reset(&d->es);
 	}
 }
+
+//void trimright(char *s)
+//{
+//  char *end;
+//
+//  end = s + strlen(s) - 1;
+//  while(end > s && isspace(*end)) end--;
+//  *(end+1) = 0;
+//}
+
 
 #ifdef ADMIN_MODE
 int add_entry(const char *dbpath, struct nentry *entry)
@@ -53,7 +65,8 @@ int add_entry(const char *dbpath, struct nentry *entry)
 	char pk[TAIA_PACK];
 
 	taia_pack(pk, &entry->k);
-	err = cdb_add(dbpath, pk, TAIA_PACK, entry->e.p, array_bytes(&entry->e));
+	err = cdb_add_idx(dbpath, pk, TAIA_PACK, entry->e.p,
+		array_bytes(&entry->e));
 	array_cat0(&entry->e);
 
 	return err;
@@ -71,7 +84,8 @@ int modify_entry(const char *dbpath, struct nentry *entry)
 	char pk[TAIA_PACK];
 	taia_pack(pk, &entry->k);
 
-	err = cdb_mod(dbpath, pk, TAIA_PACK, entry->e.p, array_bytes(&entry->e));
+	err = cdb_mod(dbpath, pk, TAIA_PACK, entry->e.p,
+		array_bytes(&entry->e));
 
 	return err;
 }
@@ -82,7 +96,7 @@ int delete_entry(const char *dbpath, struct nentry *entry)
 	char pk[TAIA_PACK];
 
 	taia_pack(pk, &entry->k);
-	err = cdb_del(dbpath, pk, TAIA_PACK);
+	err = cdb_del_idx(dbpath, pk, TAIA_PACK);
 
 	return err;
 }
@@ -112,7 +126,7 @@ void dump_entries(array * entries)
 }
 #endif
 
-int _show_entry(struct cdb * result, struct nentry *entry)
+int _show_entry(struct cdb *result, struct nentry *entry)
 {
 	int err;
 	char pac[TAIA_PACK];
@@ -123,27 +137,27 @@ int _show_entry(struct cdb * result, struct nentry *entry)
 	return err;
 }
 
-int _show_day(struct cdb * result, array * entries, const struct taia * day)
+int _show_day(struct cdb *result, array * entries, const struct taia *day)
 {
 	struct nentry dentry;
-	struct nentry * entry;
-	char * key;
-	int err,len,i;
+	struct nentry *entry;
+	char *key;
+	int err, len, i;
 
-	char buf[FMT_TAIA_STR+1] = "";
+	char buf[FMT_TAIA_STR + 1] = "";
 
-	len= fmt_time_str(buf, day);
-	buf[len] = '@'; /* len = len+1 */
+	len = fmt_time_str(buf, day);
+	buf[len] = '@';		/* len = len+1 */
 
 	memset(&dentry, 0, sizeof(struct nentry));
 
 	/* lookup all entries for that day */
-	err = _cdb_get(result, buf, len+1, &dentry);
+	err = _cdb_get(result, buf, len + 1, &dentry);
 
-	if ( err <= 0 )
+	if (err <= 0)
 		goto err;
 
-	for(i = 0; i < array_length(&dentry.e, TAIA_PACK); i++){
+	for (i = 0; i < array_length(&dentry.e, TAIA_PACK); i++) {
 		key = array_get(&dentry.e, TAIA_PACK, i);
 		/* ALLOCATION */
 		entry = new_nentry();

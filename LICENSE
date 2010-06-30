@@ -1,3 +1,25 @@
+Software used:
+
+tinyeditor:
+	AUTHOR: Michael Leigeber
+	URL: http://www.leigeber.com/2010/02/javascript-wysiwyg-editor/
+	LICENSE: http://creativecommons.org/licenses/by/3.0/us/
+
+dietlibc:
+	AUTHOR: Felix von Leitner <felix-dietlibc@fefe.de>
+	URL: http://www.fefe.de/dietlibc/
+	LICENSE: GPL v2
+
+libowfat:
+	AUTHOR: Felix von Leitner <felix-dietlibc@fefe.de>
+	URL: http://www.fefe.de/libowfat/
+	LICENSE: GPL v2
+
+cdb:
+	AUTHOR: D. J. Bernstein
+	URL: http://cr.yp.to/cdb.html
+	LICENSE: Public Domain
+
 Oliver-Tobias Ripka (otr), code@bockcay.de, 03.06.2010
 
 This program is free software; you can redistribute it and/or modify
