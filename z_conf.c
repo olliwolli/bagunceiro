@@ -52,54 +52,7 @@ int save_config(blog_t * conf)
 	return 0;
 }
 
-//int mod_add_str(const char * file, char * key, size_t ks, char *v){
-//
-//	int err;
-//
-//	struct cdb_action a = {
-//			.k = key,
-//			.ks = ks,
-//			.v  = v,
-//			.vs = strlen(v) + 1,
-//			.f = file
-//	};
-//
-//	__cdb_start_mod(a);
-//
-//	memset(&e, 0, sizeof(struct nentry));
-//	if(strcmp("", key)){
-//		err = _cdb_get(a.r, key, ks , &a.e);
-//
-//		if(err >= 1)
-//			__cdb_mod(a);
-//		else
-//			__cdb_add(a);
-//	}
-//	__cdb_finish_mod(a);
-//
-//	return 0;
-//}
-//
-//int save_config(blog_t * conf)
-//{
-//	struct cdb_action a = {
-//			.k = key,
-//			.ks = ks,
-//			.v  = v,
-//			.vs = strlen(v) + 1,
-//			.f = file,
-//			.needle = {"title", "input", "tagline"},
-//			.cbs = {__cdb_mod_add, __cdb_mod_add, __cdb_mod_add}
-//	};
-//
-//	__cdb_copy(a);
-//	a.
-//	__cdb_finish_mod(a);
-//	mod_add_str(CONF_DB , "title", 5, conf->qry.title);
-//	mod_add_str(CONF_DB , "input", 5, conf->qry.pass);
-//	mod_add_str(CONF_DB , "tagline", 7, conf->qry.tagline);
-//	return 0;
-//}
+
 #endif
 
 #ifdef ADMIN_MODE_PASS

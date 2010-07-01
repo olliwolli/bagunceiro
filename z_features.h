@@ -7,11 +7,8 @@
 #include <errno.h>
 
 #define POSTDATA_MAX		1024 * 64
-#define QUERY_MAX		128
-#define COOKIE_MAX		128
-
-
-#define ADMIN_MODE
+#define QUERY_MAX			128
+#define COOKIE_MAX			128
 
 #define PROGRAM_NAME		"BACALHAU"
 
@@ -40,11 +37,7 @@
 #endif
 
 
-
-#undef NO_ADMIN_MODE
 #ifdef ADMIN_MODE
-
-
 #define WANT_CGI_CONFIG
 #endif
 /* Admin mode includes functions to change the database.
