@@ -173,7 +173,7 @@ unsigned int caldate_fmtn(char *s, const struct caldate *cd)
 
 		s[6] = ' ';
 		x = cd->month;
-		memcpy(s + 7, months[x], 3);
+		memcpy(s + 7, months[x-1], 3);
 		s[10] = ' ';
 
 		x = cd->year;

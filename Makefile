@@ -28,12 +28,13 @@ endif
 
 TARGETS=blog.cgi blogcmd admin.cgi
 
-BLOG_O=z_mainblog.o z_blog.o z_entry.o z_time.o z_cdb.o z_format.o z_conf.o
-BLOGGER_O=z_blogger.adm.o z_time.adm.o z_cdb.adm.o z_entry.adm.o 
+BLOG_O=z_mainblog.o z_blog.o z_entry.o z_time.o z_cdb.o z_format.o z_conf.o z_day_entry.o z_comment.o z_html5.o z_http.o z_rss.o
+BLOGGER_O=z_blogger.adm.o z_time.adm.o z_cdb.adm.o z_entry.adm.o z_day_entry.o z_comment.o z_html5.o z_http.o z_rss.o
 all: $(TARGETS)
 
-HEADERS=z_blog.h z_cdb.h z_conf.h z_entry.h z_features.h z_format.h z_time.h
-SOURCES=z_blog.c z_cdb.c z_conf.c z_entry.c z_format.c z_mainblog.c z_time.c
+HEADERS=z_blog.h z_cdb.h z_conf.h z_entry.h z_features.h z_format.h z_time.h z_day_entry.h z_comment.h z_html5.h z_http.h z_rss.h
+SOURCES=z_blog.c z_cdb.c z_conf.c z_entry.c z_format.c z_mainblog.c z_time.c z_day_entry.c z_comment.c z_html5.c z_http.c z_rss.c
+
 
 BLOG_O_ADM=$(SOURCES:%.c=%.adm.o)
 

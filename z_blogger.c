@@ -35,6 +35,7 @@ void print_help()
 		"  -m          modify\n"
 		"  -s          show\n"
 
+		"  -n          add now \n"
 		"  -t          taia mode (for blog posts)\n"
 
 		"  -h          print help\n");
@@ -57,7 +58,7 @@ int main(int argc, char **argv)
 	enum mode { TAIA, PLAIN } mode = PLAIN;
 	enum action {ADD, DEL, MOD, SHOW, ADD_NOW, HELP} action = HELP;
 	/* parse */
-	while ((c = getopt(argc, argv, "b:k:v:tandmsh?")) != -1) {
+	while ((c = getopt(argc, argv, "b:k:v:tandmshi?")) != -1) {
 		switch (c) {
 		case 'b':
 			str_copy(db, optarg);
@@ -96,11 +97,13 @@ int main(int argc, char **argv)
 	}
 
 	if(mode == TAIA){
-		if (strlen(skey) != 32) {
+		if (strlen(skey) != 32 && action != ADD_NOW) {
 				sprintf("Key must by 32 hex characters wide\n");
 				exit(2);
+		}else{
+			scan_time_hex(skey, &entry.k);
 		}
-		scan_time_hex(skey, &entry.k);
+
 		if(array_bytes(&value)!=0)
 			array_cats0(&entry.e, value.p);
 	}

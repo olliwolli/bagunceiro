@@ -8,6 +8,7 @@
  *  published by the Free Software Foundation.
  */
 #include "z_entry.h"
+#include "z_day_entry.h"
 
 typedef struct fmting {
 	void (*day_entries) (const blog_t * conf, struct day_entry * e,
@@ -20,6 +21,7 @@ void print_show(array * blog, blog_t * conf);
 #ifdef ADMIN_MODE
 int print_add_entry(const blog_t * conf);
 int print_mod_entry(const blog_t * conf, struct nentry *n);
+int print_config(const blog_t * conf);
 #endif
 
 #ifdef ADMIN_MODE_PASS

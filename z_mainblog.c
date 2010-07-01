@@ -89,7 +89,12 @@ static void get_cookie_string(array * co)
 #endif
 
 /* CONVERSION */
-static int get_param_char(array * q_str, size_t qmax, char *search, char *ret,
+#define P_UNLIMITED -1
+#define P_NO_VALUE -2
+#define RET_NO_VALUE -2
+#define RET_INVALID -3
+#define PARAM_SUCCESS 0
+static int get_http_param(array * q_str, size_t qmax, char *search, char *ret,
 	size_t n, char *sep)
 {
 
@@ -99,16 +104,10 @@ static int get_param_char(array * q_str, size_t qmax, char *search, char *ret,
 	size_t destlen, qlen;
 
 	qlen = array_bytes(q_str);
-
 	char buf[qlen + 1];
 
-	if (!qlen) {
-		return -1;
-	}
-
-	if (qlen > qmax && qlen != -1) {
-		return -1;
-	}
+	if (!qlen || (qlen > qmax && qlen != -1))
+		return RET_INVALID;
 
 	memcpy(buf, q_str->p, qlen);
 	buf[qlen] = 0;
@@ -121,32 +120,33 @@ static int get_param_char(array * q_str, size_t qmax, char *search, char *ret,
 
 		if (str_equal(key, search)) {
 			/* just a key, no value */
-			if (val == 0)
-				return -2;
+			if (val == 0 || n == P_NO_VALUE)
+				return RET_NO_VALUE;
 
 			/* not complying to length rules */
-			if (str_len(val) >= n && n != -1) {
-				str_copy(ret, "bad");
+			if ((strlen(val) >= n && n != P_UNLIMITED)) {
+				strcpy(ret, "bad");
 				set_err("Invalid input", 0, N_ERROR);
-				return -3;
+				return RET_INVALID;
 			}
 			qlen = scan_urlencoded(val, ret, &destlen);
 			ret[destlen] = 0; /* make it a string */
-			return 0;	/* alright */
+			return PARAM_SUCCESS;	/* alright */
 		}
 	}
-	return -1;
+	return RET_INVALID;
 }
 
 static void parse_cookie(blog_t * conf, array * co)
 {
 	int err;
 
-	err = get_param_char(co, COOKIE_MAX, "css", conf->css, MAX_CSS_ARG,
+	err = get_http_param(co, COOKIE_MAX, "css", conf->css, MAX_CSS_ARG,
 		"; ");
 	if (!err)
 		conf->csstype = CSS_COOKIE;
 }
+
 
 static void parse_query(blog_t * conf, array * qs)
 {
@@ -154,34 +154,34 @@ static void parse_query(blog_t * conf, array * qs)
 	char buf[MAX_CSS_ARG+MAX_FMT_LENGTH+MAX_FMT_LENGTH];
 
 	/* TIMESTAMP */
-	err = get_param_char(qs, QUERY_MAX, "ts", conf->qry.ts,
+	err = get_http_param(qs, QUERY_MAX, "ts", conf->qry.ts,
 		MAX_KEY_LENGTH_STR, "&");
-	if (!err) {
+	if (err == PARAM_SUCCESS) {
 		conf->qry.type = QRY_TS;
 		conf->qry.action = QA_SHOW;
 	}
 
 	/* CSS STYLESHEET */
-	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "css", conf->css,
+	err = get_http_param(qs, MAX_KEY_LENGTH_STR + 4, "css", conf->css,
 		MAX_KEY_LENGTH_STR, "&");
 
-	if(err == -2)
+	if(err == RET_NO_VALUE)
 		conf->csstype = CSS_RESET;
-	if(err == 0)
+	if(err == PARAM_SUCCESS)
 		conf->csstype = CSS_SELECT;
 
 	/* FORMAT (HTML/RSS) */
-	err = get_param_char(qs, MAX_FMT_LENGTH + 4, "fmt", buf,
+	err = get_http_param(qs, MAX_FMT_LENGTH + 4, "fmt", buf,
 		MAX_FMT_LENGTH, "&");
-	if (err == 0 && str_equal(buf, "rss")) {
+	if (err == PARAM_SUCCESS && str_equal(buf, "rss")) {
 		conf->stype = S_RSS;
 	}
 
 	/* MONTH SELECTION */
 
-	err = get_param_char(qs, QUERY_MAX, "mn", buf, FMT_CALDATE,
+	err = get_http_param(qs, QUERY_MAX, "mn", buf, FMT_CALDATE,
 		"&");
-	if (!err) {
+	if (err == PARAM_SUCCESS) {
 		conf->qry.type = QRY_MONTH;
 		conf->qry.action = QA_SHOW;
 		/* append -01 (day), to make it compatible with conversion functions */
@@ -207,7 +207,7 @@ static void do_admin_pass_mode(blog_t * conf, array * co, array * pd,
 	strcpy(conf->sessionid, "");
 
 	/* parse cookie */
-	if(0 == get_param_char(co, COOKIE_MAX, "sid", conf->sessionid,
+	if(PARAM_SUCCESS == get_http_param(co, COOKIE_MAX, "sid", conf->sessionid,
 		SESSION_ID_LEN + 1, "; ")){
 		conf->auth = validate_session_id(conf->sessionid);
 		conf->authtype = AUTH_SID;
@@ -215,8 +215,8 @@ static void do_admin_pass_mode(blog_t * conf, array * co, array * pd,
 
 	/*  parse postdata */
 
-	err = get_param_char(pd, -1, "login", tmptoken, 100, "&");
-	if (!err) {
+	err = get_http_param(pd, P_UNLIMITED, "login", tmptoken, 100, "&");
+	if (err == PARAM_SUCCESS) {
 		conf->auth = auth_conf(conf, (unsigned char*)tmptoken, strlen(tmptoken));
 		memset(tmptoken, 0, 20);
 		if(conf->auth)
@@ -227,16 +227,16 @@ static void do_admin_pass_mode(blog_t * conf, array * co, array * pd,
 
 // TODO streamline
 	/* parse query string */
-	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "login", conf->qry.ts,
+	err = get_http_param(qs, MAX_KEY_LENGTH_STR + 4, "login", conf->qry.ts,
 		MAX_KEY_LENGTH_STR, "&");
-	if (err == -2) {
+	if (err == RET_NO_VALUE) {
 		conf->qry.type = QRY_NONE;
 		conf->qry.action = QA_LOGIN;
 	}
 
-	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "logout", conf->qry.ts,
+	err = get_http_param(qs, MAX_KEY_LENGTH_STR + 4, "logout", conf->qry.ts,
 		MAX_KEY_LENGTH_STR, "&");
-	if (err == -2) {
+	if (err == RET_NO_VALUE) {
 		conf->qry.action = QA_LOGOUT;
 		conf->auth = 0;
 	}
@@ -255,32 +255,32 @@ static void do_admin_mode(blog_t * conf, array * co, array * pd, array * qs)
 	char tmp[4];
 	char *parg;
 
-	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "del", conf->qry.ts,
+	err = get_http_param(qs, MAX_KEY_LENGTH_STR + 4, "del", conf->qry.ts,
 		MAX_KEY_LENGTH_STR, "&");
-	if (!err) {
+	if (err == PARAM_SUCCESS) {
 		conf->qry.action = QA_DELETE;
 		conf->qry.type = QRY_NONE;
 	}
 
-	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "add", NULL,
-		MAX_KEY_LENGTH_STR, "&");
-	if (err == -2){
+	err = get_http_param(qs, MAX_KEY_LENGTH_STR + 4, "add", NULL,
+			P_NO_VALUE, "&");
+	if (err == RET_NO_VALUE){
 		conf->qry.action = QA_ADD;
 		conf->qry.type = QRY_NONE;
 	}
 
 #ifdef WANT_CGI_CONFIG
-	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "config", NULL,
-		MAX_KEY_LENGTH_STR, "&");
-	if (err == -2){
+	err = get_http_param(qs, MAX_KEY_LENGTH_STR + 4, "config", NULL,
+			P_NO_VALUE, "&");
+	if (err == RET_NO_VALUE){
 		conf->qry.action = QA_CONFIG;
 		conf->qry.type = QRY_NONE;
 	}
 #endif
 
-	err = get_param_char(qs, MAX_KEY_LENGTH_STR + 4, "mod", conf->qry.ts,
-		MAX_KEY_LENGTH_STR, "&");
-	if (!err) {
+	err = get_http_param(qs, MAX_KEY_LENGTH_STR + 4, "mod", conf->qry.ts,
+			MAX_KEY_LENGTH_STR, "&");
+	if (err == PARAM_SUCCESS) {
 		conf->qry.type = QRY_NONE;
 		conf->qry.action = QA_MODIFY;
 	}
@@ -289,9 +289,9 @@ static void do_admin_mode(blog_t * conf, array * co, array * pd, array * qs)
 	/* TODO REVIEW IF POST DOES NOT WORK */
 	if (array_bytes(pd) < POSTDATA_MAX && array_bytes(pd)) {
 		parg = alloca(array_bytes(pd));
-		if(get_param_char(pd, -1, "input", parg, -1, "&")==0){
+		if(get_http_param(pd, P_UNLIMITED, "input", parg, P_UNLIMITED, "&")==PARAM_SUCCESS){
 
-			if (get_param_char(pd, -1, "action", tmp, 4, "&") == 0) {
+			if (get_http_param(pd, P_UNLIMITED, "action", tmp, 4, "&") == PARAM_SUCCESS) {
 				if (str_equal(tmp, "add"))
 					conf->qry.action = QA_ADD;
 				if (str_equal(tmp, "mod"))
@@ -300,15 +300,15 @@ static void do_admin_mode(blog_t * conf, array * co, array * pd, array * qs)
 			}
 
 			array_cats0(&conf->input, parg);
-			get_param_char(pd, -1, "key", conf->qry.ts, MAX_KEY_LENGTH_STR,
+			get_http_param(pd, P_UNLIMITED, "key", conf->qry.ts, MAX_KEY_LENGTH_STR,
 				"&");
-		}else if (get_param_char(pd, -1, "action", tmp, 7, "&") == 0){
+		}else if (get_http_param(pd, P_UNLIMITED, "action", tmp, 7, "&") == PARAM_SUCCESS){
 			if (str_equal(tmp, "config"))
 				conf->qry.action = QA_CONFIG;
 
-			get_param_char(pd, -1, "title", conf->qry.title, MAX_CONF_STR, "&");
-			get_param_char(pd, -1, "tagline", conf->qry.tagline, MAX_CONF_STR, "&");
-			get_param_char(pd, -1, "input", conf->qry.pass, MAX_CONF_STR, "&");
+			get_http_param(pd, P_UNLIMITED, "title", conf->qry.title, MAX_CONF_STR, "&");
+			get_http_param(pd, P_UNLIMITED, "tagline", conf->qry.tagline, MAX_CONF_STR, "&");
+			get_http_param(pd, P_UNLIMITED, "input", conf->qry.pass, MAX_CONF_STR, "&");
 		}
 	}
 }

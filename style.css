@@ -2,19 +2,6 @@
 a img { border:none; }
 
 body {
-	font-family:Frutiger,"Frutiger Linotype",
-		Univers,Calibri,
-		"Gill Sans","Gill Sans MT",
-				"Myriad Pro",Myriad,
-					"DejaVu Sans Condensed",
-					"Liberation Sans",
-					"Nimbus Sans L",
-					Tahoma,Geneva,
-					"Helvetica Neue",
-					Helvetica,
-					Arial,
-					sans-serif;
-	font-size: 14px;
 	line-height: 16px;
 	color: #666;
 }
@@ -37,7 +24,11 @@ h1, h1 a:link, h1 a:visited, h1 a:active, h1 a:active {
 
 .day ul{
 	margin-left: 20px;
-	list-style-image:url("http://img.bockcay.de/star.gif");
+	list-style-image:url("star.gif");
+}
+
+.day li{
+	margin-bottom: 3px;
 }
 
 #tagline {
@@ -80,6 +71,11 @@ h1, h1 a:link, h1 a:visited, h1 a:active, h1 a:active {
 	color: #3f3f41;
 	text-decoration: none;
 	font-style:italic;
+}
+
+textarea {
+	width:400px;
+	height:200px;
 }
 
 a:hover {

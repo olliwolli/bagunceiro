@@ -12,9 +12,11 @@
 
 #include "z_cdb.h"
 #include "z_entry.h"
+#include "z_day_entry.h"
 #include "z_time.h"
 #include "z_blog.h"
 #include "z_features.h"
+#include "z_conf.h"
 #include "z_format.h"
 
 /* Parses query and fetches data from database */
@@ -156,6 +158,12 @@ int handle_query(blog_t * conf)
 		break;
 	default:;
 	}
+
+#endif
+
+#ifdef ADMIN_MODE_PASS
+	if(conf->authtype == AUTH_POST && !conf->auth)
+		set_err("Wrong password", 0, N_ERROR);
 #endif
 
 	switch (conf->qry.action) {
@@ -191,6 +199,7 @@ int handle_query(blog_t * conf)
 			array_cats0(&n.e, conf->input.p);
 			add_entry_now(conf->db, &n);
 			err = fetch_entries_days(conf, &blog);
+			conf->qry.action = QA_SHOW;
 			print_show(&blog, conf);
 		}
 		break;
@@ -226,6 +235,7 @@ int handle_query(blog_t * conf)
 			modify_entry(conf->db, &n);
 
 			err = fetch_entries_days(conf, &blog);
+			conf->qry.action = QA_SHOW;
 			print_show(&blog, conf);
 		}
 		break;

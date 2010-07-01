@@ -1,55 +1,42 @@
 #include <array.h>
 #include <str.h>
+#include <alloca.h>
 #include <textcode.h>
 #include "z_blog.h"
 #include "z_format.h"
 #include "z_entry.h"
+#include "z_day_entry.h"
 #include "z_features.h"
 #include "z_time.h"
+#include "z_html5.h"
+#include "z_http.h"
+#include "z_rss.h"
 
 #ifdef ADMIN_MODE_PASS
 #include <stdlib.h>
 #endif
 
-#define CONTENT_TYPE_HTML "Content-type: text/html; charset=UTF-8\r\n\r\n"
-#define DOCTYPE "<!doctype html>\n"
-
-/* helper */
-static int divstack;
-
-static inline void startdiv(char *type, char *name)
-{
-	sprintm("<div ", type, "=\"", name, "\">\n");
-	divstack++;
-}
-
-static inline void enddiv()
-{
-	sprint("</div>");
-	divstack--;
-}
-
-static inline void closedivs()
-{
-	while (divstack-- > 0)
-		sprint("</div>\n");
-}
-
 /* Formatting of the output */
 
-/* GENERAL */
-static void print_key_plain(struct nentry *e)
+/* needs FMT_TAIA_HEX */
+static void fmt_key_plain(struct nentry *e, char * fmt)
 {
-	char buf[FMT_TAIA_HEX];
-	fmt_time_hex(buf, &e->k);
-	reduce_ts(buf);
-	sprint(buf);
+	fmt_time_hex(fmt, &e->k);
+	reduce_ts(fmt);
 }
 
-static void print_perma_link(const blog_t * conf, struct nentry *e)
+/* max 256 */
+static void fmt_perma_link(const blog_t * conf, struct nentry *e, char * fmt)
 {
-	sprintm("http://", conf->host, "?ts=");
-	print_key_plain(e);
+	char k[FMT_TAIA_HEX];
+	fmt[0] = 0;
+
+	fmt_key_plain(e, k);
+
+	strcat(fmt, PROTO_HTTP);
+	strcat(fmt, conf->host);
+	strcat(fmt,"?ts=");
+	strcat(fmt, k);
 }
 
 /* HTML */
@@ -59,22 +46,25 @@ static void print_key_html(const blog_t * conf, struct nentry *e)
 	fmt_time_hex(buf, &e->k);
 	reduce_ts(buf);
 
-	startdiv("class", "actions");
+	html_div_open("class", "actions");
 
-	sprintm(" <span class=\"k\"><a href=\"" "?ts=",
-		buf, "\">link</a></span> ");
+	html_span_open("class", "k");
+	html_link2("?ts=", buf, "link");
+	html_span_end();
 
-#ifdef ADMIN_MODE
+#ifdef ADMIN_MODE_PASS
 	if (conf->auth) {
-		sprintm(" <span class=\"k\"><a href=\"" "?del=",
-			buf, "\">delete</a></span> ");
+		html_span_open("class", "k");
+		html_link2("?del=", buf, "delete");
+		html_span_end();
 
-		sprintm(" <span class=\"k\"><a href=\"" "?mod=",
-			buf, "\">modify</a></span> ");
+		html_span_open("class", "k");
+		html_link2("?mod=", buf, "modify");
+		html_span_end();
 	}
 #endif
 
-	enddiv();
+	html_div_end();
 }
 
 #if defined(ADMIN_MODE) && defined(WANT_TINY_HTML_EDITOR)
@@ -114,7 +104,7 @@ static void print_date_html(struct day_entry *e)
 	size_t dlen;
 	dlen = caldate_fmtn(dfmt, &e->time.date);
 	dfmt[dlen] = '\0';
-	sprintm("<h3>", dfmt, "</h3>\n");
+	html_tag_open_close("h3", html_content, dfmt);
 }
 
 #ifdef WANT_ERROR_PRINT
@@ -122,21 +112,21 @@ static void print_notice_html(const blog_t * conf)
 {
 	switch (gerr.type) {
 	case N_ERROR:
-		startdiv("id", "error");
-		sprintm("Error: ", gerr.note, " ");
+		html_div_open("id", "error");
+		html_content_m("Error: ", gerr.note, " ");
 //              "<div id=\"body\">", strerror(gerr.error), "</div>",
-		sprint("Sys error");
-		enddiv();
+		html_content("Sys error");
+		html_div_end();
 		break;
 	case N_NOTE:
-		startdiv("id", "note");
-		sprintm("Note: ", gerr.note);
-		enddiv();
+		html_div_open("id", "note");
+		html_content_m("Note: ", gerr.note);
+		html_div_end();
 		break;
 	case N_ACTION:
-		startdiv("id", "note");
-		sprint(gerr.note);
-		enddiv();
+		html_div_open("id", "note");
+		html_content(gerr.note);
+		html_div_end();
 		break;
 	default:
 		return;
@@ -148,111 +138,93 @@ static void print_notice_html(const blog_t * conf)
 }
 #endif
 
-static void set_cookie(const char * k, const char * v, const char * o)
-{
-	sprintm("Set-Cookie: ",k ,"=");
-	sprint(v);
-	sprintm(";", o, "\n");
-}
-
-static void set_stylesheet(const char * s)
-{
-	sprintm("<link rel=stylesheet type=\"text/css\" href=\"");
-	if(s[0] != '/')
-		sprint("/");
-	sprintm(s, "\" >\n");
-}
-
 
 
 static void print_header_html(const blog_t * conf)
 {
-
 	/* set a cookie */
 	if(conf->csstype == CSS_SELECT)
-		set_cookie("css", conf->css, "");
+		http_set_cookie("css", conf->css, "");
 	if(conf->csstype == CSS_RESET)
-		set_cookie("css", "", "");
+		http_set_cookie("css", "", "");
 
 #ifdef ADMIN_MODE_PASS
 	if (conf->qry.action == QA_LOGOUT
-			//TODO uncomment!!!  ||((conf->authtype == AUTH_SID) && !conf->auth)
-			) {
-		set_cookie("sid", "", "");
+				||((conf->authtype == AUTH_SID) && !conf->auth)) {
+		http_set_cookie("sid", "", "");
 	}
 
 	if (conf->authtype == AUTH_POST) {
-		set_cookie("sid", conf->sessionid,"Secure; HttpOnly; Discard; Max-Age="SESSION_STR_VTIME";");
+		http_set_cookie_ssl_age("sid", conf->sessionid, SESSION_STR_VTIME);
 	}
 #endif
 
-	sprintm(CONTENT_TYPE_HTML, DOCTYPE);
-	sprint("<meta http-equiv=\"Content-type\""
-			"content=\"text/html;charset=UTF-8\" />");
-	sprint("<html>" "<head>");
+	html_http_header();
+	html_print_preface();
 
 	/* stylesheet */
 	if (conf->csstype == CSS_SELECT || conf->csstype == CSS_COOKIE)
-		set_stylesheet(conf->css);
+		html_link_css(conf->css);
 	else
-		set_stylesheet(DEFAULT_STYLESHEET);
+		html_link_css(DEFAULT_STYLESHEET);
 
 	/* rss */
-	sprintm("<link rel=\"alternate\" type=\"application/rss+xml\" title=\"",
-		conf->title, " in rss\" href=\"?fmt=rss\">\n");
+	html_link_rss(conf->title, "?fmt=rss");
 
 #if defined(ADMIN_MODE) && defined(WANT_TINY_HTML_EDITOR)
 	if (conf->qry.action == QA_ADD || conf->qry.action == QA_MODIFY) {
-		set_stylesheet(TINY_HTML_PATH"style.css");
-		sprintm("<script type=\"text/javascript\" src=\""
-			TINY_HTML_PATH "packed.js\"></script>\n\n");
+		html_link_css(TINY_HTML_PATH"style.css");
+		html_java_script(TINY_HTML_PATH "packed.js");
 	}
 #endif
 #if defined(ADMIN_MODE) && defined(WANT_UPLOAD)
 	if (conf->qry.action == QA_ADD || conf->qry.action == QA_MODIFY) {
-		sprintm("<script type=\"text/javascript\" src=\"", UPLOAD_JS, "\"></script>");
+		html_java_script(UPLOAD_JS);
 	}
 #endif
 #ifdef ADMIN_MODE_PASS
 	if (!conf->ssl && (conf->auth || conf->qry.action > 0)) {
-		sprintm("<META HTTP-EQUIV=\"Refresh\""
-	      "CONTENT=\"3; URL=https://",conf->host ,"\">");
+		html_meta_refresh(PROTO_HTTPS, conf->host, "3");
 	}
 #endif
-	sprintm("<title>", conf->title, "</title>\n");
+	html_title(conf->title);
+	html_close_head_body("class=\"home blog\">");
 
-	sprintm("</head>\n\n" "<body class=\"home blog\">\n");
-	startdiv("id", "body");
-	startdiv("id", "wrapper");
-	startdiv("id", "wrapper2");
-	sprintm("<h1><a href=\"/\">", conf->title, "</a></h1>\n\n");
-#ifdef ADMIN_MODE
-	sprint("(");
-	startdiv("class", "mactions");
-	if (conf->auth && conf->qry.action != QA_ADD ) {
-		sprintm("<a href=\"", conf->script,
-			"?add\">" "Add entry " "</a>\n");
-	}
+	html_div_open("id", "body");
+	html_div_open("id", "wrapper");
+	html_div_open("id", "wrapper2");
+
+	html_tag_open_close2("h1", html_link, "/", conf->title);
+
 #ifdef ADMIN_MODE_PASS
-	if (conf->auth){
-		sprintm("<a href=\"", conf->script, "?");
-		sprint("logout\">" "Logout");
-		sprint("</a>\n");
+	if(conf->auth){
+
+		html_div_open("class", "mactions");
+		html_content("(");
+		if (conf->qry.action != QA_ADD ) {
+			html_link2(conf->script, "?add", "Add entry");
+		}
+
+#ifdef ADMIN_MODE_PASS
+		html_link2(conf->script, "?logout", "Logout");
+		html_content(")");
+		html_div_end();
 	}
-	enddiv();
-	sprint(")");
 #endif
 #endif
 
 	if(strcmp(conf->tagline, "")){
-		sprintm("<div id=\"tagline\">",conf->tagline ,"</div>");
+		html_div_open("id", "tagline");
+		html_content(conf->tagline);
+		html_div_end();
 	}
-	sprint("<div id=\"content\" class=\"box shadow opacity\">\n\n");
-	divstack++;
+	html_div_open2("id", "content", "class", "box shadow opacity");
+	html_div_inc();
 
 #ifdef ADMIN_MODE_PASS
 	if (!conf->ssl && (conf->auth || conf->qry.action > 0)) {
-		sprintf("Need ssl connetion");
+		html_content("Need ssl connetion");
+		html_close_body();
 		exit(1);
 	}
 #endif
@@ -266,21 +238,23 @@ static void day_entries_html(const blog_t * conf, struct day_entry *de,
 	int i;
 	struct nentry *e;
 
-	startdiv("class", "day");
+	html_div_open("class", "day");
 	print_date_html(de);
-	sprint("<ul>\n");
+	html_tag_open("ul");
 	for (i = 0; i < elen; i++) {
 		e = array_get(&de->es, sizeof(struct nentry), i);
-		sprint(" <li>");
-		array_cat0(&e->e);
+		html_tag_open("li");
 
-		sprintm("<span class=\"c\">", e->e.p, "</span>");
+		array_cat0(&e->e);
+		html_span_open("class", "c");
+		html_content(e->e.p);
+		html_span_end();
 
 		print_key_html(conf, e);
-		sprint("</li>\n");
+		html_tag_close("li");
 	}
-	sprint("</ul>\n");
-	enddiv();
+	html_tag_close("ul");
+	html_div_end();
 }
 
 static void print_footer_html(const blog_t * conf)
@@ -307,28 +281,21 @@ static void print_footer_html(const blog_t * conf)
 	newer[caldate_fmt(newer, &ct.date)] = 0;
 	newer[str_rchr(newer, '-')] = 0;
 
-	startdiv("id", "nav");
-	sprintm("\n <a href=\"?mn=", older, "\">older</a> -");
-	sprintm("- <a href=\"?mn=", nower, "\">whole month</a>\n");
-	sprintm("- <a href=\"?mn=", newer, "\">later</a>\n");
-	enddiv();
-//      sprintmf("<h4>Please Note: ...  </span></h4>"
-	closedivs();
-	sprintf("</body>\n" "</html>\n");
+	html_div_open("id", "nav");
+	html_link2("?mn=", older, "older");
+	html_content(" - ");
+	html_link2("?mn=", nower, "whole month");
+	html_content(" - ");
+	html_link2("?mn=", newer, "later");
+	html_div_end();
+
+	html_div_close_all();
+	html_close_body();
 #endif
 }
 
 #ifdef ADMIN_MODE
 /*  HTML MODE ONLY */
-
-static void print_input(const char * type, const char* name, const char* value){
-	sprintm("<input type=\"", type ,"\" " );
-	if(name)
-		sprintm("name=\"", name, "\" ");
-	if(value)
-		sprintm("value=\"",value,"\" ");
-	sprint(">\n");
-}
 
 int print_config(const blog_t * conf)
 {
@@ -338,22 +305,31 @@ int print_config(const blog_t * conf)
 	set_err("Configuration", 0, N_ACTION);
 	print_notice_html(conf);
 
-	sprintm("<div id=\"conf\">\n"
-		"<form  method=\"post\" action=\"",conf->script,"\">\n");
-	print_input("hidden", "action", "config");
-	sprint("<p>Title: ");
-	print_input("text", "title", conf->title);
-	sprint("</p>");
-	sprint("<p>Tagline: ");
-	print_input("text", "tagline", conf->tagline);
-	sprint("</p>");
-	sprint("<p>Password: ");
-	print_input("password", "input", "");
-	sprint("</p>");
-	sprint("<div class=\"abutton\">\n");
-	print_input("submit", NULL, "Save");
-	sprint("</div>");
-	sprint("</form>\n");
+	html_div_open("id", "conf");
+	html_form_open("post", conf->script, 0 , 0);
+	html_input("hidden", "action", "config");
+
+	html_tag_open("p");
+	html_content("Title: ");
+	html_input("text", "title", conf->title);
+	html_tag_close("p");
+
+	html_tag_open("p");
+	html_content("Tagline: ");
+	html_input("text", "tagline", conf->tagline);
+	html_tag_close("p");
+
+	html_tag_open("p");
+	html_content("Password: ");
+	html_input("password", "input", "");
+	html_tag_close("p");
+
+	html_div_open("class", "abutton");
+	html_input("submit", NULL, "Save");
+	html_div_end();
+
+	html_div_end();
+	html_form_close();
 
 	print_footer_html(conf);
 	return 0;
@@ -362,19 +338,44 @@ int print_config(const blog_t * conf)
 void print_upload(const blog_t * conf)
 {
 #if defined(ADMIN_MODE) && defined(WANT_UPLOAD)
-	if (conf->auth && (conf->qry.action == QA_MODIFY || conf->qry.action ==
+	if (
+#ifdef ADMIN_MODE_PASS
+			conf->auth &&
+#endif
+			(conf->qry.action == QA_MODIFY || conf->qry.action ==
 			QA_ADD)){
-	sprintmf("<div id=\"upload\"><form enctype=\"multipart/form-data\" action=\"",UPLOAD_CGI,"\"\n"
-		"method=\"post\"\n"
-		"onsubmit=\"return AIM.submit(this, {'onStart' : startCallback, 'onComplete' : completeCallback})\">\n"
-		"<div><label>File:</label> <input type=\"file\" name=\"file\" /></div>\n"
-		"<div><input type=\"submit\" value=\"Upload\" /></div>\n"
-	"</form><div id=\"upload_out\"><span id=\"nr\">0</span> Files uploaded</div>\n"
-	"<div>Filename: <pre id=\"r\"></div>"
-	);
+
+	html_div_open("id", "upload");
+
+	html_form_open("post", UPLOAD_CGI,
+			"multipart/form-data",
+			"return AIM.submit(this, {'onStart' : startCallback, 'onComplete' : completeCallback})");
+
+	html_div_open(0, 0);
+	html_tag_open("label");
+	html_content("File:");
+	html_input("file", "file", 0);
+	html_div_end();
+
+	html_div_open(0, 0);
+	html_input("submit", 0, "Upload");
+	html_div_end();
+
+	html_form_close();
+
+	html_div_open("id", "upload_out");
+	html_span_open("id", "nr");
+	html_content("0");
+	html_span_end();
+	html_content("Files uploaded");
+	html_div_end();
+
+	html_div_open(0, 0);
+	html_content("Filename: ");
+	html_bulk("<pre id=\"r\">");
+	html_div_end();
 	}
 #endif
-
 }
 
 int print_add_entry(const blog_t * conf)
@@ -385,57 +386,62 @@ int print_add_entry(const blog_t * conf)
 	set_err("Add a new entry", 0, N_ACTION);
 	print_notice_html(conf);
 
-	sprintm("<div id=\"mod\">\n"
-		"<form  onsubmit='editor.post();' method=\"post\" action=\"",
-		conf->script,
-		"\">\n");
-	print_input("hidden", "action", "add");
-	sprint("<textarea name=\"input\" id=\"input\" style=\"width:400px; height:200px\"></textarea>\n");
-	sprint("");
-	sprint("<div class=\"abutton\">\n");
-	print_input("submit", NULL, "Add");
-	sprint("</div>");
-	sprint("</form>\n");
+	html_div_open("id", "mod");
+	html_form_open("post", conf->script, 0, "editor.post();");
+	html_input("hidden", "action", "add");
+
+	html_textarea_open("input", "input");
+	html_textarea_close();
+
+	html_div_open("class", "abutton");
+	html_input("submit", NULL, "Add");
+	html_div_end();
+
+	html_form_close();
 
 	print_tiny_html_editor();
 	print_upload(conf);
-	sprint("</div>");
+	html_div_end();
+
 	print_footer_html(conf);
 	return 0;
 }
 int print_mod_entry(const blog_t * conf, struct nentry *n)
 {
+	char key[FMT_TAIA_HEX];
+
+	fmt_key_plain(n, key);
+
 	print_header_html(conf);
 
 	/* set appropriate notice */
 	set_err("Modify an entry", 0, N_ACTION);
 	print_notice_html(conf);
 
-	sprintm("<div id=\"mod\">\n"
-		"<form  onsubmit='editor.post();' method=\"post\" action=\"",
-		conf->script, "\">\n",
-		"<input type=\"hidden\" name=\"action\" value=\"mod\">\n"
-		"<input type=\"hidden\" name=\"key\" value=\"");
+	html_div_open("id", "mod");
+	html_form_open("post", conf->script, 0, "editor.post();");
 
-	print_key_plain(n);
-	sprint("\">\n");
+	html_input("hidden", "action", "mod");
+	html_input("hidden", "key", key);
 
-	sprint("<textarea name=\"input\" id=\"input\" style=\"width:400px; height:200px\">");
+	html_textarea_open("input", "input");
 	if (n->e.p)
-		sprint(n->e.p);
+		html_content(n->e.p);
 	else
-		sprint("Entry not found");
-	sprint("</textarea>\n");
+		html_content("Entry not found");
+	html_textarea_close();
 
 	print_tiny_html_editor();
 
-	sprint("<div class=\"abutton\">");
-	sprintm("<input type=\"submit\" value=\"Modify\">");
-	sprint("</div>");
-	sprint(	"</form>\n");
+	html_div_open("class", "abutton");
+	html_input("submit", 0, "Modify");
+	html_div_end();
+
+	html_form_close();
 
 	print_upload(conf);
-	sprint("</div>");
+	html_div_end();
+
 	print_footer_html(conf);
 	return 0;
 }
@@ -448,78 +454,35 @@ void print_login(const blog_t * conf)
 	set_err("Login", 0, N_ACTION);
 	print_notice_html(conf);
 
-	sprintm("<div id=\"login\">"
-		"<form  method=\"post\" action=\"", conf->script, "\">\n",
-		"Enter your password: <input name=\"login\" type=\"password\" size=\"12\" maxlength=\"12\">\n");
+	html_div_open("id", "login");
 
-	sprintm("<input type=\"submit\" value=\"Login\">" "</form></div>");
+	html_form_open("post", conf->script, 0 ,0 );
+	html_content("Enter your password: ");
+	html_bulk("<input name=\"login\" type=\"password\" size=\"12\" maxlength=\"12\">\n");
+
+	html_input("submit", 0, "Login");
+	html_form_close();
+	html_div_end();
 
 	print_footer_html(conf);
 }
 
 #endif
 /* RSS */
+
 /*  static void print_date_rss(struct day_entry *de)
 {
 	//TODO
 }*/
-
-#define CONTENT_TYPE_RSS "Content-type: application/rss+xml; charset=UTF-8\r\n" "\r\n"
-static void print_header_rss(const blog_t * conf)
+static inline void print_header_rss(const blog_t * conf)
 {
-	sprintm(CONTENT_TYPE_RSS
-		"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
-		"<rss version=\"2.0\">\n"
-		"<channel>\n",
-		"<title>",
-		conf->title,
-		"</title>\n"
-		"<link>http://",
-		conf->host,
-		"</link>\n"
-		"<description>",
-		conf->title,
-		"</description>\n"
-		"<docs>http://blogs.law.harvard.edu/tech/rss</docs>\n"
-		"<generator>", PROGRAM_NAME, "</generator>\n\n");
-
+	rss_http_header();
+	rss_print_preface(conf->title, PROTO_HTTP, conf->host, conf->title, PROGRAM_NAME);
 }
 
-static inline void print_wo_tags(char *s, size_t n)
-{
-	int tagopen, andopen;
-	int i, l, ws;
 
-	tagopen = 0;
-	andopen = 0;
-	ws = 0;
+/* needs at most strlen(s) + 1 */
 
-	/* remove html artifacts */
-	/* FIXME rss also does not like spaces at the end of an entry */
-	for (l = i = 0; i < n && s[l] != '\0'; l++) {
-		if (s[l] == '<')
-			tagopen++;
-		else if (s[l] == '>' && tagopen)
-			tagopen = 0;
-		else if (s[l] == '&')
-			andopen = 1;
-		else if (s[l] == ';' && andopen)
-			andopen = 0;
-		else if (tagopen == 0 && andopen == 0) {
-			if ((s[l] == '\n' || s[l] == '\r' || s[l] == ' ')) {
-				if (!ws) {
-					sprintn(" ", 1);
-					ws = 1;
-				}
-			} else {
-				sprintn(&s[l], 1);
-				ws = 0;
-			}
-			i++;
-		}
-	}
-
-}
 
 static void day_entries_rss(const blog_t * conf, struct day_entry *de,
 	size_t elen)
@@ -527,28 +490,23 @@ static void day_entries_rss(const blog_t * conf, struct day_entry *de,
 	int i;
 	struct nentry *e;
 
+	char lnk[256] = "";
+	char * cnt;
+
 	for (i = 0; i < elen; i++) {
 		e = array_get(&de->es, sizeof(struct nentry), i);
-		sprintm("<item>\n" "<title>");
-		print_wo_tags(e->e.p, -1);
-		sprintm("</title>\n" "<link>");
-		print_perma_link(conf, e);
+		cnt = alloca(array_bytes(&e->e));
 
-		sprintm("</link>\n" "<description><![CDATA[",
-			e->e.p, "]]></description>\n");
-		//      sprint("<pubDate>");
-		//      print_date_rss(de);
-		//      sprintm("</pubDate>\n"
-		sprint("<guid>");
-		print_perma_link(conf, e);
-		sprintm("</guid>\n" "</item>\n\n");
+		fmt_perma_link(conf, e, lnk);
+		http_remove_tags(e->e.p, -1, cnt);
+
+		rss_item(cnt, lnk, e->e.p);
 	}
 }
 
 static void print_footer_rss(const blog_t * conf)
 {
-//      sprintm("<atom:link href=\"http://",conf->host,"?fmt=rss\" rel=\"self\" type=\"application/rss+xml\" />");
-	sprint("\n</channel></rss>");
+	rss_close_rss();
 }
 
 /* GENERIC PRESENTATION */
@@ -580,7 +538,7 @@ void print_show(array * blog, blog_t * conf)
 		conf->fmt = &fmt__rss;
 		break;
 	default:
-		sprint("Status: 404 Bad Request\r\n\r\n");
+		http_not_found();
 		return;
 	}
 
@@ -594,8 +552,11 @@ void print_show(array * blog, blog_t * conf)
 		elen = array_length(&de->es, sizeof(struct nentry));
 		conf->fmt->day_entries(conf, de, elen);
 	}
+	/* todo make generic */
 	if (i == 0) {
-		sprint("<div class=\"day\"><h3>No entries found</h3></div>");
+		html_div_open("class", "day");
+		html_tag_open_close("h3", html_content, "No entries found");
+		html_div_end();
 	}
 
 	if (conf->fmt->footer)

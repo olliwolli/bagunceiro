@@ -3,11 +3,15 @@
 
 #include <buffer.h>
 #include <fmt.h>
+#include <str.h>
 #include <errno.h>
 
 #define POSTDATA_MAX		1024 * 64
 #define QUERY_MAX		128
 #define COOKIE_MAX		128
+
+
+#define ADMIN_MODE
 
 #define PROGRAM_NAME		"BACALHAU"
 
@@ -35,7 +39,12 @@
 #define REDUCE_OFFSET (24 - REDUCE_SIZE)
 #endif
 
+
+
+#undef NO_ADMIN_MODE
 #ifdef ADMIN_MODE
+
+
 #define WANT_CGI_CONFIG
 #endif
 /* Admin mode includes functions to change the database.
@@ -52,6 +61,10 @@
  * */
 //#define ADMIN_MODE_PASS
 
+#ifdef ADMIN_MODE_PASS
+#define WANT_ERROR_PRINT
+#endif
+
 /* Define this macro if you want to use the tiny html editor;
  * It has to be downloaded seperately from:
  * http://www.leigeber.com/2010/02/javascript-wysiwyg-editor/
@@ -63,8 +76,10 @@
 
 
 #define WANT_UPLOAD
+
 #define UPLOAD_JS "/upload.js"
 #define UPLOAD_CGI "/upload.pl"
+
 /* define in order to be able to browse months on the blog */
 #define WANT_MONTH_BROWSING
 
@@ -82,7 +97,7 @@
 //#define DEBUG_ENTRY
 
 /* activate and set for input simulation */
-//#define DEBUG_PARSE_QUERY "config"
+//#define DEBUG_PARSE_QUERY "login"
 //#define DEBUG_PARSE_POST "action=config&title=Your+new+blog2&tagline=Your+tagline&input="
 //#define DEBUG_PARSE_COOKIE "sid=0a9b12e19184457041466032126e4655"
 
@@ -135,7 +150,7 @@ struct errors {
 
 static inline void set_err(char *msg, int num, enum notice type)
 {
-	str_copy(gerr.note, msg);
+	strcpy(gerr.note, msg);
 	gerr.error = num;
 	gerr.type = type;
 }

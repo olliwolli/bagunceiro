@@ -7,3 +7,4 @@ void add_session_id(char *buf);
 int validate_session_id(char *buf);
 
 int load_config(blog_t * conf);
+int save_config(blog_t * conf);
