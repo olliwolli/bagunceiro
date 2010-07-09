@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 
 #include <open.h>
@@ -6,84 +7,99 @@
 #include <str.h>
 #include <taia.h>
 #include <array.h>
+#include <textcode.h>
 
-#include "z_cdb.h"
 #include "z_entry.h"
 #include "z_time.h"
 #include "z_features.h"
 
-struct nentry *new_nentry(void)
+int fmt_day_idx(array * fmt, struct taia *l)
 {
-	struct nentry *n;
-	n = malloc(sizeof(struct nentry));
-	memset(&n->e, 0, sizeof(array));
-	return n;
+	char buf[FMT_TAIA_STR];
+	int len;
+
+	len = fmt_time_str(buf, l);
+
+	array_catb(fmt, buf, len);
+	array_cats(fmt, "@");
+
+	return 0;
 }
 
-void free_nentry(struct nentry *n)
+int show_entry(struct cdbb *a, struct taia *k, struct nentry *n)
 {
-	array_reset(&n->e);
-	free(n);
+	int err;
+	char pac[TAIA_PACK];
+	taia_pack(pac, k);
+	err = cdbb_read_nentry(a, pac, TAIA_PACK, n);
+
+	return err;
 }
-
-//void trimright(char *s)
-//{
-//  char *end;
-//
-//  end = s + strlen(s) - 1;
-//  while(end > s && isspace(*end)) end--;
-//  *(end+1) = 0;
-//}
-
 
 #ifdef ADMIN_MODE
-int add_entry(const char *dbpath, struct nentry *entry)
+void blog_modified(struct cdbb *a)
 {
-	int err;
 	char pk[TAIA_PACK];
+	struct taia t;
 
-	taia_pack(pk, &entry->k);
-	err = cdb_add_idx(dbpath, pk, TAIA_PACK, entry->e.p,
-		array_bytes(&entry->e));
-	array_cat0(&entry->e);
-
-	return err;
+	taia_now(&t);
+	taia_pack(pk, &t);
+	cdbb_rep(a, "!lastmodified", 13, pk,TAIA_PACK);
 }
 
-int add_entry_now(const char *dbpath, struct nentry *entry)
+void add_entry(struct cdbb *a, struct taia *k, char *v, size_t vs)
 {
-	taia_now(&entry->k);
-	return add_entry(dbpath, entry);
+	char pk[TAIA_PACK];
+	array dayidx;
+
+	memset(&dayidx, 0, sizeof(array));
+	fmt_day_idx(&dayidx, k);
+	taia_pack(pk, k);
+
+	/* entry + idx*/
+	cdbb_add(a, pk, TAIA_PACK, v, vs);
+	cdbb_add(a, dayidx.p, array_bytes(&dayidx), pk, TAIA_PACK);
+
+	blog_modified(a);
+	array_reset(&dayidx);
 }
 
-int modify_entry(const char *dbpath, struct nentry *entry)
+void add_entry_now(struct cdbb *a, char *v, size_t vs)
 {
-	int err;
-	char pk[TAIA_PACK];
-	taia_pack(pk, &entry->k);
-
-	err = cdb_mod(dbpath, pk, TAIA_PACK, entry->e.p,
-		array_bytes(&entry->e));
-
-	return err;
+	struct taia k;
+	taia_now(&k);
+	add_entry(a, &k, v, vs);
 }
 
-int delete_entry(const char *dbpath, struct nentry *entry)
+void modify_entry(struct cdbb *a, struct taia *k, char *v, size_t vs)
 {
-	int err;
 	char pk[TAIA_PACK];
+	taia_pack(pk, k);
+	cdbb_mod(a, pk, TAIA_PACK, v, vs);
+	blog_modified(a);
+}
 
-	taia_pack(pk, &entry->k);
-	err = cdb_del_idx(dbpath, pk, TAIA_PACK);
+void delete_entry(struct cdbb *a, struct taia *k)
+{
+	char pk[TAIA_PACK];
+	array dayidx;
 
-	return err;
+	memset(&dayidx, 0, sizeof(array));
+	fmt_day_idx(&dayidx, k);
+
+	taia_pack(pk, k);
+
+	cdbb_del(a, pk, TAIA_PACK);
+	cdbb_del_val(a, dayidx.p, array_bytes(&dayidx), pk, TAIA_PACK);
+	blog_modified(a);
 }
 #endif
 #ifdef ADMIN_MODE
 void entry_dump(const struct nentry *e)
 {
 	char b[FMT_TAIA_HEX];
-	fmt_time_hex(b, &e->k);
+	b[fmt_hexdump(b, e->k.p, TAIA_PACK)]=0;
+
 	sprintmf("Dump: ", b, "->", e->e.p, "\n");
 }
 
@@ -103,15 +119,4 @@ void dump_entries(array * entries)
 	}
 }
 #endif
-
-int _show_entry(struct cdb *result, struct nentry *entry)
-{
-	int err;
-	char pac[TAIA_PACK];
-
-	taia_pack(pac, &entry->k);
-	err = _cdb_get(result, pac, TAIA_PACK, entry);
-
-	return err;
-}
 

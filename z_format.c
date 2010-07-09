@@ -1,11 +1,17 @@
+#include <string.h>
+#include <stdlib.h>
+
+#include <case.h>
 #include <array.h>
 #include <str.h>
 #include <alloca.h>
 #include <textcode.h>
+
 #include "z_blog.h"
+#include "z_conf.h"
 #include "z_format.h"
 #include "z_entry.h"
-#include "z_day_entry.h"
+#include "z_day.h"
 #include "z_features.h"
 #include "z_time.h"
 #include "z_html5.h"
@@ -21,14 +27,23 @@
 /* needs FMT_TAIA_HEX */
 static void fmt_key_plain(struct nentry *e, char * fmt)
 {
-	fmt_time_hex(fmt, &e->k);
+	fmt[fmt_hexdump(fmt, e->k.p, TAIA_PACK)] = 0;
 	reduce_ts(fmt);
 }
 
-/* max 256 */
-static void fmt_perma_link(const blog_t * conf, struct nentry *e, char * fmt)
+/* needs at most FMT_PERMA_STATIC + strlen(conf->host) characters */
+#define FMT_PERMA_STATIC  (1 + FMT_TAIA_HEX + 4 + PROTO_HTTP_LEN)
+static int fmt_perma_link(const blog_t * conf, struct nentry *e, char * fmt)
 {
 	char k[FMT_TAIA_HEX];
+	int ls = strlen(conf->host);
+
+	if(ls >= 256 - FMT_PERMA_STATIC)
+		return 0;
+
+	if(fmt == NULL)
+		return ls + FMT_PERMA_STATIC;
+
 	fmt[0] = 0;
 
 	fmt_key_plain(e, k);
@@ -37,13 +52,14 @@ static void fmt_perma_link(const blog_t * conf, struct nentry *e, char * fmt)
 	strcat(fmt, conf->host);
 	strcat(fmt,"?ts=");
 	strcat(fmt, k);
+	return FMT_PERMA_STATIC + ls;
 }
 
 /* HTML */
 static void print_key_html(const blog_t * conf, struct nentry *e)
 {
 	char buf[FMT_TAIA_HEX];
-	fmt_time_hex(buf, &e->k);
+	buf[fmt_hexdump(buf, e->k.p, TAIA_PACK)] = 0;
 	reduce_ts(buf);
 
 	html_div_open("class", "actions");
@@ -72,25 +88,25 @@ void print_tiny_html_editor()
 {
 	sprintm("<script type=\"text/javascript\">"
 		"new TINY.editor.edit('editor',{"
-		"	id:'input',"
-		"	width:700,"
-		"	height:175,"
-		"	cssclass:'te',"
-		"	controlclass:'tecontrol',"
-		"	rowclass:'teheader',"
-		"	dividerclass:'tedivider',"
-		"	controls:['bold','italic','underline','strikethrough','|','subscript','superscript','|',"
-		"			  'orderedlist','unorderedlist','|','outdent','indent','|','leftalign',"
-		"			  'centeralign','rightalign','blockjustify','|','unformat','|','undo','redo','n',"
-		"			  'font','size','style','|','image','hr','link','unlink','|','cut','copy','paste','print'],"
-		"	footer:true,"
-		"	fonts:['Verdana','Arial','Georgia','Trebuchet MS'],"
-		"	xhtml:true,"
-		"	cssfile:'style.css',"
-		"	bodyid:'editor',"
-		"	footerclass:'tefooter',"
-		"	toggle:{text:'source',activetext:'wysiwyg',cssclass:'toggle'},"
-		"	resize:{cssclass:'resize'}" "});" "</script>");
+		"id:'input',"
+		"width:700,"
+		"height:175,"
+		"cssclass:'te',"
+		"controlclass:'tecontrol',"
+		"rowclass:'teheader',"
+		"dividerclass:'tedivider',"
+		"controls:['bold','italic','underline','strikethrough','|','subscript','superscript','|',"
+		"'orderedlist','unorderedlist','|','outdent','indent','|','leftalign',"
+		"'centeralign','rightalign','blockjustify','|','unformat','|','undo','redo','n',"
+		"'font','size','style','|','image','hr','link','unlink','|','cut','copy','paste','print'],"
+		"footer:true,"
+		"fonts:['Verdana','Arial','Georgia','Trebuchet MS'],"
+		"xhtml:true,"
+		"cssfile:'style.css',"
+		"bodyid:'editor',"
+		"footerclass:'tefooter',"
+		"toggle:{text:'source',activetext:'wysiwyg',cssclass:'toggle'},"
+		"resize:{cssclass:'resize'}" "});" "</script>");
 }
 #else
 void print_tiny_html_editor()
@@ -98,11 +114,11 @@ void print_tiny_html_editor()
 }
 #endif
 
-static void print_date_html(struct day_entry *e)
+static void print_date_html(struct day *e)
 {
-	char dfmt[CALDATE_FMTN];
+	char dfmt[FMT_CALDATE_NAV];
 	size_t dlen;
-	dlen = caldate_fmtn(dfmt, &e->time.date);
+	dlen = fmt_caldate_nav(dfmt, &e->time.date);
 	dfmt[dlen] = '\0';
 	html_tag_open_close("h3", html_content, dfmt);
 }
@@ -138,14 +154,12 @@ static void print_notice_html(const blog_t * conf)
 }
 #endif
 
-
-
-static void print_header_html(const blog_t * conf)
+static int print_header_html(const blog_t * conf)
 {
 	/* set a cookie */
-	if(conf->csstype == CSS_SELECT)
-		http_set_cookie("css", conf->css, "");
-	if(conf->csstype == CSS_RESET)
+	if(conf->qry.csstype == CSS_SELECT)
+		http_set_cookie("css", conf->qry.css, "");
+	if(conf->qry.csstype == CSS_RESET)
 		http_set_cookie("css", "", "");
 
 #ifdef ADMIN_MODE_PASS
@@ -155,7 +169,7 @@ static void print_header_html(const blog_t * conf)
 	}
 
 	if (conf->authtype == AUTH_POST) {
-		http_set_cookie_ssl_age("sid", conf->sessionid, SESSION_STR_VTIME);
+		http_set_cookie_ssl_age("sid", conf->sid, SESSION_STR_VTIME);
 	}
 #endif
 
@@ -163,8 +177,8 @@ static void print_header_html(const blog_t * conf)
 	html_print_preface();
 
 	/* stylesheet */
-	if (conf->csstype == CSS_SELECT || conf->csstype == CSS_COOKIE)
-		html_link_css(conf->css);
+	if (conf->qry.csstype == CSS_SELECT || conf->qry.csstype == CSS_COOKIE)
+		html_link_css(conf->qry.css);
 	else
 		html_link_css(DEFAULT_STYLESHEET);
 
@@ -183,7 +197,7 @@ static void print_header_html(const blog_t * conf)
 	}
 #endif
 #ifdef ADMIN_MODE_PASS
-	if (!conf->ssl && (conf->auth || conf->qry.action > 0)) {
+	if (conf->ssl == NULL && (conf->auth || conf->qry.action > 0)) {
 		html_meta_refresh(PROTO_HTTPS, conf->host, "3");
 	}
 #endif
@@ -192,47 +206,67 @@ static void print_header_html(const blog_t * conf)
 
 	html_div_open("id", "body");
 	html_div_open("id", "wrapper");
-	html_div_open("id", "wrapper2");
+	html_div_open("id", "header");
+	html_tag_open_close2("h1", html_link, conf->path, conf->title);
 
-	html_tag_open_close2("h1", html_link, "/", conf->title);
+	#ifdef ADMIN_MODE_PASS
+		if(conf->ssl != NULL){
+			html_div_open("class", "mactions");
+			html_content("(");
+			if(conf->auth){
+				if (conf->qry.action != QA_ADD ) {
+					html_link2(conf->script, "?add", "Add entry");
+				}
 
-#ifdef ADMIN_MODE_PASS
-	if(conf->auth){
+				html_link2(conf->script, "?config", "Config");
 
-		html_div_open("class", "mactions");
-		html_content("(");
-		if (conf->qry.action != QA_ADD ) {
-			html_link2(conf->script, "?add", "Add entry");
+	#ifdef ADMIN_MODE_PASS
+				html_link2(conf->script, "?logout", "Logout");
+			}else
+					html_link2(conf->script, "?login", "Login");
+
+			html_content(")");
+			html_div_end();
 		}
+	#endif
+	#endif
 
-#ifdef ADMIN_MODE_PASS
-		html_link2(conf->script, "?logout", "Logout");
-		html_content(")");
-		html_div_end();
-	}
-#endif
-#endif
-
+	html_div_open("id", "hwidgets");
 	if(strcmp(conf->tagline, "")){
 		html_div_open("id", "tagline");
 		html_content(conf->tagline);
 		html_div_end();
 	}
+
+#ifdef WANT_SEARCHING
+	if(conf->sbox == 'y' && conf->path){
+		html_div_open("id", "sbox");
+		html_form_open("get", conf->path, NULL, NULL);
+		html_input("text", "qry", NULL);
+		html_input("submit", NULL, "Search");
+		html_form_close();
+		html_div_end();
+	}
+#endif
+	html_div_end();
+	html_div_end();
+	html_div_open("id", "wrapper2");
 	html_div_open2("id", "content", "class", "box shadow opacity");
 	html_div_inc();
 
 #ifdef ADMIN_MODE_PASS
-	if (!conf->ssl && (conf->auth || conf->qry.action > 0)) {
+	if (conf->ssl == NULL && (conf->auth || conf->qry.action > 0)) {
 		html_content("Need ssl connetion");
 		html_close_body();
-		exit(1);
+		return 1;
 	}
 #endif
 
 	print_notice_html(conf);
+	return 0;
 }
 
-static void day_entries_html(const blog_t * conf, struct day_entry *de,
+static void day_entries_html(const blog_t * conf, struct day *de,
 	size_t elen)
 {
 	int i;
@@ -242,7 +276,7 @@ static void day_entries_html(const blog_t * conf, struct day_entry *de,
 	print_date_html(de);
 	html_tag_open("ul");
 	for (i = 0; i < elen; i++) {
-		e = array_get(&de->es, sizeof(struct nentry), i);
+		e = day_get_nentry(de, i);
 		html_tag_open("li");
 
 		array_cat0(&e->e);
@@ -260,38 +294,53 @@ static void day_entries_html(const blog_t * conf, struct day_entry *de,
 static void print_footer_html(const blog_t * conf)
 {
 #ifdef WANT_MONTH_BROWSING
-	/* TODO optimize */
-	/* print month selection */
-	char older[FMT_CALDATE];
-	char nower[FMT_CALDATE];
-	char newer[FMT_CALDATE];
+	/* print month selection, past, now, future */
+	char p[FMT_CALDATE]= "";
+	char n[FMT_CALDATE]= "";
+	char f[FMT_CALDATE]= "";
 	struct caltime ct;
+
 	memcpy(&ct, &conf->qry.mon, sizeof(struct caltime));
 
-	nower[caldate_fmt(nower, &ct.date)] = 0;
-	nower[str_rchr(nower, '-')] = 0;
+	if(caldate_fmt(0, &ct.date) < FMT_CALDATE){
+		n[caldate_fmt(n, &ct.date)] = 0;
+		n[str_rchr(n, '-')] = 0;
+	}
 
 	ct.date.month--;
 	caldate_normalize(&ct.date);
-	older[caldate_fmt(older, &ct.date)] = 0;
-	older[str_rchr(older, '-')] = 0;
+
+	if(caldate_fmt(0, &ct.date) < FMT_CALDATE){
+		p[caldate_fmt(p, &ct.date)] = 0;
+		p[str_rchr(p, '-')] = 0;
+	}
 
 	ct.date.month += 2;
 	caldate_normalize(&ct.date);
-	newer[caldate_fmt(newer, &ct.date)] = 0;
-	newer[str_rchr(newer, '-')] = 0;
+
+	if(caldate_fmt(0, &ct.date) < FMT_CALDATE){
+		f[caldate_fmt(f, &ct.date)] = 0;
+		f[str_rchr(f, '-')] = 0;
+	}
 
 	html_div_open("id", "nav");
-	html_link2("?mn=", older, "older");
+	html_link2("?mn=", p, "older");
 	html_content(" - ");
-	html_link2("?mn=", nower, "whole month");
+	html_link2("?mn=", n, "whole month");
 	html_content(" - ");
-	html_link2("?mn=", newer, "later");
+	html_link2("?mn=", f, "later");
 	html_div_end();
 
 	html_div_close_all();
 	html_close_body();
 #endif
+}
+
+void print_noentries_html(const blog_t * conf)
+{
+	html_div_open("class", "day");
+	html_tag_open_close("h3", html_content, "No entries found");
+	html_div_end();
 }
 
 #ifdef ADMIN_MODE
@@ -321,8 +370,18 @@ int print_config(const blog_t * conf)
 
 	html_tag_open("p");
 	html_content("Password: ");
-	html_input("password", "input", "");
+	html_input("password", "pass", "");
 	html_tag_close("p");
+
+#ifdef WANT_SEARCHING
+	html_tag_open("p");
+	html_content("Search box: ");
+	if(conf->sbox == 'y')
+		html_checkbox("sbox", "y", 1);
+	else
+		html_checkbox("sbox", "y", 0);
+	html_tag_close("p");
+#endif
 
 	html_div_open("class", "abutton");
 	html_input("submit", NULL, "Save");
@@ -353,7 +412,6 @@ void print_upload(const blog_t * conf)
 
 	html_div_open(0, 0);
 	html_tag_open("label");
-	html_content("File:");
 	html_input("file", "file", 0);
 	html_div_end();
 
@@ -426,7 +484,7 @@ int print_mod_entry(const blog_t * conf, struct nentry *n)
 
 	html_textarea_open("input", "input");
 	if (n->e.p)
-		html_content(n->e.p);
+		html_bulk(n->e.p);
 	else
 		html_content("Entry not found");
 	html_textarea_close();
@@ -449,7 +507,8 @@ int print_mod_entry(const blog_t * conf, struct nentry *n)
 #ifdef ADMIN_MODE_PASS
 void print_login(const blog_t * conf)
 {
-	print_header_html(conf);
+	if(print_header_html(conf))
+		return;
 
 	set_err("Login", 0, N_ACTION);
 	print_notice_html(conf);
@@ -466,41 +525,43 @@ void print_login(const blog_t * conf)
 
 	print_footer_html(conf);
 }
-
 #endif
-/* RSS */
 
-/*  static void print_date_rss(struct day_entry *de)
+/* RSS */
+/* I don't need this feature,
+ * look at http_last_modified() on how to implement this */
+static void fmt_date_rss(const struct nentry *n, char *d)
 {
-	//TODO
-}*/
-static inline void print_header_rss(const blog_t * conf)
+}
+
+static inline int print_header_rss(const blog_t * conf)
 {
 	rss_http_header();
 	rss_print_preface(conf->title, PROTO_HTTP, conf->host, conf->title, PROGRAM_NAME);
+	return 0;
 }
 
-
-/* needs at most strlen(s) + 1 */
-
-
-static void day_entries_rss(const blog_t * conf, struct day_entry *de,
+static void day_entries_rss(const blog_t * conf, struct day *de,
 	size_t elen)
 {
 	int i;
 	struct nentry *e;
 
-	char lnk[256] = "";
+	char lnk[FMT_PERMA_STATIC + strlen(conf->host)];
 	char * cnt;
+	char d[40] = "";
+
+	lnk[0] = '\0';
 
 	for (i = 0; i < elen; i++) {
-		e = array_get(&de->es, sizeof(struct nentry), i);
+		e = array_get(&de->es, sizeof(struct nentry *), i);
 		cnt = alloca(array_bytes(&e->e));
 
 		fmt_perma_link(conf, e, lnk);
 		http_remove_tags(e->e.p, -1, cnt);
 
-		rss_item(cnt, lnk, e->e.p);
+		fmt_date_rss(e, d);
+		rss_item(cnt, lnk, e->e.p, d);
 	}
 }
 
@@ -509,28 +570,52 @@ static void print_footer_rss(const blog_t * conf)
 	rss_close_rss();
 }
 
-/* GENERIC PRESENTATION */
+void print_noentries_rss(const blog_t * conf)
+{
+}
 
 /* STRUCTS */
 struct fmting fmt__html = {
 	.day_entries = day_entries_html,
 	.header = print_header_html,
-	.footer = print_footer_html
+	.footer = print_footer_html,
+	.noentries = print_noentries_html
 };
 
 struct fmting fmt__rss = {
 	.day_entries = day_entries_rss,
 	.header = print_header_rss,
-	.footer = print_footer_rss
+	.footer = print_footer_rss,
+	.noentries = print_noentries_rss
 };
 
-void print_show(array * blog, blog_t * conf)
+/* CHECK MODIFICATION */
+
+
+int print_show(struct result * res, blog_t * conf)
 {
+	int err;
 	size_t blen, elen;
-	day_entry_t *de;
+	struct day *de;
 	int i;
 
-	switch (conf->stype) {
+	/* FIXME 304 with fast cgi is broken for unknown reasons */
+#if defined(WANT_HTTP_304)// && !defined(WANT_FAST_CGI)
+	time_t t;
+
+	/* may exit */
+	if(conf->mod){
+		if((t=http_if_modified_since(conf->mod)) != 0)
+			http_last_modified(t);
+		else{
+			http_not_changed_modified();
+
+			return 304;
+		}
+	}
+#endif
+
+	switch (conf->qry.stype) {
 	case S_HTML:
 		conf->fmt = &fmt__html;
 		break;
@@ -539,26 +624,27 @@ void print_show(array * blog, blog_t * conf)
 		break;
 	default:
 		http_not_found();
-		return;
+		return 404;
 	}
 
-	blen = array_length(blog, sizeof(struct day_entry));
+	blen = result_length(res);
 
-	if (conf->fmt->header)
-		conf->fmt->header(conf);
+	if (conf->fmt->header){
+		err = conf->fmt->header(conf);
+		if(err)
+			return 1;
+	}
 
 	for (i = 0; i < blen; i++) {
-		de = array_get(blog, sizeof(struct day_entry), i);
-		elen = array_length(&de->es, sizeof(struct nentry));
+		de = result_get_day_entry(res, i);
+		elen = day_length(de);
 		conf->fmt->day_entries(conf, de, elen);
 	}
-	/* todo make generic */
-	if (i == 0) {
-		html_div_open("class", "day");
-		html_tag_open_close("h3", html_content, "No entries found");
-		html_div_end();
-	}
+
+	if (i == 0)
+		conf->fmt->noentries(conf);
 
 	if (conf->fmt->footer)
 		conf->fmt->footer(conf);
+	return 0;
 }

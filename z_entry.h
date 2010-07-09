@@ -3,26 +3,18 @@
 
 #include <array.h>
 #include <taia.h>
-
 #include <cdb.h>
+
+#include "z_cdbb.h"
 
 #define MAX_ENTRY_SIZE 32768
 #define MAX_ENTRIES_PER_DAY    128
 
-typedef struct nentry {
-	array e;		/*  entry */
-	struct taia k;		/*  key */
-	char *kp;	/*  key packed */
-} nentry_t;
-
-struct nentry * new_nentry(void);
-
-int modify_entry(const char *dbpath, struct nentry *entry);
-int add_entry_now(const char *dbpath, struct nentry *entry);
-int add_entry(const char *dbpath, struct nentry *entry);
-int delete_entry(const char *dbpath, struct nentry *entry);
-
-int _show_entry(struct cdb * result, struct nentry *entry);
+void add_entry(struct cdbb *a, struct taia *k, char *v, size_t vs);
+void add_entry_now(struct cdbb *a, char *v, size_t vs);
+void modify_entry(struct cdbb *a, struct taia *k, char *v, size_t vs);
+void delete_entry(struct cdbb *a, struct taia *k);
+int show_entry(struct cdbb *a, struct taia *k, struct nentry *n);
 
 int show_file(array * entries, const char *file);
 void dump_entries(array * entries);

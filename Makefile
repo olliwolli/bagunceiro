@@ -1,77 +1,142 @@
-.SUFFIXES: .adm.o .o .c
+# uses dietlibc (default)
+# be sure that libowfat is compiled with the same
+# libc as the one you are using here
+WANT_DIET=yes
+
+# compile fast cgi version
+# increases the binary by about 36kb 
+#WANT_FCGI=yes
+
+# compile with clang instead of gcc
+#WANT_CLANG=yes
+
+# enable debugging
+#DEBUG=yes
+
+# makefile
+.SUFFIXES: .std.o .adm.o .o .c
+
+ifneq ($(WANT_DIET),)
 DIET=/opt/diet
 DIET_INCLUDE=$(DIET)/include
-LIB=lib
 DBIN=$(DIET)/bin/diet
+CFLAGS+=-I$(DIET_INCLUDE)
+LDFLAGS+=-L$(DIET)/lib
+else
+LOWFAT_LIBC_INCLUDE=/opt/libclibowfat
+LOWFAT_LIBC_LIB=/opt/libclibowfat
+CFLAGS+=-I$(LOWFAT_LIBC_INCLUDE)
+LDFLAGS+=-L$(LOWFAT_LIBC_LIB)
+endif
+
+ifneq ($(WANT_CLANG),)
+CC=$(DBIN) clang
+else
 CC=$(DBIN) gcc
+endif
 
 # dynamic and static content in the same path
-INSTALL_DIR=/var/www/dynamic/blog
+INSTALL_DIR=/var/www/blog
 BINDIR=/usr/bin
 DBDIR=$(INSTALL_DIR)/db
 TINYDIR=$(INSTALL_DIR)/tinyeditor
 WEBUSER=www-data
 WEBGRP=www-data
 
-CFLAGS=-Wall -I$(DIET_INCLUDE)
-LDFLAGS=-lowfat -L$(DIET)/$(LIB) -static
+# ok this might look a bit complicated, but rest assured
+# the way to hell was paved with good intentions.
+# if someone has a neat way to do this please mail me.
+# basically we need the same object files with minor
+# adjustments for 3 binaries and do not want to bloat
+# binaries with unneeded stuff. the root of this evil
+# is conditional compilation (ifdefs) in the code
+#
+#                              /       /
+#                           .'<_.-._.'<
+#                          /           \      .^.
+#        ._               |  -+- -+-    |    (_|_)
+#     r- |\                \   /       /      // 
+#   /\ \\  :                \  -=-    /       \\
+#    `. \\.'           ___.__`..;._.-'---...  //
+#      ``\\      __.--"        `;'     __   `-.  
+#        /\\.--""      __.,              ""-.  ".
+#        ;=r    __.---"   | `__    __'   / .'  .'
+#        '=/\\""           \             .'  .'
+#            \\             |  __ __    /   |
+#             \\            |  -- --   //`'`'
+#              \\           |  -- --  ' | //
+#               \\          |    .      |// AsH
+#
+# For example:
+# admin.cgi includes write functionality of z_cdbb.c
+# while blog.cgi does not include this functionality
+# in order to have a smaller binary and strip unneeded
+# functions. This however means that we need to compile 
+# two versions of z_cdbb.o one, with write functions
+# and one without them.
+#
+# Thats what the (pre/suf)fixes ADMIN/adm and STD/std
+# are for.
+
+CFLAGS+=-Wall
+LDFLAGS+=-lowfat
 LDFLAGS_ADMIN=$(LDFLAGS)
 
+# static breaks valgrind leak checking
 ifneq ($(DEBUG),)
-CFLAGS+=-g
+CFLAGS+=-g3 -fomit-frame-pointer
 CFLAGS_ADMIN=$(CFLAGS) -DADMIN_MODE -DADMIN_MODE_PASS -g
 else
 CFLAGS+=-Os -fomit-frame-pointer
-LDFLAGS+=-s 
+LDFLAGS+=-s -static
 CFLAGS_ADMIN=$(CFLAGS) -DADMIN_MODE -DADMIN_MODE_PASS
 endif
 
-TARGETS=blog.cgi blogcmd admin.cgi
+TARGETS=blog.cgi admin.cgi blogcmd
 
-BLOG_O=z_mainblog.o z_blog.o z_entry.o z_time.o z_cdb.o z_format.o z_conf.o z_day_entry.o z_comment.o z_html5.o z_http.o z_rss.o
-BLOGGER_O=z_blogger.adm.o z_time.adm.o z_cdb.adm.o z_entry.adm.o z_day_entry.o z_comment.o z_html5.o z_http.o z_rss.o
 all: $(TARGETS)
 
-HEADERS=z_blog.h z_cdb.h z_conf.h z_entry.h z_features.h z_format.h z_time.h z_day_entry.h z_comment.h z_html5.h z_http.h z_rss.h
-SOURCES=z_blog.c z_cdb.c z_conf.c z_entry.c z_format.c z_mainblog.c z_time.c z_day_entry.c z_comment.c z_html5.c z_http.c z_rss.c
+HEADERS=z_blog.h z_conf.h z_entry.h z_features.h z_format.h z_time.h z_day.h z_html5.h z_http.h z_rss.h z_cdbb.h z_result.h
+SOURCES=z_blog.c z_conf.c z_entry.c z_format.c z_mainblog.c z_time.c z_day.c z_html5.c z_http.c z_rss.c z_cdbb.c z_result.c
 
-
+BLOG_O=$(SOURCES:%.c=%.o)
+BLOG_O_STD=$(SOURCES:%.c=%.std.o)
 BLOG_O_ADM=$(SOURCES:%.c=%.adm.o)
 
-z_mainblog.o: z_blog.c z_blog.h z_time.h z_time.c z_features.h
-z_blog.o: z_blog.c z_blog.h z_cdb.h z_cdb.c z_time.h z_entry.h z_entry.c z_format.c z_format.h z_features.h
-z_blogger.o: z_blogger.c z_blog.h z_blog.c z_cdb.h z_cdb.c z_time.h z_time.c z_entry.h z_entry.c z_features.h
-z_format.o: z_format.h z_format.c z_blog.h z_blog.c z_entry.h z_entry.c z_time.h z_time.c
-z_cdb.o: z_cdb.h z_cdb.c z_entry.h z_entry.c z_features.h
-z_time.o: z_time.h z_time.c z_features.h
-z_entry.o: z_entry.h z_entry.c z_cdb.h z_cdb.c z_entry.h z_entry.c z_time.h z_time.c z_features.h
+CFLAGS_STD:=$(CFLAGS)
+ifneq ($(WANT_FCGI),)
+CFLAGS+=-DWANT_FAST_CGI
+FCGI_O=fcgiapp.o os_unix.o
+BLOG_O+=$(FCGI_O)
+BLOG_O_ADM+=$(FCGI_O)
+endif
+
+.c.std.o : $(HEADERS)
+	$(CC) -c -o $@ $(CFLAGS_STD) $(<:.std.o=.c)
+
+blogcmd: $(BLOG_O_STD)
+	$(CC) -o $@ $^ $(LDFLAGS_ADMIN)
+	#-strip -R .note -R .comment $@
 
 .c.adm.o : $(HEADERS)
 	$(CC) -c -o $@ $(CFLAGS_ADMIN) $(<:.adm.o=.c)
 
-z_blogger.adm.o: z_blogger.c
-	$(CC) -c -o $@ $(CFLAGS_ADMIN) $(<:.adm.o=.c)
-
 _admin: $(BLOG_O_ADM) 
-	$(CC) -o $@ $(BLOG_O_ADM) $(LDFLAGS_ADMIN)
-
-_blog: $(BLOG_O)
-	$(CC) -o $@ $(BLOG_O) $(LDFLAGS)
-
-blog.cgi: _blog
-	cp -p $^ $@
-	-strip -R .note -R .comment $@
+	$(CC) -o $@ $^ $(LDFLAGS_ADMIN)
 	
 admin.cgi: _admin
 	cp -p $^ $@
 	-strip -R .note -R .comment $@
 
-blogcmd: $(BLOGGER_O)
-	$(CC) -o $@ $(BLOGGER_O) $(LDFLAGS)
+_blog: $(BLOG_O)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+blog.cgi: _blog
+	cp -p $^ $@
 	-strip -R .note -R .comment $@
 
 clean:
-	rm -f _* $(TARGETS) *~ *.o cscope.out tags
+	rm -f _* $(TARGETS) css/*~ *~ *.o cscope.out tags
 
 install:
 # create used directories
@@ -81,8 +146,9 @@ install:
 	install -d -o $(WEBUSER) -g $(WEBGRP) $(INSTALL_DIR)/db
 
 # initial database files
-	install -o $(WEBUSER) -g $(WEBGRP) db.init $(INSTALL_DIR)/db/db.inc
-	install -o $(WEBUSER) -g $(WEBGRP) session.init $(INSTALL_DIR)/db/session.inc
+	install -o $(WEBUSER) -g $(WEBGRP) init/db.inc $(INSTALL_DIR)/db/db.inc
+	install -o $(WEBUSER) -g $(WEBGRP) init/session.inc $(INSTALL_DIR)/db/session.inc
+	install -o $(WEBUSER) -g $(WEBGRP) init/conf.inc $(INSTALL_DIR)/db/conf.inc
 	
 # wysiwyg editor
 	install -d $(TINYDIR) $(TINYDIR)/images
@@ -91,8 +157,8 @@ install:
 	install tinyeditor/images/* $(TINYDIR)/images
 
 # upload functionality
-	install upload.pl $(INSTALL_DIR)
-	install upload.js $(INSTALL_DIR)
+	install upload/upload.pl $(INSTALL_DIR)
+	install upload/upload.js $(INSTALL_DIR)
 
 # install cgi scripts
 	install blog.cgi $(INSTALL_DIR)
@@ -102,4 +168,5 @@ install:
 	install blogcmd $(BIN_DIR)
 
 # css stylesheets
-	install *css $(INSTALL_DIR)
+	install css/*css $(INSTALL_DIR)
+	install background.jpg $(INSTALL_DIR)

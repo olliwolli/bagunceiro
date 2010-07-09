@@ -1,9 +1,11 @@
-* indent breaks formatting arguments of print functions;
-makes it kinda hard to read after writing
+TODO list sorted by priority (descending):
 
-  Following types of queries are not supported:
-	- search the blog for a certain string
-	- arbitrary sql like queries
-
-* Create install/configuration cgi script for avoiding
-  the use of blogcmd
+* Rewrite: fastcgi library (already removed a lot of code)
+	but the current implementation uses at least +30kb ;-(
+* Check: malloc return values
+* Feature: post preview
+* Feature: sidebar
+* Features: Trackbacks, Atom
+* Feature: comments
+* Optimize: code size
+* Feature: Worth it? CSS-compability with Wordpress themes

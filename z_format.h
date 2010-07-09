@@ -1,3 +1,5 @@
+#ifndef _Z_FORMAT_H
+#define _Z_FORMAT_H
 /*
  *  format.h
  *
@@ -8,16 +10,18 @@
  *  published by the Free Software Foundation.
  */
 #include "z_entry.h"
-#include "z_day_entry.h"
+#include "z_day.h"
+#include "z_result.h"
 
 typedef struct fmting {
-	void (*day_entries) (const blog_t * conf, struct day_entry * e,
+	void (*day_entries) (const blog_t * conf, struct day * e,
 		size_t elen);
-	void (*header) (const blog_t * conf);
+	int (*header) (const blog_t * conf);
 	void (*footer) (const blog_t * conf);
+	void (*noentries) (const blog_t * conf);
 } fmting_t;
 
-void print_show(array * blog, blog_t * conf);
+int print_show(struct result * blog, blog_t * conf);
 #ifdef ADMIN_MODE
 int print_add_entry(const blog_t * conf);
 int print_mod_entry(const blog_t * conf, struct nentry *n);
@@ -30,3 +34,4 @@ void print_login(const blog_t * conf);
 
 extern struct fmting fmt__html;
 extern struct fmting fmt__rss;
+#endif

@@ -1,0 +1,32 @@
+Here's an example on how to setup lighttpd for fastcgi.
+You should adapt the $HTTP part for your server/domain.
+
+#--------------- FCGI EXAMPLE -----------
+# Deny access to configuration and database files
+url.access-deny            = ( "~", ".inc" )
+
+$HTTP["remoteip"] =~ "127.0.0.1" {
+fastcgi.server =
+	( "/blog" =>
+		("test" => (
+			"check-local" => "disable",
+			"socket" => "/tmp/blog.sock",
+			"bin-path" => "/usr/lib/cgi-bin/clog/blog.cgi",
+			"min-procs" => 1, "max-procs" => 1
+			)
+		)
+	)
+	# needed for upload script
+	cgi.assign = ( ".pl" => "/usr/bin/perl" )
+}
+
+#----------------CFI EXAMPLE ------------
+# Deny access to configuration and database files
+url.access-deny            = ( "~", ".inc" )
+
+$HTTP["host"] =~ "(^|\.)sub\.mydomain\.com.*$" {
+    url.rewrite-once = ( "^/\?(.*)$" => "/blog.cgi/\?$1" , "^/$" => "/blog.cgi/")
+    server.document-root = "/var/www/dynamic/blog"
+
+    cgi.assign = ( "/blog.cgi" => "" , "/admin.cgi" => "", ".pl" => "/usr/bin/perl")
+}

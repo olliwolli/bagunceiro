@@ -4,9 +4,11 @@
 #include <array.h>
 #include <str.h>
 #include <taia.h>
+#include <textcode.h>
 
+#undef WANT_FAST_CGI
 #include "z_features.h"
-#include "z_cdb.h"
+#include "z_cdbb.h"
 #include "z_entry.h"
 #include "z_blog.h"
 #include "z_time.h"
@@ -49,7 +51,9 @@ int main(int argc, char **argv)
 	int err = 0;
 
 	char db[32] = DB_FILE;
-	struct cdb *cdb;
+	struct cdbb a;
+
+	struct taia t;
 
 	char skey[100];
 	static array value;
@@ -101,7 +105,7 @@ int main(int argc, char **argv)
 				sprintf("Key must by 32 hex characters wide\n");
 				exit(2);
 		}else{
-			scan_time_hex(skey, &entry.k);
+			scan_time_hex(skey, &t);
 		}
 
 		if(array_bytes(&value)!=0)
@@ -110,51 +114,55 @@ int main(int argc, char **argv)
 
 	switch(action){
 	case ADD_NOW:
-		err = add_entry_now(db, &entry);
-		entry_dump(&entry);
+		cdbb_start_mod(&a, db);
+		add_entry_now(&a, entry.e.p, array_bytes(&entry.e));
+		err = cdbb_apply(&a);
 		break;
 	case ADD:
+		cdbb_start_mod(&a, db);
 		if(mode == TAIA){
-			err = add_entry(db, &entry);
+			add_entry(&a, &t, entry.e.p, array_bytes(&entry.e));
 			entry_dump(&entry);
-		}else{
-			cdb_add(db, skey, strlen(skey), value.p, strlen(value.p)+1);
-		}
+		}else
+			cdbb_add(&a, skey, strlen(skey), value.p, array_bytes(&value));
+
+		err = cdbb_apply(&a);
 		break;
 	case DEL:
-		if(mode == TAIA){
-			err = delete_entry(db, &entry);
-		}else{
-			err = cdb_del(db, skey, strlen(skey));
-		}
+		cdbb_start_mod(&a, db);
+		if(mode == TAIA)
+			delete_entry(&a, &t);
+		else
+			cdbb_del(&a, skey, strlen(skey));
+		err = cdbb_apply(&a);
 		break;
 	case SHOW:
+		cdbb_open_read(&a, db);
 		if(mode == TAIA){
-			cdb= cdb_open_read(db);
-			err = _show_entry(cdb, &entry);
-			cdb_close(cdb);
-			fmt_time_hex(fmtkey, &entry.k);
+			err= show_entry(&a, &t, &entry);
+			fmtkey[fmt_hexdump(fmtkey, entry.k.p, TAIA_PACK)] = 0;
 			if(err > 0)
 				sprintmf(fmtkey, ":", entry.e.p, "\n");
-			else
-				sprintf("No entry found\n");
 		}else{
-			err = _cdb_get_value(db, skey, strlen(skey), &entry);
+			err = cdbb_read_nentry(&a, skey, strlen(skey), &entry);
 			if( err > 0)
 				sprintmf(skey, ":", entry.e.p, "\n");
-			else
-				sprintf("No entry found\n");
 		}
+		if(err <= 0)
+			sprintf("No entry found\n");
+		cdbb_close_read(&a);
 		break;
 	case MOD:
+		cdbb_start_mod(&a, db);
 		if(mode == TAIA){
-			err = modify_entry(db, &entry);
-			entry_dump(&entry);
+			modify_entry(&a, &t, value.p, array_bytes(&value));
 		}else{
-			cdb_mod(db, skey, strlen(skey), value.p, strlen(value.p)+1);
+			cdbb_mod(&a, skey, strlen(skey), value.p, strlen(value.p)+1);
 		}
+		err = cdbb_apply(&a);
 		break;
 	default:
+
 		print_help();
 		break;
 	}

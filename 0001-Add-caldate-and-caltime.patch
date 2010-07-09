@@ -1,0 +1,1301 @@
+From 5fc15bafb98b16811f050c6f293140f65867acc8 Mon Sep 17 00:00:00 2001
+From: Oliver Ripka <code@bockcay.de>
+Date: Fri, 9 Jul 2010 17:06:21 +0100
+Subject: [PATCH 1/3] Add caldate and caltime
+
+---
+ GNUmakefile         |   13 ++++--
+ cal/caldate.0       |   36 ++++++++++++++++
+ cal/caldate.3       |   54 +++++++++++++++++++++++++
+ cal/caldate_fmjd.c  |   48 ++++++++++++++++++++++
+ cal/caldate_fmt.c   |   25 +++++++++++
+ cal/caldate_mjd.0   |   72 +++++++++++++++++++++++++++++++++
+ cal/caldate_mjd.3   |  111 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ cal/caldate_mjd.c   |   44 ++++++++++++++++++++
+ cal/caldate_norm.c  |    7 +++
+ cal/caldate_scan.c  |   25 +++++++++++
+ cal/caldate_ster.c  |   24 +++++++++++
+ cal/caltime.0       |   44 ++++++++++++++++++++
+ cal/caltime.3       |   82 +++++++++++++++++++++++++++++++++++++
+ cal/caltime_fmt.c   |   45 +++++++++++++++++++++
+ cal/caltime_scan.c  |   40 ++++++++++++++++++
+ cal/caltime_tai.0   |   43 ++++++++++++++++++++
+ cal/caltime_tai.3   |   61 ++++++++++++++++++++++++++++
+ cal/caltime_tai.c   |   25 +++++++++++
+ cal/caltime_utc.c   |   35 ++++++++++++++++
+ cal/leapsecs.c      |   28 +++++++++++++
+ cal/leapsecs_add.c  |   26 ++++++++++++
+ cal/leapsecs_init.c |   11 +++++
+ cal/leapsecs_read.c |   50 +++++++++++++++++++++++
+ cal/leapsecs_sub.c  |   29 +++++++++++++
+ caldate.h           |   19 +++++++++
+ caltime.h           |   20 +++++++++
+ leapsecs.h          |   10 +++++
+ 27 files changed, 1022 insertions(+), 5 deletions(-)
+ create mode 100644 cal/caldate.0
+ create mode 100644 cal/caldate.3
+ create mode 100644 cal/caldate_fmjd.c
+ create mode 100644 cal/caldate_fmt.c
+ create mode 100644 cal/caldate_mjd.0
+ create mode 100644 cal/caldate_mjd.3
+ create mode 100644 cal/caldate_mjd.c
+ create mode 100644 cal/caldate_norm.c
+ create mode 100644 cal/caldate_scan.c
+ create mode 100644 cal/caldate_ster.c
+ create mode 100644 cal/caltime.0
+ create mode 100644 cal/caltime.3
+ create mode 100644 cal/caltime_fmt.c
+ create mode 100644 cal/caltime_scan.c
+ create mode 100644 cal/caltime_tai.0
+ create mode 100644 cal/caltime_tai.3
+ create mode 100644 cal/caltime_tai.c
+ create mode 100644 cal/caltime_utc.c
+ create mode 100644 cal/leapsecs.c
+ create mode 100644 cal/leapsecs_add.c
+ create mode 100644 cal/leapsecs_init.c
+ create mode 100644 cal/leapsecs_read.c
+ create mode 100644 cal/leapsecs_sub.c
+ create mode 100644 caldate.h
+ create mode 100644 caltime.h
+ create mode 100644 leapsecs.h
+
+diff --git a/GNUmakefile b/GNUmakefile
+index da2462f..2f8cd14 100644
+--- a/GNUmakefile
++++ b/GNUmakefile
+@@ -11,9 +11,9 @@ MAN3DIR=${prefix}/man/man3
+ 
+ LIBS=byte.a fmt.a scan.a str.a uint.a open.a stralloc.a unix.a socket.a \
+ buffer.a mmap.a taia.a tai.a dns.a case.a mult.a array.a io.a \
+-textcode.a cdb.a
++textcode.a cdb.a cal.a
+ 
+-all: $(LIBS) libowfat.a libsocket t
++all: $(LIBS) libowfat.a libsocket t 
+ 
+ CROSS=
+ #CROSS=i686-mingw-
+@@ -54,7 +54,7 @@ endif
+ # to build without diet libc support, use $ make DIET=
+ # see http://www.fefe.de/dietlibc/ for details about the diet libc
+ 
+-VPATH=str:byte:fmt:scan:uint:open:stralloc:unix:socket:buffer:mmap:textcode:taia:tai:dns:case:array:mult:io:cdb
++VPATH=str:byte:fmt:scan:uint:open:stralloc:unix:socket:buffer:mmap:textcode:taia:tai:cal:dns:case:array:mult:io:cdb
+ 
+ BYTE_OBJS=$(patsubst byte/%.c,%.o,$(wildcard byte/*.c))
+ FMT_OBJS=$(patsubst fmt/%.c,%.o,$(wildcard fmt/*.c))
+@@ -70,6 +70,7 @@ MMAP_OBJS=$(patsubst mmap/%.c,%.o,$(wildcard mmap/*.c))
+ TEXTCODE_OBJS=$(patsubst textcode/%.c,%.o,$(wildcard textcode/*.c))
+ TAI_OBJS=$(patsubst tai/%.c,%.o,$(wildcard tai/*.c))
+ TAIA_OBJS=$(patsubst taia/%.c,%.o,$(wildcard taia/*.c))
++CAL_OBJS=$(patsubst cal/%.c,%.o,$(wildcard cal/*.c))
+ DNS_OBJS=$(patsubst dns/%.c,%.o,$(wildcard dns/*.c))
+ CASE_OBJS=$(patsubst case/%.c,%.o,$(wildcard case/*.c))
+ ARRAY_OBJS=$(patsubst array/%.c,%.o,$(wildcard array/*.c))
+@@ -89,6 +90,7 @@ $(MMAP_OBJS): mmap.h open.h
+ $(TEXTCODE_OBJS): textcode.h
+ $(TAI_OBJS): tai.h uint64.h
+ $(TAIA_OBJS): taia.h tai.h uint64.h
++$(CAL_OBJS): leapsecs.h caldate.h caltime.h taia.h tai.h uint64.h
+ $(DNS_OBJS): dns.h stralloc.h taia.h tai.h uint64.h iopause.h
+ $(CASE_OBJS): case.h
+ $(ARRAY_OBJS): uint64.h array.h
+@@ -121,6 +123,7 @@ mmap.a: $(MMAP_OBJS)
+ textcode.a: $(TEXTCODE_OBJS)
+ taia.a: $(TAIA_OBJS)
+ tai.a: $(TAI_OBJS)
++cal.a: $(CAL_OBJS)
+ dns.a: $(DNS_OBJS)
+ case.a: $(CASE_OBJS)
+ array.a: $(ARRAY_OBJS)
+@@ -132,7 +135,7 @@ ALL_OBJS=$(DNS_OBJS) $(BYTE_OBJS) $(FMT_OBJS) $(SCAN_OBJS) \
+ $(STR_OBJS) $(UINT_OBJS) $(OPEN_OBJS) $(STRALLOC_OBJS) $(UNIX_OBJS) \
+ $(SOCKET_OBJS) $(BUFFER_OBJS) $(MMAP_OBJS) $(TEXTCODE_OBJS) \
+ $(TAIA_OBJS) $(TAI_OBJS) $(CASE_OBJS) $(ARRAY_OBJS) $(MULT_OBJS) \
+-$(IO_OBJS) $(CDB_OBJS)
++$(IO_OBJS) $(CDB_OBJS) $(CAL_OBJS)
+ 
+ libowfat.a: $(ALL_OBJS)
+ 	$(CROSS)ar cr $@ $(ALL_OBJS)
+@@ -164,7 +167,7 @@ libepoll havesigio.h havebsdsf.h havesendfile.h havescope.h havedevpoll.h \
+ dep libsocket havealloca.h
+ 
+ INCLUDES=buffer.h byte.h fmt.h ip4.h ip6.h mmap.h scan.h socket.h str.h stralloc.h \
+-uint16.h uint32.h uint64.h open.h textcode.h tai.h taia.h dns.h iopause.h case.h \
++uint16.h uint32.h uint64.h open.h textcode.h caldate.h caltime.h leapsecs.h tai.h taia.h dns.h iopause.h case.h \
+ openreadclose.h readclose.h ndelay.h array.h io.h safemult.h iob.h havealloca.h \
+ errmsg.h cdb.h cdb_make.h rangecheck.h iarray.h
+ 
+diff --git a/cal/caldate.0 b/cal/caldate.0
+new file mode 100644
+index 0000000..5477efa
+--- /dev/null
++++ b/cal/caldate.0
+@@ -0,0 +1,36 @@
++caldate(3)                                                          caldate(3)
++
++
++
++NNAAMMEE
++       caldate - calendar dates
++
++SSYYNNTTAAXX
++       ##iinncclluuddee <<ccaallddaattee..hh>>
++
++       unsigned int ccaallddaattee__ffmmtt(_s,&_c_d);
++       unsigned int ccaallddaattee__ssccaann(_s,&_c_d);
++
++       struct caldate _c_d;
++       char *_s;
++
++DDEESSCCRRIIPPTTIIOONN
++       A  ssttrruucctt  ccaallddaattee  value is a calendar date.  It has three components:
++       yyeeaarr, mmoonntthh (1...12), and ddaayy (1...31).
++
++       ccaallddaattee__ffmmtt prints _c_d in ISO style (yyyy-mm-dd) into the character buf‐
++       fer  _s, without a terminating NUL.  It returns the number of characters
++       printed.  _s may be zero; then ccaallddaattee__ffmmtt returns the number of charac‐
++       ters that would have been printed.
++
++       ccaallddaattee__ssccaann  reads  a calendar date in ISO style from the beginning of
++       the character buffer _s and puts it into _c_d.  It returns the  number  of
++       characters  read.   If  _s  does  not start with an ISO-style date, ccaall‐‐
++       ddaattee__ssccaann returns 0.
++
++SSEEEE AALLSSOO
++       caldate_mjd(3), caltime(3)
++
++
++
++                                                                    caldate(3)
+diff --git a/cal/caldate.3 b/cal/caldate.3
+new file mode 100644
+index 0000000..4377376
+--- /dev/null
++++ b/cal/caldate.3
+@@ -0,0 +1,54 @@
++.TH caldate 3
++.SH NAME
++caldate \- calendar dates
++.SH SYNTAX
++.B #include <caldate.h>
++
++unsigned int \fBcaldate_fmt\fP(\fIs\fR,&\fIcd\fR);
++.br
++unsigned int \fBcaldate_scan\fP(\fIs\fR,&\fIcd\fR);
++
++struct caldate \fIcd\fR;
++.br
++char *\fIs\fR;
++.SH DESCRIPTION
++A
++.B struct caldate
++value is a calendar date.
++It has three components:
++.BR year ,
++.B month
++(1...12),
++and
++.B day
++(1...31).
++
++.B caldate_fmt
++prints
++.I cd
++in ISO style (yyyy-mm-dd)
++into the character buffer
++.IR s ,
++without a terminating NUL.
++It returns the number of characters printed.
++.I s
++may be zero;
++then
++.B caldate_fmt
++returns the number of characters that would have been printed.
++
++.B caldate_scan
++reads a calendar date in ISO style
++from the beginning of the character buffer
++.I s
++and puts it into
++.IR cd .
++It returns the number of characters read.
++If
++.I s
++does not start with an ISO-style date,
++.B caldate_scan
++returns 0.
++.SH "SEE ALSO"
++caldate_mjd(3),
++caltime(3)
+diff --git a/cal/caldate_fmjd.c b/cal/caldate_fmjd.c
+new file mode 100644
+index 0000000..05ff32f
+--- /dev/null
++++ b/cal/caldate_fmjd.c
+@@ -0,0 +1,48 @@
++#include "caldate.h"
++
++void caldate_frommjd(cd,day,pwday,pyday)
++struct caldate *cd;
++long day;
++int *pwday;
++int *pyday;
++{
++  long year;
++  long month;
++  int yday;
++
++  year = day / 146097L;
++  day %= 146097L;
++  day += 678881L;
++  while (day >= 146097L) { day -= 146097L; ++year; }
++
++  /* year * 146097 + day - 678881 is MJD; 0 <= day < 146097 */
++  /* 2000-03-01, MJD 51604, is year 5, day 0 */
++
++  if (pwday) *pwday = (day + 3) % 7;
++
++  year *= 4;
++  if (day == 146096L) { year += 3; day = 36524L; }
++  else { year += day / 36524L; day %= 36524L; }
++  year *= 25;
++  year += day / 1461;
++  day %= 1461;
++  year *= 4;
++
++  yday = (day < 306);
++  if (day == 1460) { year += 3; day = 365; }
++  else { year += day / 365; day %= 365; }
++  yday += day;
++
++  day *= 10;
++  month = (day + 5) / 306;
++  day = (day + 5) % 306;
++  day /= 10;
++  if (month >= 10) { yday -= 306; ++year; month -= 10; }
++  else { yday += 59; month += 2; }
++
++  cd->year = year;
++  cd->month = month + 1;
++  cd->day = day + 1;
++
++  if (pyday) *pyday = yday;
++}
+diff --git a/cal/caldate_fmt.c b/cal/caldate_fmt.c
+new file mode 100644
+index 0000000..3a21521
+--- /dev/null
++++ b/cal/caldate_fmt.c
+@@ -0,0 +1,25 @@
++#include "caldate.h"
++
++unsigned int caldate_fmt(s,cd)
++char *s;
++struct caldate *cd;
++{
++  long x;
++  int i = 0;
++
++  x = cd->year; if (x < 0) x = -x; do { ++i; x /= 10; } while(x);
++
++  if (s) {
++    x = cd->year;
++    if (x < 0) { x = -x; *s++ = '-'; }
++    s += i; do { *--s = '0' + (x % 10); x /= 10; } while(x); s += i;
++
++    x = cd->month;
++    s[0] = '-'; s[2] = '0' + (x % 10); x /= 10; s[1] = '0' + (x % 10);
++
++    x = cd->day;
++    s[3] = '-'; s[5] = '0' + (x % 10); x /= 10; s[4] = '0' + (x % 10);
++  }
++
++  return (cd->year < 0) + i + 6;
++}
+diff --git a/cal/caldate_mjd.0 b/cal/caldate_mjd.0
+new file mode 100644
+index 0000000..52ea97c
+--- /dev/null
++++ b/cal/caldate_mjd.0
+@@ -0,0 +1,72 @@
++caldate_mjd(3)                                                  caldate_mjd(3)
++
++
++
++NNAAMMEE
++       caldate_mjd - manipulate calendar dates
++
++SSYYNNTTAAXX
++       ##iinncclluuddee <<ccaallddaattee..hh>>
++
++       void ccaallddaattee__ffrroommmmjjdd(&_c_d,_d_a_y,_w_e_e_k_d_a_y,_y_e_a_r_d_a_y);
++       long ccaallddaattee__mmjjdd(&_c_d);
++       void ccaallddaattee__nnoorrmmaalliizzee(&_c_d);
++
++       void ccaallddaattee__eeaasstteerr(&_c_d);
++
++       struct caldate _c_d;
++       long _d_a_y;
++       int *_w_e_e_k_d_a_y;
++       int *_y_e_a_r_d_a_y;
++
++BBAASSIICC CCOONNVVEERRSSIIOONNSS
++       Every  calendar  date has a _m_o_d_i_f_i_e_d _J_u_l_i_a_n _d_a_y _n_u_m_b_e_r.  The day number
++       increases by 1 every day.  Day number 0 is 17 November 1858.  Day  num‐
++       ber 51604 is 1 March 2000.
++
++       ccaallddaattee__ffrroommmmjjdd  puts  into  _c_d  the date corresponding to the modified
++       Julian day number _d_a_y.
++
++       ccaallddaattee__ffrroommmmjjdd also computes the day of the week (0 through 6) and the
++       day  of  the  year  (0  through 365).  It stores the day of the week in
++       **_w_e_e_k_d_a_y if _w_e_e_k_d_a_y is nonzero.  It stores  the  day  of  the  year  in
++       **_y_e_a_r_d_a_y if _y_e_a_r_d_a_y is nonzero.
++
++       ccaallddaattee__mmjjdd returns the modified Julian day number corresponding to the
++       date in _c_d.
++
++       ccaallddaattee__mmjjdd accepts days outside the range 1 to 31, referring  to  days
++       before  the  beginning  or after the end of the month.  It also accepts
++       months outside the range 1 to 12, referring to months before the begin‐
++       ning or after the end of the year.
++
++       ccaallddaattee__nnoorrmmaalliizzee calls ccaallddaattee__ffrroommmmjjdd with the result of ccaallddaattee__mmjjdd.
++       This means that it accepts out-of-range months and out-of-range days in
++       _c_d, and puts a valid calendar date back into _c_d.
++
++OOTTHHEERR FFUUNNCCTTIIOONNSS
++       ccaallddaattee__eeaasstteerr  reads  the year from _c_d and then changes _c_d to the date
++       of Easter in the same year.
++
++LLIIMMIITTAATTIIOONNSS
++       The ccaallddaattee routines currently support the  Gregorian  calendar,  which
++       was  defined  in 1582 and adopted at different times in different coun‐
++       tries.  For earlier dates the ccaallddaattee routines work with ``virtual Gre‐
++       gorian,''  defined  mathematically  by the 400-year Gregorian cycle for
++       years before 1582.  The Julian calendar is not supported.
++
++       The Gregorian calendar will be replaced by a new calendar within a  few
++       thousand  years.   The ccaallddaattee__ffrroommmmjjdd and ccaallddaattee__mmjjdd routines will be
++       upgraded accordingly.  The current ccaallddaattee__ffrroommmmjjdd and ccaallddaattee__mmjjdd rou‐
++       tines are not useful for dates far in the future.
++
++       Day  numbers  will  overflow  a  32-bit  lloonngg  sometime  after the year
++       5000000; all systems should upgrade to 64-bit lloonnggs before then.   ccaall‐‐
++       ddaattee__mmjjdd does not check for overflow.
++
++SSEEEE AALLSSOO
++       caldate(3)
++
++
++
++                                                                caldate_mjd(3)
+diff --git a/cal/caldate_mjd.3 b/cal/caldate_mjd.3
+new file mode 100644
+index 0000000..4e6a424
+--- /dev/null
++++ b/cal/caldate_mjd.3
+@@ -0,0 +1,111 @@
++.TH caldate_mjd 3
++.SH NAME
++caldate_mjd \- manipulate calendar dates
++.SH SYNTAX
++.B #include <caldate.h>
++
++void \fBcaldate_frommjd\fP(&\fIcd\fR,\fIday\fR,\fIweekday\fR,\fIyearday\fR);
++.br
++long \fBcaldate_mjd\fP(&\fIcd\fR);
++.br
++void \fBcaldate_normalize\fP(&\fIcd\fR);
++
++void \fBcaldate_easter\fP(&\fIcd\fR);
++
++struct caldate \fIcd\fR;
++.br
++long \fIday\fR;
++.br
++int *\fIweekday\fR;
++.br
++int *\fIyearday\fR;
++.SH "BASIC CONVERSIONS"
++Every calendar date has a
++.I modified Julian day number\fR.
++The day number increases by 1 every day.
++Day number 0 is 17 November 1858.
++Day number 51604 is 1 March 2000.
++
++.B caldate_frommjd
++puts into
++.I cd
++the date corresponding to the modified Julian day number
++.IR day .
++
++.B caldate_frommjd
++also computes the day of the week (0 through 6)
++and the day of the year (0 through 365).
++It stores the day of the week in
++.B *\fIweekday
++if
++.I weekday
++is nonzero.
++It stores the day of the year in
++.B *\fIyearday
++if
++.I yearday
++is nonzero.
++
++.B caldate_mjd
++returns the modified Julian day number corresponding to the date in
++.IR cd .
++
++.B caldate_mjd
++accepts days outside the range 1 to 31,
++referring to days before the beginning or after the end of the month.
++It also accepts months outside the range 1 to 12,
++referring to months before the beginning or after the end of the year.
++
++.B caldate_normalize
++calls
++.B caldate_frommjd
++with the result of
++.BR caldate_mjd .
++This means that it accepts out-of-range months and out-of-range days in
++.IR cd ,
++and puts a valid calendar date back into
++.IR cd .
++.SH "OTHER FUNCTIONS"
++.B caldate_easter
++reads the year from
++.I cd
++and then changes
++.I cd
++to the date of Easter in the same year.
++.SH LIMITATIONS
++The
++.B caldate
++routines currently support the Gregorian calendar,
++which was defined in 1582 and adopted at different times
++in different countries.
++For earlier dates the
++.B caldate
++routines work with
++``virtual Gregorian,''
++defined mathematically by the 400-year Gregorian cycle
++for years before 1582.
++The Julian calendar is not supported.
++
++The Gregorian calendar will be replaced by a new calendar
++within a few thousand years.
++The
++.B caldate_frommjd
++and
++.B caldate_mjd
++routines will be upgraded accordingly.
++The current
++.B caldate_frommjd
++and
++.B caldate_mjd
++routines are not useful for dates far in the future.
++
++Day numbers will overflow a 32-bit
++.B long
++sometime after the year 5000000;
++all systems should upgrade to 64-bit
++.BR long s
++before then.
++.B caldate_mjd
++does not check for overflow.
++.SH "SEE ALSO"
++caldate(3)
+diff --git a/cal/caldate_mjd.c b/cal/caldate_mjd.c
+new file mode 100644
+index 0000000..85f2a1b
+--- /dev/null
++++ b/cal/caldate_mjd.c
+@@ -0,0 +1,44 @@
++#include "caldate.h"
++
++static unsigned long times365[4] = { 0, 365, 730, 1095 } ;
++static unsigned long times36524[4] = { 0, 36524UL, 73048UL, 109572UL } ;
++static unsigned long montab[12] =
++{ 0, 31, 61, 92, 122, 153, 184, 214, 245, 275, 306, 337 } ;
++/* month length after february is (306 * m + 5) / 10 */
++
++long caldate_mjd(cd)
++struct caldate *cd;
++{
++  long y;
++  long m;
++  long d;
++
++  d = cd->day - 678882L;
++  m = cd->month - 1;
++  y = cd->year;
++
++  d += 146097L * (y / 400);
++  y %= 400;
++
++  if (m >= 2) m -= 2; else { m += 10; --y; }
++
++  y += (m / 12);
++  m %= 12;
++  if (m < 0) { m += 12; --y; }
++
++  d += montab[m];
++
++  d += 146097L * (y / 400);
++  y %= 400;
++  if (y < 0) { y += 400; d -= 146097L; }
++
++  d += times365[y & 3];
++  y >>= 2;
++
++  d += 1461L * (y % 25);
++  y /= 25;
++
++  d += times36524[y & 3];
++
++  return d;
++}
+diff --git a/cal/caldate_norm.c b/cal/caldate_norm.c
+new file mode 100644
+index 0000000..7e99ac3
+--- /dev/null
++++ b/cal/caldate_norm.c
+@@ -0,0 +1,7 @@
++#include "caldate.h"
++
++void caldate_normalize(cd)
++struct caldate *cd;
++{
++  caldate_frommjd(cd,caldate_mjd(cd),(int *) 0,(int *) 0);
++}
+diff --git a/cal/caldate_scan.c b/cal/caldate_scan.c
+new file mode 100644
+index 0000000..fa62b7e
+--- /dev/null
++++ b/cal/caldate_scan.c
+@@ -0,0 +1,25 @@
++#include "caldate.h"
++
++unsigned int caldate_scan(s,cd)
++char *s;
++struct caldate *cd;
++{
++  int sign = 1;
++  char *t = s;
++  unsigned long z;
++  unsigned long c;
++
++  if (*t == '-') { ++t; sign = -1; }
++  z = 0; while ((c = (unsigned char) (*t - '0')) <= 9) { z = z * 10 + c; ++t; }
++  cd->year = z * sign;
++
++  if (*t++ != '-') return 0;
++  z = 0; while ((c = (unsigned char) (*t - '0')) <= 9) { z = z * 10 + c; ++t; }
++  cd->month = z;
++
++  if (*t++ != '-') return 0;
++  z = 0; while ((c = (unsigned char) (*t - '0')) <= 9) { z = z * 10 + c; ++t; }
++  cd->day = z;
++
++  return t - s;
++}
+diff --git a/cal/caldate_ster.c b/cal/caldate_ster.c
+new file mode 100644
+index 0000000..b016331
+--- /dev/null
++++ b/cal/caldate_ster.c
+@@ -0,0 +1,24 @@
++#include "caldate.h"
++
++void caldate_easter(cd)
++struct caldate *cd;
++{
++  long c;
++  long t;
++  long j;
++  long n;
++  long y;
++
++  y = cd->year;
++
++  c = (y / 100) + 1;
++  t = 210 - (((c * 3) / 4) % 210);
++  j = y % 19;
++  n = 57 - ((14 + j * 11 + (c * 8 + 5) / 25 + t) % 30);
++  if ((n == 56) && (j > 10)) --n;
++  if (n == 57) --n;
++  n -= ((((y % 28) * 5) / 4 + t + n + 2) % 7);
++
++  if (n < 32) { cd->month = 3; cd->day = n; }
++  else { cd->month = 4; cd->day = n - 31; }
++}
+diff --git a/cal/caltime.0 b/cal/caltime.0
+new file mode 100644
+index 0000000..f2644c4
+--- /dev/null
++++ b/cal/caltime.0
+@@ -0,0 +1,44 @@
++caltime(3)                                                          caltime(3)
++
++
++
++NNAAMMEE
++       caltime - calendar dates and times
++
++SSYYNNTTAAXX
++       ##iinncclluuddee <<ccaallttiimmee..hh>>
++
++       unsigned int ccaallttiimmee__ffmmtt(_s,&_c_t);
++       unsigned int ccaallttiimmee__ssccaann(_s,&_c_t);
++
++       struct caltime _c_t;
++       char *_s;
++
++DDEESSCCRRIIPPTTIIOONN
++       A  ssttrruucctt  ccaallttiimmee  value is a calendar date and time with an offset in
++       minutes from UTC.  It has five components:  ddaattee  (a  ssttrruucctt  ccaallddaattee),
++       hhoouurr   (0...23),   mmiinnuuttee   (0...59),   sseeccoonndd   (0...60),  and  ooffffsseett
++       (-5999...5999).
++
++       For example, a leap second occurred on 30 June 1997  at  23:59:60  UTC.
++       The local time in New York was 30 June 1997 19:59:60 -0400.  This local
++       time is represented inside a ssttrruucctt ccaallttiimmee with ddaattee containing  1997,
++       6, 30; hhoouurr 19; mmiinnuuttee 59; sseeccoonndd 60; and ooffffsseett -240 (4 hours).
++
++FFOORRMMAATTTTIINNGG
++       ccaallttiimmee__ffmmtt prints _c_t in ISO style (yyyy-mm-dd hh:mm:ss +oooo) into the
++       character buffer _s, without a terminating NUL.  It returns  the  number
++       of  characters  printed.   _s  may be zero; then ccaallttiimmee__ffmmtt returns the
++       number of characters that would have been printed.
++
++       ccaallttiimmee__ssccaann reads a calendar date, time, and offset in ISO style  from
++       the  beginning  of  the  character  buffer _s and puts them into _c_t.  It
++       returns the number of characters read.  If _s does  not  start  with  an
++       ISO-style date and time (including offset), ccaallttiimmee__ssccaann returns 0.
++
++SSEEEE AALLSSOO
++       caltime_tai(3), caldate(3), tai(3)
++
++
++
++                                                                    caltime(3)
+diff --git a/cal/caltime.3 b/cal/caltime.3
+new file mode 100644
+index 0000000..e100be0
+--- /dev/null
++++ b/cal/caltime.3
+@@ -0,0 +1,82 @@
++.TH caltime 3
++.SH NAME
++caltime \- calendar dates and times
++.SH SYNTAX
++.B #include <caltime.h>
++
++unsigned int \fBcaltime_fmt\fP(\fIs\fR,&\fIct\fR);
++.br
++unsigned int \fBcaltime_scan\fP(\fIs\fR,&\fIct\fR);
++
++struct caltime \fIct\fR;
++.br
++char *\fIs\fR;
++.SH DESCRIPTION
++A
++.B struct caltime
++value is a calendar date and time with an offset in minutes from UTC.
++It has five components:
++.B date
++(a
++.B struct caldate\fR),
++.B hour
++(0...23),
++.B minute
++(0...59),
++.B second
++(0...60),
++and
++.B offset
++(-5999...5999).
++
++For example,
++a leap second occurred
++on 30 June 1997 at 23:59:60 UTC.
++The local time in New York was
++30 June 1997 19:59:60 -0400.
++This local time is represented inside a
++.B struct caltime
++with
++.B date
++containing 1997, 6, 30;
++.B hour
++19;
++.B minute
++59;
++.B second
++60;
++and
++.B offset
++\-240
++(4 hours).
++.SH FORMATTING
++.B caltime_fmt
++prints
++.I ct
++in ISO style (yyyy-mm-dd hh:mm:ss +oooo)
++into the character buffer
++.IR s ,
++without a terminating NUL.
++It returns the number of characters printed.
++.I s
++may be zero;
++then
++.B caltime_fmt
++returns the number of characters that would have been printed.
++
++.B caltime_scan
++reads a calendar date, time, and offset in ISO style
++from the beginning of the character buffer
++.I s
++and puts them into
++.IR ct .
++It returns the number of characters read.
++If
++.I s
++does not start with an ISO-style date and time (including offset),
++.B caltime_scan
++returns 0.
++.SH "SEE ALSO"
++caltime_tai(3),
++caldate(3),
++tai(3)
+diff --git a/cal/caltime_fmt.c b/cal/caltime_fmt.c
+new file mode 100644
+index 0000000..2ee90bd
+--- /dev/null
++++ b/cal/caltime_fmt.c
+@@ -0,0 +1,45 @@
++#include "caldate.h"
++#include "caltime.h"
++
++unsigned int caltime_fmt(s,ct)
++char *s;
++struct caltime *ct;
++{
++  unsigned int result;
++  long x;
++
++  result = caldate_fmt(s,&ct->date);
++
++  if (s) {
++    s += result;
++  
++    x = ct->hour;
++    s[0] = ' ';
++    s[2] = '0' + (x % 10); x /= 10;
++    s[1] = '0' + (x % 10);
++    s += 3;
++  
++    x = ct->minute;
++    s[0] = ':';
++    s[2] = '0' + (x % 10); x /= 10;
++    s[1] = '0' + (x % 10);
++    s += 3;
++    
++    x = ct->second;
++    s[0] = ':';
++    s[2] = '0' + (x % 10); x /= 10;
++    s[1] = '0' + (x % 10);
++    s += 3;
++
++    s[0] = ' ';
++    x = ct->offset;
++    if (x < 0) { s[1] = '-'; x = -x; } else s[1] = '+';
++
++    s[5] = '0' + (x % 10); x /= 10;
++    s[4] = '0' + (x % 6); x /= 6;
++    s[3] = '0' + (x % 10); x /= 10;
++    s[2] = '0' + (x % 10);
++  }
++
++  return result + 15;
++}
+diff --git a/cal/caltime_scan.c b/cal/caltime_scan.c
+new file mode 100644
+index 0000000..b690460
+--- /dev/null
++++ b/cal/caltime_scan.c
+@@ -0,0 +1,40 @@
++#include "caltime.h"
++
++unsigned int caltime_scan(s,ct)
++char *s;
++struct caltime *ct;
++{
++  char *t = s;
++  unsigned long z;
++  unsigned long c;
++  int sign;
++
++  t += caldate_scan(t,&ct->date);
++
++  while ((*t == ' ') || (*t == '\t') || (*t == 'T')) ++t;
++  z = 0; while ((c = (unsigned char) (*t - '0')) <= 9) { z = z * 10 + c; ++t; }
++  ct->hour = z;
++
++  if (*t++ != ':') return 0;
++  z = 0; while ((c = (unsigned char) (*t - '0')) <= 9) { z = z * 10 + c; ++t; }
++  ct->minute = z;
++
++  if (*t != ':')
++    ct->second = 0;
++  else {
++    ++t;
++    z = 0; while ((c = (unsigned char) (*t - '0')) <= 9) { z = z * 10 + c; ++t; }
++    ct->second = z;
++  }
++
++  while ((*t == ' ') || (*t == '\t')) ++t;
++  if (*t == '+') sign = 1; else if (*t == '-') sign = -1; else return 0;
++  ++t;
++  c = (unsigned char) (*t++ - '0'); if (c > 9) return 0; z = c;
++  c = (unsigned char) (*t++ - '0'); if (c > 9) return 0; z = z * 10 + c;
++  c = (unsigned char) (*t++ - '0'); if (c > 9) return 0; z = z * 6 + c;
++  c = (unsigned char) (*t++ - '0'); if (c > 9) return 0; z = z * 10 + c;
++  ct->offset = z * sign;
++
++  return t - s;
++}
+diff --git a/cal/caltime_tai.0 b/cal/caltime_tai.0
+new file mode 100644
+index 0000000..5d0ccf9
+--- /dev/null
++++ b/cal/caltime_tai.0
+@@ -0,0 +1,43 @@
++caltime(3)                                                          caltime(3)
++
++
++
++NNAAMMEE
++       caltime_tai - convert calendar dates and times
++
++SSYYNNTTAAXX
++       ##iinncclluuddee <<ccaallttiimmee..hh>>
++       ##iinncclluuddee <<ttaaii..hh>>
++
++       void ccaallttiimmee__ttaaii(&_c_t,&_t);
++       void ccaallttiimmee__uuttcc(&_c_t,&_t,&_w_e_e_k_d_a_y,&_y_e_a_r_d_a_y);
++
++       struct caltime _c_t;
++       struct tai _t;
++       int *_w_e_e_k_d_a_y;
++       int *_y_e_a_r_d_a_y;
++
++DDEESSCCRRIIPPTTIIOONN
++       ccaallttiimmee__ttaaii  reads  a  date, time, and UTC offset from _c_t.  It puts the
++       corresponding TAI64 label into _t.
++
++       ccaallttiimmee__uuttcc reads a TAI64 label from _t.  It puts the corresponding date
++       and time into _c_t, with UTC offset 0.
++
++       ccaallttiimmee__uuttcc  fills in _w_e_e_k_d_a_y and _y_e_a_r_d_a_y the same way as ccaallddaattee__ffrroomm‐‐
++       mmjjdd.
++
++LLIIMMIITTAATTIIOONNSS
++       The sequence of TAI64 labels has been determined for the next few  hun‐
++       dred  billion years.  The same is not true, however, for calendar dates
++       and times.  New leap seconds are added every year or two, as  discussed
++       in  lleeaappsseeccss(3);  and the Gregorian calendar will change in a few thou‐
++       sand years, as discussed  in  ccaallddaattee__mmjjdd(3).   This  means  that  ccaall‐‐
++       ttiimmee__ttaaii and ccaallttiimmee__uuttcc are not useful for dates far in the future.
++
++SSEEEE AALLSSOO
++       caldate_mjd(3), caltime(3), tai(3), leapsecs(3)
++
++
++
++                                                                    caltime(3)
+diff --git a/cal/caltime_tai.3 b/cal/caltime_tai.3
+new file mode 100644
+index 0000000..49c6ab1
+--- /dev/null
++++ b/cal/caltime_tai.3
+@@ -0,0 +1,61 @@
++.TH caltime 3
++.SH NAME
++caltime_tai \- convert calendar dates and times
++.SH SYNTAX
++.B #include <caltime.h>
++.br
++.B #include <tai.h>
++
++void \fBcaltime_tai\fP(&\fIct\fR,&\fIt\fR);
++.br
++void \fBcaltime_utc\fP(&\fIct\fR,&\fIt\fR,&\fIweekday\fR,&\fIyearday\fR);
++
++struct caltime \fIct\fR;
++.br
++struct tai \fIt\fR;
++.br
++int *\fIweekday\fR;
++.br
++int *\fIyearday\fR;
++.SH DESCRIPTION
++.B caltime_tai
++reads a date, time, and UTC offset from
++.IR ct .
++It puts the corresponding TAI64 label into
++.IR t .
++
++.B caltime_utc
++reads a TAI64 label from
++.IR t .
++It puts the corresponding date and time into
++.IR ct ,
++with UTC offset 0.
++
++.B caltime_utc
++fills in
++.I weekday
++and
++.I yearday
++the same way as
++.BR caldate_frommjd .
++.SH LIMITATIONS
++The sequence of TAI64 labels has been determined
++for the next few hundred billion years.
++The same is not true, however, for
++calendar dates and times.
++New leap seconds are added every year or two,
++as discussed in
++.BR leapsecs (3);
++and the Gregorian calendar will change in a few thousand years,
++as discussed in
++.BR caldate_mjd (3).
++This means that
++.B caltime_tai
++and
++.B caltime_utc
++are not useful for dates far in the future.
++.SH "SEE ALSO"
++caldate_mjd(3),
++caltime(3),
++tai(3),
++leapsecs(3)
+diff --git a/cal/caltime_tai.c b/cal/caltime_tai.c
+new file mode 100644
+index 0000000..d4da689
+--- /dev/null
++++ b/cal/caltime_tai.c
+@@ -0,0 +1,25 @@
++#include "tai.h"
++#include "leapsecs.h"
++#include "caldate.h"
++#include "caltime.h"
++
++/* XXX: breaks tai encapsulation */
++
++void caltime_tai(ct,t)
++struct caltime *ct;
++struct tai *t;
++{
++  long day;
++  long s;
++
++  /* XXX: check for overflow? */
++
++  day = caldate_mjd(&ct->date);
++
++  s = ct->hour * 60 + ct->minute;
++  s = (s - ct->offset) * 60 + ct->second;
++
++  t->x = day * 86400ULL + 4611686014920671114ULL + (long long) s;
++
++  leapsecs_add(t,ct->second == 60);
++}
+diff --git a/cal/caltime_utc.c b/cal/caltime_utc.c
+new file mode 100644
+index 0000000..e721ce6
+--- /dev/null
++++ b/cal/caltime_utc.c
+@@ -0,0 +1,35 @@
++#include "tai.h"
++#include "leapsecs.h"
++#include "caldate.h"
++#include "caltime.h"
++
++/* XXX: breaks tai encapsulation */
++
++void caltime_utc(ct,t,pwday,pyday)
++struct caltime *ct;
++struct tai *t;
++int *pwday;
++int *pyday;
++{
++  struct tai t2 = *t;
++  uint64 u;
++  int leap;
++  long s;
++
++  /* XXX: check for overfow? */
++
++  leap = leapsecs_sub(&t2);
++  u = t2.x;
++
++  u += 58486;
++  s = u % 86400ULL;
++
++  ct->second = (s % 60) + leap; s /= 60;
++  ct->minute = s % 60; s /= 60;
++  ct->hour = s;
++
++  u /= 86400ULL;
++  caldate_frommjd(&ct->date,/*XXX*/(long) (u - 53375995543064ULL),pwday,pyday);
++
++  ct->offset = 0;
++}
+diff --git a/cal/leapsecs.c b/cal/leapsecs.c
+new file mode 100644
+index 0000000..e5db267
+--- /dev/null
++++ b/cal/leapsecs.c
+@@ -0,0 +1,28 @@
++#include <stdio.h>
++#include "tai.h"
++#include "leapsecs.h"
++#include "caldate.h"
++
++/* XXX: breaks tai encapsulation */
++
++/* XXX: output here has to be binary; DOS redirection uses ASCII */
++
++char line[100];
++
++main()
++{
++  struct caldate cd;
++  struct tai t;
++  char x[TAI_PACK];
++  long leaps = 0;
++
++  while (fgets(line,sizeof line,stdin))
++    if (line[0] == '+')
++      if (caldate_scan(line + 1,&cd)) {
++	t.x = (caldate_mjd(&cd) + 1) * 86400ULL + 4611686014920671114ULL + leaps++;
++        tai_pack(x,&t);
++	fwrite(x,TAI_PACK,1,stdout);
++      }
++      
++  exit(0);
++}
+diff --git a/cal/leapsecs_add.c b/cal/leapsecs_add.c
+new file mode 100644
+index 0000000..fcc10b7
+--- /dev/null
++++ b/cal/leapsecs_add.c
+@@ -0,0 +1,26 @@
++#include "leapsecs.h"
++#include "tai.h"
++
++/* XXX: breaks tai encapsulation */
++
++extern struct tai *leapsecs;
++extern int leapsecs_num;
++
++void leapsecs_add(t,hit)
++struct tai *t;
++int hit;
++{
++  int i;
++  uint64 u;
++
++  if (leapsecs_init() == -1) return;
++
++  u = t->x;
++
++  for (i = 0;i < leapsecs_num;++i) {
++    if (u < leapsecs[i].x) break;
++    if (!hit || (u > leapsecs[i].x)) ++u;
++  }
++
++  t->x = u;
++}
+diff --git a/cal/leapsecs_init.c b/cal/leapsecs_init.c
+new file mode 100644
+index 0000000..4785b12
+--- /dev/null
++++ b/cal/leapsecs_init.c
+@@ -0,0 +1,11 @@
++#include "leapsecs.h"
++
++static int flaginit = 0;
++
++int leapsecs_init()
++{
++  if (flaginit) return 0;
++  if (leapsecs_read() == -1) return -1;
++  flaginit = 1;
++  return 0;
++}
+diff --git a/cal/leapsecs_read.c b/cal/leapsecs_read.c
+new file mode 100644
+index 0000000..62c8712
+--- /dev/null
++++ b/cal/leapsecs_read.c
+@@ -0,0 +1,50 @@
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <fcntl.h>
++#include <errno.h>
++extern int errno;
++#include "tai.h"
++#include "leapsecs.h"
++
++struct tai *leapsecs = 0;
++int leapsecs_num = 0;
++
++int leapsecs_read()
++{
++  int fd;
++  struct stat st;
++  struct tai *t;
++  int n;
++  int i;
++  struct tai u;
++
++  fd = open("/etc/leapsecs.dat",O_RDONLY | O_NDELAY);
++  if (fd == -1) {
++    if (errno != ENOENT) return -1;
++    if (leapsecs) free(leapsecs);
++    leapsecs = 0;
++    leapsecs_num = 0;
++    return 0;
++  }
++
++  if (fstat(fd,&st) == -1) { close(fd); return -1; }
++
++  t = (struct tai *) malloc(st.st_size);
++  if (!t) { close(fd); return -1; }
++
++  n = read(fd,(char *) t,st.st_size);
++  close(fd);
++  if (n != st.st_size) { free(t); return -1; }
++
++  n /= sizeof(struct tai);
++
++  for (i = 0;i < n;++i) {
++    tai_unpack((char *) &t[i],&u);
++    t[i] = u;
++  }
++
++  if (leapsecs) free(leapsecs);
++
++  leapsecs = t;
++  leapsecs_num = n;
++}
+diff --git a/cal/leapsecs_sub.c b/cal/leapsecs_sub.c
+new file mode 100644
+index 0000000..387e02c
+--- /dev/null
++++ b/cal/leapsecs_sub.c
+@@ -0,0 +1,29 @@
++#include "leapsecs.h"
++#include "tai.h"
++
++/* XXX: breaks tai encapsulation */
++
++extern struct tai *leapsecs;
++extern int leapsecs_num;
++
++int leapsecs_sub(t)
++struct tai *t;
++{
++  int i;
++  uint64 u;
++  int s;
++
++  if (leapsecs_init() == -1) return 0;
++
++  u = t->x;
++  s = 0;
++
++  for (i = 0;i < leapsecs_num;++i) {
++    if (u < leapsecs[i].x) break;
++    ++s;
++    if (u == leapsecs[i].x) { t->x = u - s; return 1; }
++  }
++
++  t->x = u - s;
++  return 0;
++}
+diff --git a/caldate.h b/caldate.h
+new file mode 100644
+index 0000000..5f235e4
+--- /dev/null
++++ b/caldate.h
+@@ -0,0 +1,19 @@
++#ifndef CALDATE_H
++#define CALDATE_H
++
++struct caldate {
++  long year;
++  int month;
++  int day;
++} ;
++
++extern unsigned int caldate_fmt();
++extern unsigned int caldate_scan();
++
++extern void caldate_frommjd();
++extern long caldate_mjd();
++extern void caldate_normalize();
++
++extern void caldate_easter();
++
++#endif
+diff --git a/caltime.h b/caltime.h
+new file mode 100644
+index 0000000..36ed8ea
+--- /dev/null
++++ b/caltime.h
+@@ -0,0 +1,20 @@
++#ifndef CALTIME_H
++#define CALTIME_H
++
++#include "caldate.h"
++
++struct caltime {
++  struct caldate date;
++  int hour;
++  int minute;
++  int second;
++  long offset;
++} ;
++
++extern void caltime_tai();
++extern void caltime_utc();
++
++extern unsigned int caltime_fmt();
++extern unsigned int caltime_scan();
++
++#endif
+diff --git a/leapsecs.h b/leapsecs.h
+new file mode 100644
+index 0000000..2206784
+--- /dev/null
++++ b/leapsecs.h
+@@ -0,0 +1,10 @@
++#ifndef LEAPSECS_H
++#define LEAPSECS_H
++
++extern int leapsecs_init();
++extern int leapsecs_read();
++
++extern void leapsecs_add();
++extern int leapsecs_sub();
++
++#endif
+-- 
+1.7.0.4
+

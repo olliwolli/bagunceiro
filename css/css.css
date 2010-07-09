@@ -2,6 +2,19 @@
 a img { border:none; }
 
 body {
+	font-family:Frutiger,"Frutiger Linotype",
+					Univers,Calibri,
+					"Gill Sans","Gill Sans MT",
+					"Myriad Pro",Myriad,
+					"DejaVu Sans Condensed",
+					"Liberation Sans",
+					"Nimbus Sans L",
+					Tahoma,Geneva,
+					"Helvetica Neue",
+					Helvetica,
+					Arial,
+					sans-serif;
+	font-size: 14px;
 	line-height: 16px;
 	color: #666;
 }
@@ -10,7 +23,6 @@ h1, h1 a:link, h1 a:visited, h1 a:active, h1 a:active {
 	font-size: 36px;
 	letter-spacing: -3px;
 	font-family: georgia;
-	display: inline;
 	text-decoration: none;	
 	margin-bottom: 30px;
 	color: #000000;
@@ -24,41 +36,12 @@ h1, h1 a:link, h1 a:visited, h1 a:active, h1 a:active {
 
 .day ul{
 	margin-left: 20px;
-	list-style-image:url("star.gif");
+	list-style-image:url("http://img.bockcay.de/star.gif");
 }
 
-.day li{
-	margin-bottom: 3px;
-}
+.actions, .mactions, #tagline{
 
-#tagline {
-	margin: 15px 0 15px 0;
-}
-
-.actions{
-	display: inline;
-}
-
-.mactions, .mactions a{
-	font-size: 85%;
-	display: inline;
-	text-decoration: none;
-}
-
-#mod {
-	margin: 20px 0px 10px 10px;
-}
-
-#upload {
-	padding: 20px 200px;
-}
-
-#upload_out{
-	padding: 20px ;
-}
-
-.abutton{
-	margin: 20px -1px 10px 10px;
+display: inline;
 }
 
 .c a{
@@ -73,22 +56,11 @@ h1, h1 a:link, h1 a:visited, h1 a:active, h1 a:active {
 	font-style:italic;
 }
 
-textarea {
-	width:400px;
-	height:200px;
-}
-
 a:hover {
 	text-decoration: underline;
 }
 
-#nav {
-	text-align: center;
-}
-
 blockquote {
-	display: block;
-	font-style: italic;
+display: block;
+font-style: italic;
 }
-
-	display: inline;

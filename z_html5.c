@@ -4,46 +4,46 @@
 /* helper */
 static int divstack;
 static int indent;
-static int nl;
 
 /* not perfect, but whatever */
+
 #define conprint(str) do{\
 						indent++;\
 						indent_space(indent);\
-						buffer_puts(buffer_1, (str));\
+						sprint(str);\
 						indent--;\
+						sprintn("\n", 1);\
 					}while(0)
 
 #define oprint(str) do{\
 						indent++;\
 						indent_space(indent);\
-						buffer_puts(buffer_1, (str));\
+						sprint(str);\
 						sprintn("\n", 1);\
 					}while(0)
 
 #define oprintm(...) do{\
 						indent++;\
 						indent_space(indent);\
-						buffer_putm(buffer_1, ##__VA_ARGS__);\
+						sprintm( __VA_ARGS__ );\
 						sprintn("\n", 1);\
 					}while(0)
 
 #define cprint(str) do{\
-						sprintn("\n", 1);\
 						indent_space(indent);\
-						buffer_puts(buffer_1, (str));\
-						nl = 1;\
+						sprint(str);\
 						indent--;\
+						sprintn("\n", 1);\
 					}while(0)
 
 #define cprintm(...) do{\
-						sprintn("\n", 1);\
 						indent_space(indent);\
-						buffer_putm(buffer_1, ##__VA_ARGS__);\
+						sprintm( __VA_ARGS__ );\
 						indent--;\
+						sprintn("\n", 1);\
 					}while(0)
 
-inline void indent_space(int i)
+void indent_space(int i)
 {
 	if(i<=0)
 		return;
@@ -51,19 +51,18 @@ inline void indent_space(int i)
 		sprintn("  ", 2);
 }
 
-inline void html_bulk(const char *s)
+void html_bulk(const char *s)
 {
 	sprint(s);
 }
 
-inline void html_content(const char *c)
+void html_content(const char *c)
 {
 	conprint(c);
 }
 
 void html_div_open(char *type, char *name)
 {
-	sprint("\n");
 	if(!type || ! name)
 		oprint("<div>");
 	else
@@ -73,7 +72,6 @@ void html_div_open(char *type, char *name)
 
 void html_div_open2(const char *type, const char *name, const char * type2, const char *name2)
 {
-	sprint("\n");
 	if(!type || ! name)
 		oprint("<div>");
 	else
@@ -110,7 +108,8 @@ void html_div_close_all()
 
 void html_http_header()
 {
-	http_headers("text/html");
+	divstack = indent = 0;
+	http_content_type("text/html");
 }
 
 void html_print_preface()
@@ -159,25 +158,23 @@ void html_close_head_body(const char * b)
 
 void html_close_body()
 {
-	sprintf("</body>\n" "</html>\n");
+	sprint("</body>\n" "</html>\n");
 }
 
-inline void html_tag_open(const char *t)
+void html_tag_open(const char *t)
 {
 	if(t)
 		oprintm("<", t, ">");
-	sprintf("");
+	sprint("");
 }
 
-inline void html_tag_close(const char *t)
+void html_tag_close(const char *t)
 {
 	if(t)
 		cprintm("</", t, ">");
-
-	sprintf("");
 }
 
-inline void html_tag_open_close(const char *t, void(*f)(const char * v), const char *v)
+void html_tag_open_close(const char *t, void(*f)(const char * v), const char *v)
 {
 	html_tag_open(t);
 	f(v);
@@ -185,7 +182,7 @@ inline void html_tag_open_close(const char *t, void(*f)(const char * v), const c
 }
 
 
-inline void html_tag_open_close2(const char *t, void(*f)(const char * v1v, const char *v2v), const char *v1, const char *v2)
+void html_tag_open_close2(const char *t, void(*f)(const char * v1v, const char *v2v), const char *v1, const char *v2)
 {
 	html_tag_open(t);
 	f(v1, v2);
@@ -208,42 +205,56 @@ void html_link2(const char * l1, const char * l2, const char * t)
 
 void html_input(const char * type, const char* name, const char* value)
 {
+	indent++;
+	indent_space(indent);
 	sprintm("<input type=\"", type ,"\" " );
 	if(name)
 		sprintm("name=\"", name, "\" ");
 	if(value)
 		sprintm("value=\"",value,"\" ");
 	sprint(">\n");
+	indent--;
 }
 
 void html_textarea_open(const char *name, const char * id)
 {
-	sprintm("<textarea name=\"",name,"\" id=\"",id, "\"  >");
+	oprintm("<textarea name=\"",name,"\" id=\"",id, "\"  >");
 
 }
 
 void html_textarea_close()
 {
-	sprint("</textarea>");
+	cprint("</textarea>");
+}
 
+void html_checkbox(const char *name, const char *v, int checked)
+{
+	sprintm("<input type=\"checkbox\" name=\"",name,"\" value=\"",v, "\"");
+	if(checked)
+		sprint(" checked");
+	sprint(">");
 }
 
 void html_form_close()
 {
-	sprint("</form>");
+	cprint("</form>");
 }
 
 void html_form_open(const char * m, const char * a, const char *enc, const char *os)
 {
+	indent++;
+	indent_space(indent);
+
 	sprintm("<form method=\"", m, "\" action=\"", a, "\"");
 
 	if(enc)
 		sprintm(" enctype=\"", enc, "\"");
 
 	if(os)
-		sprintm(" onsubmit='", os, "'");
+		sprintm(" onsubmit=\"", os, "\"");
 
 	sprint(" >\n");
+	indent--;
 }
 
 void http_remove_tags(char *s, size_t n, char *fmt)

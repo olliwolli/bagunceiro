@@ -10,80 +10,169 @@
 #include <str.h>
 #include <cdb.h>
 
-#include "z_cdb.h"
+#include "z_features.h"
+#include "z_result.h"
 #include "z_entry.h"
-#include "z_day_entry.h"
+#include "z_day.h"
+#include "z_cdbb.h"
 #include "z_time.h"
 #include "z_blog.h"
-#include "z_features.h"
 #include "z_conf.h"
 #include "z_format.h"
 
-/* Parses query and fetches data from database */
-static int fetch_entry_ts(const blog_t * conf, array * blog)
+#ifdef WANT_SEARCHING
+static void add_to_result(struct result * res, struct nentry * n)
 {
-	struct day_entry *day = new_day_entry();
-	struct nentry *e;
-	struct cdb *result;
+	struct taia tday;
+	struct caltime ttime;
+	struct day *day = NULL;
+	int i;
+	int found = 0;
 
-	if ((result = cdb_open_read(conf->db)) == NULL)
+	taia_unpack(n->k.p, &tday);
+	caltime_utc(&ttime, &tday.sec, (int *)0, (int *)0);
+
+
+	for(i=0; i< result_length(res); i++){
+		day = result_get_day_entry(res, i);
+		if(day != NULL && day->time.date.day == ttime.date.day &&
+			day->time.date.month == ttime.date.month &&
+			day->time.date.year == ttime.date.year){
+			found = 1;
+			break;
+		}else{
+			day = NULL;
+		}
+	}
+
+	if(day== NULL)
+		day = day_new();
+
+	/* entries to day */
+	memcpy(&day->time, &ttime, sizeof(struct caltime));
+	day_add_nentry(day, n);
+
+	/* day to blog */
+	if(!found)
+		result_add_day_entry(res, day);
+}
+
+int datecomp(const void* a,const void* b) {
+	struct day * A = (struct day *) a;
+	struct day * B = (struct day *) b;
+
+	int l;
+	l = B->time.date.year - A->time.date.year;
+	if(l!=0)
+		return l;
+	l = B->time.date.month - A->time.date.month;
+	if(l!=0)
+		return l;
+	l = B->time.date.day - A->time.date.day;
+	return l;
+}
+
+static int fetch_entry_query(const blog_t * conf, struct result * res)
+{
+	struct cdbb a;
+	struct nentry * n;
+
+	int num, err;
+
+	num = 0;
+	cdbb_open_read(&a, conf->db);
+	if(cdbb_firstkey(&a) == -1)
+		return -1;
+
+	while(42){
+		n = new_nentry();
+		if(n == NULL)
+			continue;
+
+		err = cdbb_findnext(&a, conf->qry.find, n);
+
+		if (err == -1){
+			free_nentry(n);
+			return num;
+		}
+		else if(err == 0){
+			free_nentry(n);
+			continue;
+		}
+
+		add_to_result(res, n);
+		num++;
+	}
+}
+#endif
+
+/* Parses query and fetches data from database */
+static int fetch_entry_ts(const blog_t * conf, struct result * res)
+{
+	struct day *day = day_new();
+	struct nentry *e;
+	struct taia k;
+	struct cdbb a;
+
+	if (cdbb_open_read(&a, conf->db) <= 0)
 		return -1;
 
 	e = new_nentry();
-	scan_time_hex(conf->qry.ts, &e->k);
+	if(e == NULL)
+		goto err;
 
-	_show_entry(result, e);
+	scan_time_hex(conf->qry.ts, &k);
+	show_entry(&a, &k, e);
 
-	caltime_utc(&day->time, &e->k.sec, (int *)0, (int *)0);
+	caltime_utc(&day->time, &k.sec, (int *)0, (int *)0);
 
-	array_catb(&day->es, (char *)e, sizeof(struct nentry));
-	array_catb(blog, (char *)day, sizeof(struct day_entry));
+	day_add_nentry(day, e);
+	result_add_day_entry(res, day);
 
-	cdb_close(result);
-
+err:
+	cdbb_close_read(&a);
 	return 0;
 }
 
-static int fetch_entries_days(const blog_t * conf, array * blog)
+static int fetch_entries_days(const blog_t * conf, struct result * res)
 {
 	int num, start;
-	struct day_entry *day;
+	struct day * day;
 	struct taia tday;
-	struct cdb *result;
+	struct cdbb a;
 	num = 0;
-	if ((result = cdb_open_read(conf->db)) == NULL)
+
+	if (cdbb_open_read(&a, conf->db) <= 0)
 		return -1;
 
 	start = conf->qry.start;
 
 	memcpy(&tday, &conf->now, sizeof(struct taia));
 
-	ht_sub_days(&tday, start);
+	sub_days(&tday, start);
 
 	for (start = 0; start < conf->qry.doff; start++) {
-		/* allocate memory */
-		day = new_day_entry();
-
+		day = day_new();
 		/* get entries for calculated day */
-		if (_show_day(result, &day->es, &tday) <= 0) {	/* File not found or 0 entries */
-			free_day_entry(day);
+		if (cdbb_fetch_day(&a, day, &tday) <= 0){/* File not found or 0 entries */
+			day_free(day);
 			goto sub;
 		}
 
 		caltime_utc(&day->time, &tday.sec, (int *)0, (int *)0);
 
 		/* add the day to the blog */
-		array_catb(blog, (char *)day, sizeof(struct day_entry));
-		if (array_failed(blog)) {
-			eprintf("Could not allocate memory!");
-			exit(-1);
-		}
+		result_add_day_entry(res, day);
+//		if (array_failed(blog)) {FIXME
+//			eprintf("Could not allocate memory!");
+//			return -1;
+//		}
 		num++;
 sub:
 		/* calculate day */
-		ht_sub_days(&tday, 1);
+		sub_days(&tday, 1);
 	}
-	cdb_close(result);
+	cdbb_close_read(&a);
 
 	return num;
 }
@@ -91,7 +180,7 @@ sub:
 #ifdef WANT_MONTH_BROWSING
 /* TODO: optimize */
 /* this calculates offsets from today and calls fetch_entries_days */
-static int fetch_entries_month(blog_t * conf, array * blog)
+static int fetch_entries_month(blog_t * conf, struct result * res)
 {
 	struct caltime ct;
 	int num;
@@ -127,38 +216,45 @@ static int fetch_entries_month(blog_t * conf, array * blog)
 
 	conf->qry.start = start;
 	conf->qry.doff = offset + 1;	/* add one to also get first day of month */
-	num = fetch_entries_days(conf, blog);
+	num = fetch_entries_days(conf, res);
 
 	return num;
 }
 #endif
 
+ssize_t buffer_get_array(buffer* b,array * x) {
+  unsigned long done;
+  int blen;
+  done=0;
+  while (42) {
+    if ((blen=buffer_feed(b))<=0) return blen;
+    array_catb(x,b->x+b->p, blen);
+    b->p+=blen;
+    done+=blen;
+  }
+  return done;
+}
+
 int handle_query(blog_t * conf)
 {
-	array blog;
+	struct result res;
 	struct nentry n;
-	int err;
-
-	memset(&n.e, 0, sizeof(array));
-	memset(&blog, 0, sizeof(array));
-
-#if defined(ADMIN_OVERRIDE) && defined(ADMIN_MODE)
-	switch (conf->qry.action) {
-	case QA_DELETE:;
-	case QA_ADD:;
-
-	case QA_MODIFY:
-#ifdef WANT_CGI_CONFIG
-	case QA_CONFIG:
+#ifdef ADMIN_MODE
+	struct cdbb a;
 #endif
-		if (!conf->auth) {
+	struct taia k;
+	int err = 0;
+
+	init_nentry(&n);
+	result_init(&res);
+
+	scan_time_hex(conf->qry.ts, &k);
+
+#if defined(ADMIN_MODE)
+	if(IS_ADMIN_ACTION(conf->qry.action) && !conf->auth){
 			conf->qry.action = QA_SHOW;
 			conf->qry.type = QRY_WEEK;
-		}
-		break;
-	default:;
 	}
-
 #endif
 
 #ifdef ADMIN_MODE_PASS
@@ -170,101 +266,123 @@ int handle_query(blog_t * conf)
 	case QA_SHOW:
 		switch (conf->qry.type) {
 		case QRY_WEEK:
-			err = fetch_entries_days(conf, &blog);
+			err = fetch_entries_days(conf, &res);
+#ifdef WANT_MONTH_BROWSING
 			if(err < 1){
-				fetch_entries_month(conf, &blog);
+				fetch_entries_month(conf, &res);
 			}
+#endif
 			break;
 		case QRY_TS:
-			fetch_entry_ts(conf, &blog);
+			fetch_entry_ts(conf, &res);
 			break;
+#ifdef WANT_SEARCHING
+		case QRY_FIND:
+			fetch_entry_query(conf, &res);
+
+			qsort(res.r.p,
+					result_length(&res),
+					sizeof(struct day **),
+					datecomp);
+			break;
+#endif
 #ifdef WANT_MONTH_BROWSING
 		case QRY_MONTH:
-			fetch_entries_month(conf, &blog);
+			fetch_entries_month(conf, &res);
 			break;
 #endif
 		default:
 			return -1;
 		}
-		print_show(&blog, conf);
+		err = print_show(&res, conf);
 		break;
-
 #ifdef ADMIN_MODE
 	case QA_ADD:
 		/* show the add dialog */
-		if (!array_bytes(&conf->input)) {
-			print_add_entry(conf);
-		} else {
-			set_err("Entry added", 0, N_NOTE);
-			array_cats0(&n.e, conf->input.p);
-			add_entry_now(conf->db, &n);
-			err = fetch_entries_days(conf, &blog);
-			conf->qry.action = QA_SHOW;
-			print_show(&blog, conf);
-		}
+		print_add_entry(conf);
 		break;
+	case QA_ADD_POST:
+		err = cdbb_start_mod(&a, conf->db);
+		if(err <= 0){
+			set_err("Could not open database files", 0, N_ERROR);
+		}else{
 
+			set_err("Entry added", 0, N_NOTE);
+			add_entry_now(&a, conf->qry.input.p, array_bytes(&conf->qry.input));
+			cdbb_apply(&a);
+		}
+		err = fetch_entries_days(conf, &res);
+		conf->qry.action = QA_SHOW;
+		print_show(&res, conf);
+		break;
 	case QA_DELETE:
-		scan_time_hex(conf->qry.ts, &n.k);
-		err = delete_entry(conf->db, &n);
+		err = cdbb_start_mod(&a, conf->db);
+		if(err <= 0){
+			set_err("Could not open database files", 0, N_ERROR);
+		}else{
+			delete_entry(&a, &k);
+			err = cdbb_apply(&a);
 
-		if (err < 0)
-			set_err(conf->qry.ts, errno, N_ERROR);
-		else
-			set_err("Entry deleted", 0, N_NOTE);
-
-		fetch_entries_days(conf, &blog);
-		print_show(&blog, conf);
+			if (err < 0)
+				set_err(conf->qry.ts, errno, N_ERROR);
+			else
+				set_err("Entry deleted", 0, N_NOTE);
+		}
+		fetch_entries_days(conf, &res);
+		print_show(&res, conf);
 		break;
 
 	case QA_MODIFY:
-		scan_time_hex(conf->qry.ts, &n.k);
-		if (!array_bytes(&conf->input)) {
-			/* fetch entry from db, one could call fetch_entry_ts */
-			struct cdb *result;
-			if ((result = cdb_open_read(conf->db)) == NULL)
-				return -1;
-			_show_entry(result, &n);
-			cdb_close(result);
+			if (cdbb_open_read(&a, conf->db) > 0)
+				show_entry(&a, &k, &n);
+			cdbb_close_read(&a);
 
 			print_mod_entry(conf, &n);
 			/* add a new entry */
-		} else {
+			break;
+	case QA_MODIFY_POST:
+		err = cdbb_start_mod(&a, conf->db);
+		if(err <= 0){
+			set_err("Could not open database files", 0, N_ERROR);
+		}else{
 			set_err("Entry modified", 0, N_NOTE);
-			array_cats0(&n.e, conf->input.p);
-			modify_entry(conf->db, &n);
-
-			err = fetch_entries_days(conf, &blog);
-			conf->qry.action = QA_SHOW;
-			print_show(&blog, conf);
+			modify_entry(&a, &k, conf->qry.input.p, array_bytes(&conf->qry.input));
+			cdbb_apply(&a);
 		}
+
+		err = fetch_entries_days(conf, &res);
+		conf->qry.action = QA_SHOW;
+		print_show(&res, conf);
 		break;
 #endif
 #ifdef ADMIN_MODE_PASS
+#ifdef WANT_CGI_CONFIG
+	case QA_CONFIG:
+		print_config(conf);
+		break;
+	case QA_CONFIG_POST:
+		set_err("Configuration saved", 0, N_NONE);
+		save_config(conf);
+		err = fetch_entries_days(conf, &res);
+		conf->qry.action = QA_SHOW;
+		print_show(&res, conf);
+		break;
+#endif
 	case QA_LOGIN:
 		print_login(conf);
 		break;
-#ifdef WANT_CGI_CONFIG
-	case QA_CONFIG:
-		//FIXME
-		if(!strlen(conf->qry.title) && !strlen(conf->qry.tagline) && !strlen(conf->qry.pass)){
-			print_config(conf);
-		}else{
-			set_err("Configuration saved", 0, N_NONE);
-			save_config(conf);
-			print_show(&blog, conf);
-		}
-		break;
-#endif
 	case QA_LOGOUT:
-		fetch_entries_days(conf, &blog);
-		print_show(&blog, conf);
-		break;
+		err = expire_all_sessions(conf);
+		if(err)
+			set_err("Could not expire sessions", 0, N_ERROR);
 
+		fetch_entries_days(conf, &res);
+		err = print_show(&res, conf);
+		break;
 #endif
 	}
-	/* TODO free day, day_items, blog */
-	array_reset(&blog);
-	array_reset(&n.e);
-	return 0;
+
+	result_reset(&res);
+	reset_nentry(&n);
+	return err;
 }

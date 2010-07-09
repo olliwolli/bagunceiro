@@ -20,6 +20,11 @@ cdb:
 	URL: http://cr.yp.to/cdb.html
 	LICENSE: Public Domain
 
+lfcgi:
+	AUTHOR: Open Market, Inc ("Open Market")
+	URL: http://www.fastcgi.com
+	LICENSE: See LICENSE.lfcgi
+
 Oliver-Tobias Ripka (otr), code@bockcay.de, 03.06.2010
 
 This program is free software; you can redistribute it and/or modify

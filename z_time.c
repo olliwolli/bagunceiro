@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include <fmt.h>
 #include <scan.h>
 #include <tai.h>
@@ -20,8 +22,10 @@ void reduce_ts(char *src)
 	memcpy(src, tmp, FMT_TAIA_HEX);
 	src[REDUCE_SIZE] = 0;
 }
-//
-// TODO remove fixed string 4000000..
+/* We use 40 00 00 00 00 00 00 00 here
+ * since we do not allow past timestamps
+ * (more precisely timestamps before 1970)
+ * for explanation see http://cr.yp.to/libtai/tai64.html#tai64 */
 void inflate_ts(char *src)
 {
 	char tmp[FMT_TAIA_HEX];
@@ -48,62 +52,12 @@ size_t fmt_time_hex(char *s, const struct taia *time)
 	return len;
 }
 
-size_t scan_time_hex(const char *s, struct taia * time)
-{
-	char buf[FMT_TAIA_HEX];
-	size_t destlen = TAIA_PACK;
-	if (!s)
-		return 0;
-	scan_hexdump(s, buf, &destlen);
-	taia_unpack(buf, time);
-
-	return TAIA_PACK;
-}
-
-#define DAYS_SECS 86400
-size_t ht_sub_days(struct taia * time, const unsigned int days)
-{
-	struct taia day;
-	int i;
-
-	taia_uint(&day, DAYS_SECS);
-	for (i = 0; i < days; i++)
-		taia_sub(time, time, &day);
-
-	return days;
-}
-
-#undef DAYS_SECS
-
-static inline int timeval_subtract(struct timeval *result, struct timeval *x,
-	struct timeval *y)
-{
-	/* Perform the carry for the later subtraction by updating y. */
-	if (x->tv_usec < y->tv_usec) {
-		int nsec = (y->tv_usec - x->tv_usec) / 1000000 + 1;
-		y->tv_usec -= 1000000 * nsec;
-		y->tv_sec += nsec;
-	}
-	if (x->tv_usec - y->tv_usec > 1000000) {
-		int nsec = (y->tv_usec - x->tv_usec) / 1000000;
-		y->tv_usec += 1000000 * nsec;
-		y->tv_sec -= nsec;
-	}
-
-	/* Compute the time remaining to wait.
-	   tv_usec  is certainly positive. */
-	result->tv_sec = x->tv_sec - y->tv_sec;
-	result->tv_usec = x->tv_usec - y->tv_usec;
-
-	/* Return 1 if result is negative. */
-	return x->tv_sec < y->tv_sec;
-}
-
 char months[12][4] =
 	{ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Okt",
 	"Nov", "Dez"
 };
 char weekdays[7][4] = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+
 
 static int weekday(int month, int day, int year)
 {
@@ -145,7 +99,7 @@ static int weekday(int month, int day, int year)
 	return (tx % 7);
 }
 
-unsigned int caldate_fmtn(char *s, const struct caldate *cd)
+unsigned int fmt_caldate_nav(char *s, const struct caldate *cd)
 {
 	long x;
 	int i = 0;
@@ -188,13 +142,65 @@ unsigned int caldate_fmtn(char *s, const struct caldate *cd)
 	return (cd->year < 0) + yi + 11;
 }
 
+
+size_t scan_time_hex(const char *s, struct taia * time)
+{
+	char buf[FMT_TAIA_HEX];
+	size_t destlen = TAIA_PACK;
+	if (!s)
+		return 0;
+	scan_hexdump(s, buf, &destlen);
+	taia_unpack(buf, time);
+
+	return TAIA_PACK;
+}
+
+#define DAYS_SECS 86400
+size_t sub_days(struct taia * time, const unsigned int days)
+{
+	struct taia day;
+	int i;
+
+	taia_uint(&day, DAYS_SECS);
+	for (i = 0; i < days; i++)
+		taia_sub(time, time, &day);
+
+	return days;
+}
+
+#undef DAYS_SECS
+
+static inline int timeval_subtract(struct timeval *result, struct timeval *x,
+	struct timeval *y)
+{
+	/* Perform the carry for the later subtraction by updating y. */
+	if (x->tv_usec < y->tv_usec) {
+		int nsec = (y->tv_usec - x->tv_usec) / 1000000 + 1;
+		y->tv_usec -= 1000000 * nsec;
+		y->tv_sec += nsec;
+	}
+	if (x->tv_usec - y->tv_usec > 1000000) {
+		int nsec = (y->tv_usec - x->tv_usec) / 1000000;
+		y->tv_usec += 1000000 * nsec;
+		y->tv_sec -= nsec;
+	}
+
+	/* Compute the time remaining to wait.
+	   tv_usec  is certainly positive. */
+	result->tv_sec = x->tv_sec - y->tv_sec;
+	result->tv_usec = x->tv_usec - y->tv_usec;
+
+	/* Return 1 if result is negative. */
+	return x->tv_sec < y->tv_sec;
+}
+
 void time_stop_print(struct timeval *time)
 {
 	struct timeval end, diff;
 
 	char fmtsec[12];
 	char fmtnsec[12];
-	int len;
+	size_t len;
 
 	gettimeofday(&end, NULL);
 	timeval_subtract(&diff, &end, time);
@@ -214,7 +220,7 @@ void time_stop_print(struct timeval *time)
 size_t fmt_time_str(char *s, const struct taia *time)
 {
 	struct caltime ct;
-	unsigned int len;
+	size_t len;
 
 	caltime_utc(&ct, &time->sec, (int *)0, (int *)0);
 	len = caldate_fmt(s, &ct);

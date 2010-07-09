@@ -1,10 +1,11 @@
+#include <string.h>
+
 #include "z_features.h"
 #include "z_http.h"
 
-
 void rss_http_header()
 {
-	http_headers("application/rss+xml");
+	http_content_type("application/rss+xml");
 }
 
 void rss_print_preface(const char * t, const char *p, const char *l, const char * d, const char *g)
@@ -24,7 +25,6 @@ void rss_print_preface(const char * t, const char *p, const char *l, const char 
 		"</description>\n"
 		"<docs>http://blogs.law.harvard.edu/tech/rss</docs>\n"
 		"<generator>", g, "</generator>\n\n");
-
 }
 
 void rss_close_rss()
@@ -32,14 +32,14 @@ void rss_close_rss()
 	sprint("\n</channel></rss>");
 }
 
-void rss_item(const char * c, const char * l, const char * d)
+void rss_item(const char * c, const char * l, const char * d, const char *w)
 {
 	sprintm("<item>\n" "<title>", c,
 			"</title>\n" "<link>", l,
 			"</link>\n" "<description><![CDATA[",
-			c, "]]></description>\n",
-	//      sprint("<pubDate>");
-	//      print_date_rss(de);
-	//      sprintm("</pubDate>\n"
-			"<guid>", l, "</guid>\n" "</item>\n\n");
+			c, "]]></description>\n");
+	if(strlen(w))
+		sprintm("<pubDate>", w, "</pubDate>\n");
+
+	sprintm("<guid>", l, "</guid>\n" "</item>\n\n");
 }

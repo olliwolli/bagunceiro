@@ -10,12 +10,10 @@
 #define QUERY_MAX			128
 #define COOKIE_MAX			128
 
-#define PROGRAM_NAME		"BACALHAU"
+#define PROGRAM_NAME		"b"
 
-/* Adds error messages that are not for free.
- * Adds approx. 4k
- * this also removes some useful notices.
- * */
+/* Adds error messages that are not for free. Adds approx. 4k.
+ * This also removes some useful notices. Ok for admin binary */
 //#define WANT_ERROR_PRINT
 
 /* This removes parts from the packed timestamp
@@ -24,109 +22,133 @@
 
 /* parameters for WANT_REDUCE_TS:
  * REDUCE_SIZE 16 will break on 2106-02-07 by overflowing after
+ * a.k.a. unsigned Y2K38 problem
  * this reduction:
  * 40000000ffffffffffffffff00000000 -> ffffffffffffffff
  * If you want to be safe for the future, increase REDUCE_SIZE
  * MAX is 24
  * The last four bytes will always be removed (00000000)
- * if you activate WANT_REDUCE_TS
- */
+ * if you activate WANT_REDUCE_TS */
 #ifdef WANT_REDUCE_TS
 #define REDUCE_SIZE 16
 #define REDUCE_OFFSET (24 - REDUCE_SIZE)
 #endif
 
-
-#ifdef ADMIN_MODE
-#define WANT_CGI_CONFIG
-#endif
-/* Admin mode includes functions to change the database.
- * Use this if you want a cgi that does not allow write
- * access to the database and is smaller. This cgi
- * presumes that you save access to it by some kind of
- * external authentication method (e.g. http basic auth)
- * Adds approx. 8k */
-//#define ADMIN_MODE
-
-/* Admin mode pass allows password authentication
- * This mode only works over https. Since cookies may be
- * sniffed otherwise. It provides the action ?login.
- * */
-//#define ADMIN_MODE_PASS
-
-#ifdef ADMIN_MODE_PASS
-#define WANT_ERROR_PRINT
-#endif
-
-/* Define this macro if you want to use the tiny html editor;
- * It has to be downloaded seperately from:
- * http://www.leigeber.com/2010/02/javascript-wysiwyg-editor/
- * We use packed.js instead of tinyeditor.js
- * TINY_HTML_PATH is the base url to the editor in your webserver
- * setup */
+/* Define this macro if you want to use the tiny html editor
+ * if you do not want this you may also safely delete the
+ * installed tinyeditor directory */
 #define WANT_TINY_HTML_EDITOR
+/* TINY_HTML_PATH the path to the editor */
 #define TINY_HTML_PATH "/tinyeditor/"
 
+/* enable month browsing of blog */
+#define WANT_MONTH_BROWSING
 
+/* upload form on post page, if you disable this you also might
+ * want to delete the two files mentioned below */
 #define WANT_UPLOAD
-
 #define UPLOAD_JS "/upload.js"
 #define UPLOAD_CGI "/upload.pl"
 
-/* define in order to be able to browse months on the blog */
-#define WANT_MONTH_BROWSING
+/* full text searching capability */
+#define WANT_SEARCHING
 
-/* TODO:unimplemented:
- * 	- free all malloced memory at each loop runtime
- * 	- exclude printf like function from fast cgi library
- * 	- reset variables at beginning of loop
- * 	- add linker flag to makefile
- * define in order to use fast cgi */
-//#define WANT_FAST_CGI
+/* want http "304 Not Modified" support, you usually want this */
+#define WANT_HTTP_304
 
 /* Debugging options */
 //#define DEBUG
 //#define DEBUG_PARSING
 //#define DEBUG_ENTRY
+/* loops through default action x100 */
+//#define DEBUG_MEMORY 100
 
 /* activate and set for input simulation */
-//#define DEBUG_PARSE_QUERY "login"
-//#define DEBUG_PARSE_POST "action=config&title=Your+new+blog2&tagline=Your+tagline&input="
-//#define DEBUG_PARSE_COOKIE "sid=0a9b12e19184457041466032126e4655"
-
-//#define ADMIN_OVERRIDE
-#define SESSION_ID_LEN 32
-/*  validity in seconds, FIXME unify */
-#define SESSION_VTIME 43200
-#define SESSION_STR_VTIME "43200"
-
-#define DEFAULT_STYLESHEET "style.css"
-#define DB_FILE "db/db.inc"
+//#define DEBUG_PARSE_QUERY "action=config&title=Title&tagline=Tagline&pass="
+//#define DEBUG_PARSE_POST "action=config&title=Titles&tagline=Tagline&pass=&sbox=y"
+//#define DEBUG_PARSE_COOKIE "sid=03143246f1188b30e6a26c7e4dfdcfcb"
 
 /* YOU SHOULDN'T EDIT BELOW THIS LINE */
-#ifdef WANT_FAST_CGI
-#include "fcgi_stdio.h"
-#endif
+/* NOTE:
+ * usually the makefile will handle these first three symbols,
+ * blog.cgi does not define the following 2 symbols but
+ * NO_ADMIN_MODE. And admin.cgi defines the following two symbols
+ * WANT_FAST_CGI is also handled by makefile */
+
+/* Admin mode includes functions to change the database. Use
+ * this if you want an executable that does not allow write
+ * access to the database and is smaller. If you don't define
+ * ADMIN_MODE_PASS, the resulting executable will assume that
+ * you secure access to it by some kind of external
+ * authentication method (e.g. http basic auth). Adds approx.
+ *  8k */
+//#define ADMIN_MODE
+
+/* Admin mode pass allows password authentication. The mode only
+ * works over https. Since cookies and passwords may be sniffed
+ * otherwise. It provides most notably the actions ?login, ?add,
+ * ?mod, ?del, ?logout, ?config. */
+//#define ADMIN_MODE_PASS
+
+
+/*	- free all malloced memory at each loop runtime
+ * 	- reset variables at beginning of loop
+ * Define in order to use fastcgi instead of cgi
+ * This requires changes to your webserver setup */
+//#define WANT_FAST_CGI
 
 #ifdef NO_ADMIN_MODE
 #undef ADMIN_MODE
 #endif
+
 #ifdef ADMIN_MODE_PASS
-#include <openssl/sha.h>
+/* needed for login error messages */
+#define WANT_ERROR_PRINT
 #endif
 
-#define sprint(str) buffer_puts(buffer_1, (str))
-#define sprintm(...) buffer_putm(buffer_1, ##__VA_ARGS__)
-#define sprintf(str) buffer_putsflush(buffer_1, (str))
-#define sprintmf(...) buffer_putmflush(buffer_1, ##__VA_ARGS__)
-#define sprintn(str, len) buffer_put(buffer_1, (str), (len))
+#ifdef ADMIN_MODE
+#define WANT_CGI_CONFIG
+#endif
 
-#ifdef WANT_ERROR_PRINT
-#define eprint(str) buffer_puts(buffer_2, (str))
-#define eprintm(...) buffer_putm(buffer_2, ##__VA_ARGS__)
-#define eprintf(str) buffer_putsflush(buffer_2, (str))
-#define eprintmf(...) buffer_putmflush(buffer_2, ##__VA_ARGS__)
+#ifdef WANT_FAST_CGI
+	#include "fcgi_config.h"
+	#include "fcgiapp.h"
+
+	FCGX_Stream *fcgi_in, *fcgi_out, *fcgi_err;
+	FCGX_ParamArray envp;
+
+	#define getenv(str) FCGX_GetParam((str), envp)
+	#define FCGX_PutSm(b,...) FCGX_PutSm_internal(b,__VA_ARGS__,(char*)0)
+
+	#define sprint(str) FCGX_PutS(str, fcgi_out)
+	#define sprintm(...) FCGX_PutSm(fcgi_out, ##__VA_ARGS__)
+	#define sprintf(str) FCGX_PutS(str, fcgi_out)
+	#define sprintmf(...) FCGX_PutSm(fcgi_out, ##__VA_ARGS__)
+	#define sprintn(str, len) FCGX_PutStr(str, len, fcgi_out)
+
+	#ifdef WANT_ERROR_PRINT
+	#define eprint(str) FCGX_PutS(str, fcgi_err)
+	#define eprintm(...) FCGX_PutSm(fcgi_err, ##__VA_ARGS__)
+	#define eprintf(str) do {FCGX_PutS(str, fcgi_err);} while(0)
+	#define eprintmf(...) do{FCGX_PutSm(fcgi_err);} while(0)
+	#define eprintn(str, len) FCGX_PutStr(str, len, fcgi_err)
+	#endif
 #else
+	#define sprint(str) buffer_puts(buffer_1, (str))
+	#define sprintm(...) buffer_putm(buffer_1, ##__VA_ARGS__)
+	#define sprintf(str) buffer_putsflush(buffer_1, (str))
+	#define sprintmf(...) buffer_putmflush(buffer_1, ##__VA_ARGS__)
+	#define sprintn(str, len) buffer_put(buffer_1, (str), (len))
+
+	#ifdef WANT_ERROR_PRINT
+	#define eprint(str) buffer_puts(buffer_2, (str))
+	#define eprintm(...) buffer_putm(buffer_2, ##__VA_ARGS__)
+	#define eprintf(str) buffer_putsflush(buffer_2, (str))
+	#define eprintmf(...) buffer_putmflush(buffer_2, ##__VA_ARGS__)
+	#endif
+#endif
+
+#ifndef WANT_ERROR_PRINT
 #define eprint(str)
 #define eprintm(...)
 #define eprintf(str)
@@ -134,6 +156,7 @@
 #endif
 
 #ifdef WANT_ERROR_PRINT
+#include <string.h>
 enum notice { N_ERROR, N_NOTE, N_NONE, N_ACTION };
 struct errors {
 	char note[128];
@@ -150,5 +173,13 @@ static inline void set_err(char *msg, int num, enum notice type)
 #else
 #define set_err(a,b,c)
 #endif
+
+#define SIZE_SESSION_ID 32
+/* the following two macros should represent
+ * the same value, spares some conversion */
+/* session validity in seconds */
+#define SESSION_VTIME 43200
+/* session validity in seconds as string */
+#define SESSION_STR_VTIME "43200"
 
 #endif

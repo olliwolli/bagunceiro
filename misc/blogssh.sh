@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SERV=mludi@bockcay.de
+SERV=user@server.com
 BCMD=/home/mludi/clog/blogcmd
 BLOG=/var/www/dynamic/blog/
 DB=$REMOTE_BLOG/db/db.inc
