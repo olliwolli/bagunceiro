@@ -40,13 +40,13 @@ int load_config(blog_t * conf)
 		return -1;
 
 	err = cdbb_readn(&a, "title", 5, conf->title, sizeof(conf->title));
-	if(err)
+	if(err < 0)
 		return -2;
 	err = cdbb_readn(&a, "tagline", 7, conf->tagline, sizeof(conf->tagline));
-	if(err)
+	if(err < 0)
 		return -2;
 	err = cdbb_readn(&a, "searchbox", 9, &conf->sbox, 1);
-	if(err)
+	if(err < 0)
 		return -2;
 
 	cdbb_close_read(&a);
@@ -145,8 +145,12 @@ int auth_conf(blog_t * conf, unsigned char *in, size_t len)
 	}
 	cdbb_close_read(&a);
 
-	auth = !memcmp(in, n->e.p, len);
-	memset(n->e.p, 0, len);
+	/* contains zero */
+	if(array_bytes(&n->e) != len + 1)
+		return 0;
+
+	auth = !memcmp(in, n->e.p, array_bytes(&n->e));
+	memset(n->e.p, 0, array_bytes(&n->e));
 
 	return auth;
 };
@@ -173,7 +177,7 @@ int add_session_id(char *buf)
 	taia_pack(ts, &now);
 
 	err = cdbb_start_mod(&a, SESSION_DB);
-	if(err)
+	if(err < 0)
 		return -1;
 
 	cdbb_add(&a, buf, SIZE_SESSION_ID, ts, TAIA_PACK);

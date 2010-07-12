@@ -48,7 +48,7 @@ void free_nentry(struct nentry *n)
 int cdbb_open_read(struct cdbb *a, const char *f)
 {
 	int fd = open_read(f);
-	if(fd <= 0)
+	if(fd < 0)
 		return fd;
 
 	a->r = malloc(sizeof(struct cdb ));
@@ -81,8 +81,8 @@ int cdbb_open_write(struct cdbb *a, const char *f)
 	unlink(f);
 	fp = open_write(f);
 
-	if(fp <= 0)
-		return fp;
+	if(fp < 0)
+		return -1;
 
 	a->w = malloc(sizeof(struct cdb_make));
 	if(a->w == NULL){
@@ -305,7 +305,7 @@ int cdbb_start_mod(struct cdbb * a, char * f)
 
 	err = cdbb_open_write(a, a->t);
 	if(err <= 0)
-		return err;
+		return -1;
 
 	err = cdbb_open_read(a, a->f);
 	return err;

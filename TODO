@@ -1,5 +1,6 @@
 TODO list sorted by priority (descending):
 
+* Clean up posts (remove script tags, etc)
 * Rewrite: fastcgi library (already removed a lot of code)
 	but the current implementation uses at least +30kb ;-(
 * Check: malloc return values

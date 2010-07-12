@@ -34,12 +34,12 @@
 #define REDUCE_OFFSET (24 - REDUCE_SIZE)
 #endif
 
-/* Define this macro if you want to use the tiny html editor
+/* Define this macro if you want to use the tinymce html editor
  * if you do not want this you may also safely delete the
- * installed tinyeditor directory */
+ * installed tinymce directory */
 #define WANT_TINY_HTML_EDITOR
 /* TINY_HTML_PATH the path to the editor */
-#define TINY_HTML_PATH "/tinyeditor/"
+//#define TINY_HTML_PATH "/tinyeditor/"
 
 /* enable month browsing of blog */
 #define WANT_MONTH_BROWSING

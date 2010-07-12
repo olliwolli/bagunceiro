@@ -24,8 +24,13 @@ blockquote {
 	font-weight: 100;
 	margin: 0px 20px 0;
 }
+
 a {
 	text-decoration: none;
+}
+
+p{
+	margin:0; padding: 0;
 }
 
 h1, h1 a:link,h1 a:visited, h1 a:active, h1 a:hover {

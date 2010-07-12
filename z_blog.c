@@ -373,7 +373,7 @@ int handle_query(blog_t * conf)
 		break;
 	case QA_LOGOUT:
 		err = expire_all_sessions(conf);
-		if(err)
+		if(err < 0)
 			set_err("Could not expire sessions", 0, N_ERROR);
 
 		fetch_entries_days(conf, &res);

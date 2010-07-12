@@ -218,13 +218,15 @@ void html_input(const char * type, const char* name, const char* value)
 
 void html_textarea_open(const char *name, const char * id)
 {
-	oprintm("<textarea name=\"",name,"\" id=\"",id, "\"  >");
-
+	indent++;
+	indent_space(indent);
+	sprintm("<textarea name=\"",name,"\" id=\"",id, "\" >");
 }
 
 void html_textarea_close()
 {
-	cprint("</textarea>");
+	sprint("</textarea>\n");
+	indent--;
 }
 
 void html_checkbox(const char *name, const char *v, int checked)

@@ -86,27 +86,30 @@ static void print_key_html(const blog_t * conf, struct nentry *e)
 #if defined(ADMIN_MODE) && defined(WANT_TINY_HTML_EDITOR)
 void print_tiny_html_editor()
 {
-	sprintm("<script type=\"text/javascript\">"
-		"new TINY.editor.edit('editor',{"
-		"id:'input',"
-		"width:700,"
-		"height:175,"
-		"cssclass:'te',"
-		"controlclass:'tecontrol',"
-		"rowclass:'teheader',"
-		"dividerclass:'tedivider',"
-		"controls:['bold','italic','underline','strikethrough','|','subscript','superscript','|',"
-		"'orderedlist','unorderedlist','|','outdent','indent','|','leftalign',"
-		"'centeralign','rightalign','blockjustify','|','unformat','|','undo','redo','n',"
-		"'font','size','style','|','image','hr','link','unlink','|','cut','copy','paste','print'],"
-		"footer:true,"
-		"fonts:['Verdana','Arial','Georgia','Trebuchet MS'],"
-		"xhtml:true,"
-		"cssfile:'style.css',"
-		"bodyid:'editor',"
-		"footerclass:'tefooter',"
-		"toggle:{text:'source',activetext:'wysiwyg',cssclass:'toggle'},"
-		"resize:{cssclass:'resize'}" "});" "</script>");
+	html_java_script("/tinymce/tiny_mce.js");
+
+	sprintm(
+		"<script type=\"text/javascript\">"
+			);
+	sprintm(
+		"tinyMCE.init({"
+		"mode : \"textareas\","
+		"theme : \"advanced\","
+		"theme_advanced_buttons1 : \"bold,italic,underline,strikethrough,|,justifyleft,justifycenter,justifyright,justifyfull,|,styleselect,formatselect,fontselect,fontsizeselect|,forecolor,backcolor\","
+		"theme_advanced_buttons2 : \"cut,copy,paste,pastetext,|,bullist,numlist,|,outdent,indent,blockquote,|,undo,redo,|,link,unlink,anchor,image,cleanup,code,removeformat,visualaid,|,sub,sup,|,charmap\","
+		"theme_advanced_buttons3 : \"\","
+		"theme_advanced_toolbar_location : \"top\","
+		"theme_advanced_toolbar_align : \"left\","
+		"theme_advanced_statusbar_location : \"bottom\","
+		"theme_advanced_resizing : \"true\","
+		"forced_root_block : false,"
+		"force_br_newlines : true,"
+		"force_p_newlines : false"
+	"});"
+	"</script>"
+	);
+
+
 }
 #else
 void print_tiny_html_editor()
@@ -187,8 +190,7 @@ static int print_header_html(const blog_t * conf)
 
 #if defined(ADMIN_MODE) && defined(WANT_TINY_HTML_EDITOR)
 	if (conf->qry.action == QA_ADD || conf->qry.action == QA_MODIFY) {
-		html_link_css(TINY_HTML_PATH"style.css");
-		html_java_script(TINY_HTML_PATH "packed.js");
+		print_tiny_html_editor();
 	}
 #endif
 #if defined(ADMIN_MODE) && defined(WANT_UPLOAD)
@@ -348,11 +350,10 @@ void print_noentries_html(const blog_t * conf)
 
 int print_config(const blog_t * conf)
 {
+	set_err("Configuration", 0, N_ACTION);
 	print_header_html(conf);
 
 	/* set appropriate notice */
-	set_err("Configuration", 0, N_ACTION);
-	print_notice_html(conf);
 
 	html_div_open("id", "conf");
 	html_form_open("post", conf->script, 0 , 0);
@@ -438,14 +439,11 @@ void print_upload(const blog_t * conf)
 
 int print_add_entry(const blog_t * conf)
 {
+	set_err("Add a new entry", 0, N_ACTION);
 	print_header_html(conf);
 
-	/* set appropriate notice */
-	set_err("Add a new entry", 0, N_ACTION);
-	print_notice_html(conf);
-
 	html_div_open("id", "mod");
-	html_form_open("post", conf->script, 0, "editor.post();");
+	html_form_open("post", conf->script, 0, 0);
 	html_input("hidden", "action", "add");
 
 	html_textarea_open("input", "input");
@@ -457,7 +455,7 @@ int print_add_entry(const blog_t * conf)
 
 	html_form_close();
 
-	print_tiny_html_editor();
+
 	print_upload(conf);
 	html_div_end();
 
@@ -470,14 +468,11 @@ int print_mod_entry(const blog_t * conf, struct nentry *n)
 
 	fmt_key_plain(n, key);
 
+	set_err("Modify an entry", 0, N_ACTION);
 	print_header_html(conf);
 
-	/* set appropriate notice */
-	set_err("Modify an entry", 0, N_ACTION);
-	print_notice_html(conf);
-
 	html_div_open("id", "mod");
-	html_form_open("post", conf->script, 0, "editor.post();");
+	html_form_open("post", conf->script, 0, 0);
 
 	html_input("hidden", "action", "mod");
 	html_input("hidden", "key", key);
@@ -488,8 +483,6 @@ int print_mod_entry(const blog_t * conf, struct nentry *n)
 	else
 		html_content("Entry not found");
 	html_textarea_close();
-
-	print_tiny_html_editor();
 
 	html_div_open("class", "abutton");
 	html_input("submit", 0, "Modify");
@@ -507,11 +500,9 @@ int print_mod_entry(const blog_t * conf, struct nentry *n)
 #ifdef ADMIN_MODE_PASS
 void print_login(const blog_t * conf)
 {
+	set_err("Login", 0, N_ACTION);
 	if(print_header_html(conf))
 		return;
-
-	set_err("Login", 0, N_ACTION);
-	print_notice_html(conf);
 
 	html_div_open("id", "login");
 

@@ -234,7 +234,7 @@ static void do_admin_pass_mode(blog_t * conf, array * co, array * pd,
 		memset(tmptoken, 0, sizeof(tmptoken));
 		if(conf->auth){
 			err = add_session_id(conf->sid);
-			if(err)
+			if(err < 0)
 				set_err("Could not add session id", 0, N_ERROR);
 		}
 

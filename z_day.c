@@ -81,7 +81,7 @@ int cdbb_fetch_day(struct cdbb *a, struct day * entries, const struct taia *day)
 
 		/* ALLOCATION */
 		err = cdbb_read_nentry(a, key, TAIA_PACK, entry);
-		if(err)
+		if(err < 0)
 			free_nentry(entry);
 		else
 			day_add_nentry(entries, entry);
