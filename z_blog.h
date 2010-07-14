@@ -1,8 +1,9 @@
 #ifndef _Z_BLOG_H
 #define _Z_BLOG_H
 
-#include <taia.h>
 #include <sys/time.h>
+
+#include <taia.h>
 #include <array.h>
 #include <caltime.h>
 
@@ -23,6 +24,44 @@
 /* qactions bigger than 1 need administration privileges */
 #define IS_ADMIN_ACTION(x) (x) > 1
 
+/* query */
+#define QUERY_QRY "qry"
+#define QUERY_TAG "tag"
+#define QUERY_TS "ts"
+#define QUERY_DEL "del"
+#define QUERY_MOD "mod"
+#define QUERY_ADD "add"
+#define QUERY_CONFIG "config"
+#define QUERY_CSS "css"
+#define QUERY_FMT "fmt"
+#define QUERY_MONTH "mn"
+#define QUERY_LOGIN "login"
+#define QUERY_LOGOUT "logout"
+
+/* predefined database keys */
+#define CONF_TITLE "title"
+#define CONF_TAGLINE "tagline"
+#define CONF_SEARCHBOX "searchbox"
+#define CONF_PASS "input"
+
+#define POST_TITLE "title"
+#define POST_TAGLINE "tagline"
+#define POST_PASS "pass"
+#define POST_SEARCHBOX "sbox"
+#define POST_INPUT "input"
+#define POST_KEY "key"
+#define POST_LOGIN "login"
+#define POST_FILE_UPLOAD "file"
+#define POST_ADD "add"
+#define POST_MOD "mod"
+#define POST_CONFIG "config"
+#define POST_ACTION "action"
+
+#define COOKIE_SID "sid"
+#define COOKIE_CSS "css"
+
+#define DB_LAST_MODIFIED "!lastmodified"
+
 typedef struct query {
 	/* query actions */
 	enum qaction { QA_SHOW,
@@ -38,7 +77,7 @@ typedef struct query {
 	} action;
 
 	/* in case of QA_SHOW, distinct between different query types */
-	enum qtype { QRY_TS, QRY_WEEK, QRY_MONTH, QRY_NONE, QRY_FIND } type;
+	enum qtype { QRY_TS, QRY_WEEK, QRY_MONTH, QRY_NONE, QRY_FIND, QRY_TAG } type;
 
 	/* query timestamp (?ts=) */
 	char ts[FMT_TAIA_HEX];
@@ -53,6 +92,11 @@ typedef struct query {
 #ifdef WANT_SEARCHING
 	/* query search term, case sensitive (?qry=) */
 	char find[SIZE_FIND_STR];
+#endif
+
+#ifdef WANT_TAGS
+	/* tag search term, case insensitive (?tag=) */
+	char tag[SIZE_FIND_STR];
 #endif
 
 	/* posted blog entry */

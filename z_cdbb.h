@@ -68,6 +68,7 @@ void cdbb_mod(struct cdbb *a, char *k, size_t ks, char *v, size_t vs);
 void cdbb_rep(struct cdbb *a, char *k, size_t ks, char *v, size_t vs);
 void cdbb_del(struct cdbb *a, char *k, size_t ks);
 void cdbb_del_val(struct cdbb *a, char *k, size_t ks, char *v, size_t vs);
+
 int cdbb_readn(struct cdbb *a, char *k, size_t ks, char *v, size_t n);
 int cdbb_read_nentry(struct cdbb *a, char *k, size_t ks, struct nentry *n);
 
@@ -78,5 +79,6 @@ void cdbb_close_read(struct cdbb *a);
 
 int cdbb_firstkey(struct cdbb * a);
 int cdbb_findnext(struct cdbb * a, const char *needle, struct nentry *n);
+int cdbb_findnext_ignorecase(struct cdbb * a, const char *needle, struct nentry *n);
 
 #endif

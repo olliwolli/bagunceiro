@@ -29,6 +29,8 @@ void html_close_body();
 
 void html_link(const char * l, const char * t);
 void html_link2(const char * l1, const char * l2, const char * t);
+void html_qry_param_link2(const char * l1, const char * l2, const char * t);
+void html_abs_qry_link2(const char * l1, const char * l2, const char * t);
 
 void html_tag_open(const char *t);
 void html_tag_close(const char *t);

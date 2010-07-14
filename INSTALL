@@ -26,6 +26,18 @@ installed to /opt
 Then type insided the root directory of this package:
 	make
 
+By default the blog is installed to /var/www/blog you
+can change that default by change the variable INSTALL_DIR
+in the make file. Then execute
+	make install
+
+If you want the tinymce editor in order to edit blog entries
+cp the tinymce directory the blog installation:
+	cp -a tinymce /var/www/blog
+(You will need to have the webserver configured correctly
+in order for tinymce to work. This blog assumes that tinymce
+is installed like this http://my.host.com/tinymce/)
+
 2. Web server
 
 CGI must be enabled. Currently the blog system only works when

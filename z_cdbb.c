@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <uint32.h>
 #include <time.h>
 #include <array.h>
@@ -13,7 +14,6 @@
 #include "z_blog.h"
 #include "z_cdbb.h"
 #include "z_features.h"
-
 
 void init_nentry(struct nentry *n)
 {
@@ -27,7 +27,6 @@ struct nentry *new_nentry(void)
 
 	n = malloc(sizeof(struct nentry));
 	init_nentry(n);
-
 	return n;
 }
 
@@ -104,7 +103,7 @@ void cdbb_close_write(struct cdbb *a)
 
 
 /* LEVLEL COPYING LOGIC */
-int cdbb_check_ops(struct cdbb *a, unsigned char *k,
+static int cdbb_check_ops(struct cdbb *a, unsigned char *k,
 		size_t ks, unsigned char * v, size_t vs)
 {
 	struct op * t;
@@ -139,12 +138,11 @@ int cdbb_check_ops(struct cdbb *a, unsigned char *k,
 			}
 		}
 	}
-
 	return f;
 }
 
 /* LEVLEL COPYING LOGIC */
-int cdbb_check_filter(struct cdbb *a, unsigned char *k, size_t ks, unsigned char * v, size_t vs)
+static int cdbb_check_filter(struct cdbb *a, unsigned char *k, size_t ks, unsigned char * v, size_t vs)
 {
 	int i;
 	for(i=0; i < a->fnum; i++){
@@ -154,7 +152,7 @@ int cdbb_check_filter(struct cdbb *a, unsigned char *k, size_t ks, unsigned char
 	return 0;
 }
 
-int cdbb_handle_ops(struct cdbb *a)
+static int cdbb_handle_ops(struct cdbb *a)
 {
 	int i;
 	int num;
@@ -208,7 +206,7 @@ int cdbb_handle_ops(struct cdbb *a)
 	return num;
 }
 
-int __cdbb_copy(struct cdbb * a, size_t ks, size_t vs)
+static int __cdbb_copy(struct cdbb * a, size_t ks, size_t vs)
 {
 	unsigned char k[ks];
 	unsigned char v[vs];
@@ -385,7 +383,37 @@ int cdbb_firstkey(struct cdbb * a)
 	return 1;
 }
 
-int cdbb_findnext(struct cdbb * a, const char *needle, struct nentry *n){
+/* from VLC
+ * http://goalbit.git.sourceforge.net/git/gitweb.cgi?p=goalbit/goalbit;a=blob_plain;f=compat/strcasestr.c;h=e01e5c39acb9848b1bf86a9565282ece4b61b368;hb=779d38a
+ * The dietlibc does not have strcasestr or similar. (Or I am too blind to find it).
+ * This sucks badly. */
+static char *strcasestr (const char *psz_big, const char *psz_little)
+{
+    char *p_pos = (char *)psz_big;
+
+    if( !*psz_little ) return p_pos;
+
+    while( *p_pos )
+    {
+        if( toupper( *p_pos ) == toupper( *psz_little ) )
+        {
+            char * psz_cur1 = p_pos + 1;
+            char * psz_cur2 = (char *)psz_little + 1;
+            while( *psz_cur1 && *psz_cur2 &&
+                   toupper( *psz_cur1 ) == toupper( *psz_cur2 ) )
+            {
+                psz_cur1++;
+                psz_cur2++;
+            }
+            if( !*psz_cur2 ) return p_pos;
+        }
+        p_pos++;
+    }
+    return NULL;
+}
+
+
+static int __cdbb_findnext(struct cdbb * a, const char *needle, struct nentry *n, int ignorecase){
 	uint32 kp, dp, ks, vs;
 	unsigned char *k, *v;
 
@@ -405,13 +433,26 @@ int cdbb_findnext(struct cdbb * a, const char *needle, struct nentry *n){
 	cdb_read(a->r, v, vs, dp);
 
 	/* search value */
-	if(strstr((char *)v,needle) == NULL)
-		return 0;
+	if(ignorecase){
+		if(strcasestr((char *)v,needle) == NULL)
+			return 0;
+	}else{
+		if(strstr((char *)v,needle) == NULL)
+			return 0;
+	}
 
 	array_catb(&n->k, (char *)k, ks);
 	array_catb(&n->e, (char *)v, vs);
 
 	return 1;
+}
+
+int cdbb_findnext_ignorecase(struct cdbb * a, const char *needle, struct nentry *n){
+	return __cdbb_findnext(a, needle, n, 1);
+}
+
+int cdbb_findnext(struct cdbb * a, const char *needle, struct nentry *n){
+	return __cdbb_findnext(a, needle, n, 0);
 }
 
 int cdbb_read_nentry(struct cdbb *a, char *k, size_t ks, struct nentry *n)

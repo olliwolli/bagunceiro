@@ -39,13 +39,13 @@ int load_config(blog_t * conf)
 	if (err < 0)
 		return -1;
 
-	err = cdbb_readn(&a, "title", 5, conf->title, sizeof(conf->title));
+	err = cdbb_readn(&a, CONF_TITLE, 5, conf->title, sizeof(conf->title));
 	if(err < 0)
 		return -2;
-	err = cdbb_readn(&a, "tagline", 7, conf->tagline, sizeof(conf->tagline));
+	err = cdbb_readn(&a, CONF_TAGLINE, 7, conf->tagline, sizeof(conf->tagline));
 	if(err < 0)
 		return -2;
-	err = cdbb_readn(&a, "searchbox", 9, &conf->sbox, 1);
+	err = cdbb_readn(&a, CONF_SEARCHBOX, 9, &conf->sbox, 1);
 	if(err < 0)
 		return -2;
 
@@ -76,12 +76,13 @@ time_t http_if_modified_since(char *m)
 	if (err < 0)
 		return -1;
 
-	err = cdbb_readn(&a, "!lastmodified", 13, pk, TAIA_PACK);
+	err = cdbb_readn(&a, DB_LAST_MODIFIED, 13, pk, TAIA_PACK);
 	cdbb_close_read(&a);
 
 	taia_unpack(pk, &t);
 
-	if(err == 1 && m && !http_is_modified(m, (time_t)t.sec.x&0xffffffffffful)){
+	if(err == 1 && m && !http_is_modified(m,
+			(time_t)t.sec.x&0xffffffffffful)){
 		return 0;
 	}
 
@@ -115,15 +116,15 @@ int save_config(blog_t * conf)
 	struct cdbb a;
 	cdbb_start_mod(&a, CONF_DB);
 	if(strcmp(conf->qry.title, "")){
-		cdbb_rep(&a, "title", 5, conf->qry.title, strlen(conf->qry.title)+1);
+		cdbb_rep(&a, CONF_TITLE, 5, conf->qry.title, strlen(conf->qry.title)+1);
 		strcpy(conf->title, conf->qry.title);
 	}
 	if(strcmp(conf->qry.pass, ""))
-		cdbb_rep(&a, "input", 5, conf->qry.pass, strlen(conf->qry.pass)+1);
-	cdbb_rep(&a, "tagline", 7, conf->qry.tagline, strlen(conf->qry.tagline)+1);
+		cdbb_rep(&a, CONF_PASS, 5, conf->qry.pass, strlen(conf->qry.pass)+1);
+	cdbb_rep(&a, CONF_TAGLINE, 7, conf->qry.tagline, strlen(conf->qry.tagline)+1);
 	strcpy(conf->tagline, conf->qry.tagline);
 #ifdef WANT_SEARCHING
-	cdbb_rep(&a, "searchbox", 9, &conf->sbox, 1);
+	cdbb_rep(&a, CONF_SEARCHBOX, 9, &conf->sbox, 1);
 #endif
 	cdbb_apply(&a);
 
@@ -139,7 +140,7 @@ int auth_conf(blog_t * conf, unsigned char *in, size_t len)
 
 	struct cdbb a;
 	cdbb_open_read(&a, CONF_DB);
-	if(cdbb_read_nentry(&a, "input", 5, n) <= 0){
+	if(cdbb_read_nentry(&a, CONF_PASS, 5, n) <= 0){
 		free_nentry(n);
 		return 0;
 	}

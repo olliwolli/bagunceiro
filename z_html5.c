@@ -43,7 +43,7 @@ static int indent;
 						sprintn("\n", 1);\
 					}while(0)
 
-void indent_space(int i)
+static void indent_space(int i)
 {
 	if(i<=0)
 		return;
@@ -202,6 +202,21 @@ void html_link2(const char * l1, const char * l2, const char * t)
 	html_content(t);
 	cprint("</a>");
 }
+
+void html_abs_qry_link2(const char * l1, const char * l2, const char * t)
+{
+	oprintm("<a href=\"", l1, "?", l2, "\">");
+	html_content(t);
+	cprint("</a>");
+}
+
+void html_qry_param_link2(const char * l1, const char * l2, const char * t)
+{
+	oprintm("<a href=\"", "?", l1, "=", l2, "\">");
+	html_content(t);
+	cprint("</a>");
+}
+
 
 void html_input(const char * type, const char* name, const char* value)
 {

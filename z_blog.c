@@ -2,11 +2,11 @@
 #include <open.h>
 #include <time.h>
 #include <string.h>
+#include <ctype.h>
+#include <errno.h>
 
 #include <array.h>
-#include <ctype.h>
 #include <caltime.h>
-#include <errno.h>
 #include <str.h>
 #include <cdb.h>
 
@@ -20,7 +20,7 @@
 #include "z_conf.h"
 #include "z_format.h"
 
-#ifdef WANT_SEARCHING
+#if defined(WANT_SEARCHING) || defined(WANT_TAGS)
 static void add_to_result(struct result * res, struct nentry * n)
 {
 	struct taia tday;
@@ -57,7 +57,7 @@ static void add_to_result(struct result * res, struct nentry * n)
 		result_add_day_entry(res, day);
 }
 
-int datecomp(const void* a,const void* b) {
+static int datecomp(const void* a,const void* b) {
 	struct day * A = (struct day *) a;
 	struct day * B = (struct day *) b;
 
@@ -72,7 +72,7 @@ int datecomp(const void* a,const void* b) {
 	return l;
 }
 
-static int fetch_entry_query(const blog_t * conf, struct result * res)
+static int __fetch_entry_find(const blog_t * conf, struct result * res, int ignorecase)
 {
 	struct cdbb a;
 	struct nentry * n;
@@ -89,7 +89,10 @@ static int fetch_entry_query(const blog_t * conf, struct result * res)
 		if(n == NULL)
 			continue;
 
-		err = cdbb_findnext(&a, conf->qry.find, n);
+		if(ignorecase)
+			err = cdbb_findnext_ignorecase(&a, conf->qry.find, n);
+		else
+			err = cdbb_findnext(&a, conf->qry.find, n);
 
 		if (err == -1){
 			free_nentry(n);
@@ -103,6 +106,20 @@ static int fetch_entry_query(const blog_t * conf, struct result * res)
 		add_to_result(res, n);
 		num++;
 	}
+}
+#endif
+
+#ifdef WANT_SEARCHING
+static int fetch_entry_query(const blog_t * conf, struct result * res)
+{
+	return __fetch_entry_find(conf, res, 0);
+}
+#endif
+
+#ifdef WANT_TAGS
+static int fetch_entry_tag(const blog_t * conf, struct result * res)
+{
+	return __fetch_entry_find(conf, res, 1);
 }
 #endif
 
@@ -178,7 +195,6 @@ sub:
 }
 
 #ifdef WANT_MONTH_BROWSING
-/* TODO: optimize */
 /* this calculates offsets from today and calls fetch_entries_days */
 static int fetch_entries_month(blog_t * conf, struct result * res)
 {
@@ -279,6 +295,16 @@ int handle_query(blog_t * conf)
 #ifdef WANT_SEARCHING
 		case QRY_FIND:
 			fetch_entry_query(conf, &res);
+
+			qsort(res.r.p,
+					result_length(&res),
+					sizeof(struct day **),
+					datecomp);
+			break;
+#endif
+#ifdef WANT_TAGS
+		case QRY_TAG:
+			fetch_entry_tag(conf, &res);
 
 			qsort(res.r.p,
 					result_length(&res),

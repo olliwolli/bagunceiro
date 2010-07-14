@@ -39,7 +39,7 @@ endif
 INSTALL_DIR=/var/www/blog
 BINDIR=/usr/bin
 DBDIR=$(INSTALL_DIR)/db
-TINYDIR=$(INSTALL_DIR)/tinyeditor
+TINYDIR=$(INSTALL_DIR)/tinymce
 WEBUSER=www-data
 WEBGRP=www-data
 
@@ -97,7 +97,7 @@ TARGETS=blog.cgi admin.cgi blogcmd
 all: $(TARGETS)
 
 HEADERS=z_blog.h z_conf.h z_entry.h z_features.h z_format.h z_time.h z_day.h z_html5.h z_http.h z_rss.h z_cdbb.h z_result.h
-SOURCES=z_blog.c z_conf.c z_entry.c z_format.c z_mainblog.c z_time.c z_day.c z_html5.c z_http.c z_rss.c z_cdbb.c z_result.c
+SOURCES=z_blog.c z_conf.c z_entry.c z_format.c z_time.c z_day.c z_html5.c z_http.c z_rss.c z_cdbb.c z_result.c
 
 BLOG_O=$(SOURCES:%.c=%.o)
 BLOG_O_STD=$(SOURCES:%.c=%.std.o)
@@ -114,21 +114,21 @@ endif
 .c.std.o : $(HEADERS)
 	$(CC) -c -o $@ $(CFLAGS_STD) $(<:.std.o=.c)
 
-blogcmd: $(BLOG_O_STD)
+blogcmd: $(BLOG_O_ADM) z_blogger.adm.o
 	$(CC) -o $@ $^ $(LDFLAGS_ADMIN)
 	#-strip -R .note -R .comment $@
 
 .c.adm.o : $(HEADERS)
 	$(CC) -c -o $@ $(CFLAGS_ADMIN) $(<:.adm.o=.c)
-
-_admin: $(BLOG_O_ADM) 
+ 
+_admin: $(BLOG_O_ADM) z_mainblog.adm.o
 	$(CC) -o $@ $^ $(LDFLAGS_ADMIN)
 	
 admin.cgi: _admin
 	cp -p $^ $@
 	-strip -R .note -R .comment $@
 
-_blog: $(BLOG_O)
+_blog: $(BLOG_O) z_mainblog.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 blog.cgi: _blog
@@ -151,10 +151,7 @@ install:
 	install -o $(WEBUSER) -g $(WEBGRP) init/conf.inc $(INSTALL_DIR)/db/conf.inc
 	
 # wysiwyg editor
-	install -d $(TINYDIR) $(TINYDIR)/images
-	install tinyeditor/style.css $(TINYDIR)
-	install tinyeditor/packed.js $(TINYDIR)
-	install tinyeditor/images/* $(TINYDIR)/images
+	install -d $(TINYDIR)
 
 # upload functionality
 	install upload/upload.pl $(INSTALL_DIR)

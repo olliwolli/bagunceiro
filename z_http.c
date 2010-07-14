@@ -27,8 +27,7 @@ void http_last_modified(time_t t)
 	fmt[fmt_httpdate(fmt, t)] = 0;
 	sprintm("Last-Modified: ", fmt,"\r\n");
 }
-// FIXME review: changed from  HTTP
-// 	sprint("Status: 304 Not Modified\r\n\r\n");
+
 void http_not_changed_modified()
 {
 	sprint("Status: 304 Not Modified\r\n\r\n");

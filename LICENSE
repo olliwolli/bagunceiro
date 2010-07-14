@@ -1,9 +1,13 @@
+Copyright 2010 Oliver-Tobias Ripka
+
+This software is covered by the GPL v2
+
 Software used:
 
-tinyeditor:
-	AUTHOR: Michael Leigeber
-	URL: http://www.leigeber.com/2010/02/javascript-wysiwyg-editor/
-	LICENSE: http://creativecommons.org/licenses/by/3.0/us/
+tinymce:
+	AUTHOR: Moxiecode Systems
+	URL: http://tinymce.moxiecode.com/
+	LICENSE: LGPL
 
 dietlibc:
 	AUTHOR: Felix von Leitner <felix-dietlibc@fefe.de>

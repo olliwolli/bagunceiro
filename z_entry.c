@@ -9,11 +9,13 @@
 #include <array.h>
 #include <textcode.h>
 
+#include "z_blog.h"
 #include "z_entry.h"
 #include "z_time.h"
 #include "z_features.h"
 
-int fmt_day_idx(array * fmt, struct taia *l)
+#ifdef ADMIN_MODE
+static int fmt_day_idx(array * fmt, struct taia *l)
 {
 	char buf[FMT_TAIA_STR];
 	int len;
@@ -25,6 +27,7 @@ int fmt_day_idx(array * fmt, struct taia *l)
 
 	return 0;
 }
+#endif
 
 int show_entry(struct cdbb *a, struct taia *k, struct nentry *n)
 {
@@ -37,14 +40,14 @@ int show_entry(struct cdbb *a, struct taia *k, struct nentry *n)
 }
 
 #ifdef ADMIN_MODE
-void blog_modified(struct cdbb *a)
+static void blog_modified(struct cdbb *a)
 {
 	char pk[TAIA_PACK];
 	struct taia t;
 
 	taia_now(&t);
 	taia_pack(pk, &t);
-	cdbb_rep(a, "!lastmodified", 13, pk,TAIA_PACK);
+	cdbb_rep(a, DB_LAST_MODIFIED, 13, pk,TAIA_PACK);
 }
 
 void add_entry(struct cdbb *a, struct taia *k, char *v, size_t vs)

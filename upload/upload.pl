@@ -5,7 +5,8 @@ use CGI;
 use CGI::Carp qw ( fatalsToBrowser );  
 use File::Basename;  
 
-$CGI::POST_MAX = 1024 * 5000;  
+my $k = 300;
+$CGI::POST_MAX = 1024 * $k;  
 
 my $upload_dir = "img/";  
 
@@ -19,7 +20,7 @@ my $filename = $query->param("file");
 if ( !$filename )  
 {  
  print $query->header ( );  
- print "There was a problem uploading your photo (try a smaller file).";  
+ print "The file you are attempting to upload exceeds the maximum allowable file size ($k kb).";  
  exit;  
 }  
 
@@ -28,7 +29,7 @@ my $upload_filehandle = $query->upload("file");
 do {  
 	my ( $name, $path, $extension ) = fileparse ( $filename, '\..*' );  
 	my $rand_hex = join "", map { unpack "H*", chr(rand(256)) } 1..16;
-	$filename = $rand_hex . $extension;
+	$filename = $rand_hex . lc($extension);
  
 } while (-e $filename);
 

@@ -170,7 +170,7 @@ size_t sub_days(struct taia * time, const unsigned int days)
 
 #undef DAYS_SECS
 
-static inline int timeval_subtract(struct timeval *result, struct timeval *x,
+static int timeval_subtract(struct timeval *result, struct timeval *x,
 	struct timeval *y)
 {
 	/* Perform the carry for the later subtraction by updating y. */

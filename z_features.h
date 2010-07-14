@@ -53,8 +53,12 @@
 /* full text searching capability */
 #define WANT_SEARCHING
 
+/* case insensitive full text searching capability */
+#define WANT_TAGS
+
 /* want http "304 Not Modified" support, you usually want this */
 #define WANT_HTTP_304
+
 
 /* Debugging options */
 //#define DEBUG
@@ -64,7 +68,7 @@
 //#define DEBUG_MEMORY 100
 
 /* activate and set for input simulation */
-//#define DEBUG_PARSE_QUERY "action=config&title=Title&tagline=Tagline&pass="
+//#define DEBUG_PARSE_QUERY "fmt=rss"
 //#define DEBUG_PARSE_POST "action=config&title=Titles&tagline=Tagline&pass=&sbox=y"
 //#define DEBUG_PARSE_COOKIE "sid=03143246f1188b30e6a26c7e4dfdcfcb"
 
@@ -96,7 +100,6 @@
  * Define in order to use fastcgi instead of cgi
  * This requires changes to your webserver setup */
 //#define WANT_FAST_CGI
-
 #ifdef NO_ADMIN_MODE
 #undef ADMIN_MODE
 #endif
