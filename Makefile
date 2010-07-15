@@ -11,7 +11,7 @@ WANT_DIET=yes
 #WANT_CLANG=yes
 
 # enable debugging
-DEBUG=yes
+#DEBUG=yes
 
 # makefile
 .SUFFIXES: .std.o .adm.o .o .c
