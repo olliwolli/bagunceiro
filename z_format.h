@@ -32,6 +32,10 @@ int print_config(const blog_t * conf);
 void print_login(const blog_t * conf);
 #endif
 
+void fmt_key_plain(struct nentry *e, char * fmt);
+#define FMT_PERMA_STATIC  (1 + FMT_TAIA_HEX + 4 + PROTO_HTTP_LEN)
+int fmt_perma_link(const blog_t * conf, struct nentry *e, char * fmt);
+
 extern struct fmting fmt__html;
 extern struct fmting fmt__rss;
 #endif

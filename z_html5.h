@@ -45,6 +45,6 @@ void html_input(const char * type, const char* name, const char* value);
 void html_textarea_open(const char *name, const char * id);
 void html_textarea_close();
 
-void http_remove_tags(char *s, size_t n, char *fmt);
+void html_remove_tags(char *s, size_t n, char *fmt);
 
 #endif

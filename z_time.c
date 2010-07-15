@@ -58,7 +58,6 @@ char months[12][4] =
 };
 char weekdays[7][4] = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 
-
 static int weekday(int month, int day, int year)
 {
 	int ix, tx, vx;

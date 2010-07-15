@@ -274,7 +274,7 @@ void html_form_open(const char * m, const char * a, const char *enc, const char 
 	indent--;
 }
 
-void http_remove_tags(char *s, size_t n, char *fmt)
+void html_remove_tags(char *s, size_t n, char *fmt)
 {
 	int tagopen, andopen;
 		int i, l, ws;

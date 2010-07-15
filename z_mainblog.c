@@ -474,17 +474,17 @@ int main()
 #endif
 
 		/* reset variables */
-		conf.host = getenv("SERVER_NAME");
-		if(!conf.host){
-			conf.host = malloc(2);
+		if(getenv("SERVER_NAME"))
+			strncpy(conf.host, getenv("SERVER_NAME"), MAX_HOST_SIZE);
+		else
 			strcpy(conf.host, "");
-		}
+		conf.host[MAX_HOST_SIZE-1] = 0;
 
-		conf.script = getenv("SCRIPT_NAME");
-		if(!conf.script){
-			conf.script = malloc(2);
+		if(getenv("SCRIPT_NAME"))
+			strncpy(conf.script, getenv("SCRIPT_NAME"), MAX_SCRIPT_SIZE);
+		else
 			strcpy(conf.script, "/");
-		}
+		conf.script[MAX_SCRIPT_SIZE-1] = 0;
 
 		conf.mod = getenv("HTTP_IF_MODIFIED_SINCE");
 		conf.ssl = getenv("HTTPS");

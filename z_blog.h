@@ -146,8 +146,11 @@ typedef struct blog {
 
 /* environment variables */
 	char *ssl;
-	char *script;
-	char *host;
+
+#define MAX_SCRIPT_SIZE 128
+	char script[MAX_SCRIPT_SIZE];
+#define MAX_HOST_SIZE 128
+	char host[MAX_HOST_SIZE];
 	char *mod;
 
 	char path[URL_PATH];
