@@ -5,13 +5,13 @@ WANT_DIET=yes
 
 # compile fast cgi version
 # increases the binary by about 36kb 
-#WANT_FCGI=yes
+WANT_FCGI=yes
 
 # compile with clang instead of gcc
 #WANT_CLANG=yes
 
 # enable debugging
-#DEBUG=yes
+DEBUG=yes
 
 # makefile
 .SUFFIXES: .std.o .adm.o .o .c

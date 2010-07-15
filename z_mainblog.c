@@ -325,7 +325,7 @@ static void do_admin_mode(blog_t * conf, array * co, array * pd, array * qs)
 
 			if(conf->qry.action == QA_ADD_POST || conf->qry.action == QA_MODIFY_POST){
 				err  = get_http_param(pd, P_UNLIMITED, POST_INPUT, parg, P_UNLIMITED, "&");
-				if(err != PARAM_SUCCESS){
+				if(err == PARAM_SUCCESS){
 					array_cats0(&conf->qry.input, parg);
 					get_http_param(pd, P_UNLIMITED, POST_KEY, conf->qry.ts, MAX_KEY_LENGTH_STR,
 							"&");
