@@ -133,6 +133,7 @@ unsigned int fmt_caldate_nav(char * s, const struct caldate * cd){
 	s += 13;
 
 	s += fmt_uint(s, dt.year);
+	s[0] = 0;
 	return 111; /* FIXME */
 }
 
