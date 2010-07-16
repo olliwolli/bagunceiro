@@ -20,6 +20,8 @@
  * when printing and parsing it from web page i/o */
 #define WANT_REDUCE_TS
 
+#define WANT_DT
+
 /* parameters for WANT_REDUCE_TS:
  * REDUCE_SIZE 16 will break on 2106-02-07 by overflowing after
  * a.k.a. unsigned Y2K38 problem

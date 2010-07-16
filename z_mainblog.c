@@ -397,6 +397,8 @@ int main()
 		.sbox = 'n'
 	};
 
+//	testit();
+
 	/* load the configuration, only done once. It is save_configs
 	 * responsibility to update the on disk and in memory values
 	 * when they are changed */

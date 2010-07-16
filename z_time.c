@@ -52,6 +52,111 @@ size_t fmt_time_hex(char *s, const struct taia *time)
 	return len;
 }
 
+
+#ifdef WANT_DT
+char *day_long[5] = {
+    "Sweetmorn", "Boomtime", "Pungenday", "Prickle-Prickle", "Setting Orange"
+};
+
+char *season_long[5] = {
+    "Chaos", "Discord", "Confusion", "Bureaucracy", "The Aftermath"
+};
+
+char *holyday[5][2] = {
+    "Mungday", "Chaoflux",
+    "Mojoday", "Discoflux",
+    "Syaday",  "Confuflux",
+    "Zaraday", "Bureflux",
+    "Maladay", "Afflux"
+};
+
+struct disc_time {
+    int season; /* 0-4 */
+    int day; /* 0-72 */
+    int yday; /* 0-365 */
+    int year; /* 3066- */
+};
+
+int cal[12] = {0,31,59,90,120,151,181,212,243,273,304,334};
+int convert(struct disc_time * dt, const struct caldate * cd)
+{
+   dt->year = cd->year+1166;
+   dt->day = cal[cd->month-1] + cd->day - 1;
+   dt->season = 0;
+
+   /* leap year */
+   if ((dt->year % 4) == 2) {
+	   if (dt->day == 59)
+		   dt->day = -1;
+	   else if (dt->day > 59)
+		   dt->day -= 1;
+   }
+
+   dt->yday = dt->day;
+   while (dt->day >= 73) {
+	   dt->season++;
+	   dt->day -= 73;
+   }
+   return 0;
+}
+
+unsigned int fmt_caldate_nav(char * s, const struct caldate * cd){
+
+	struct disc_time dt;
+	convert(&dt, cd);
+
+	if(dt.day==-1){
+		strcpy(s, "St. Tib's Day ");
+		s += 14;
+	}else{
+		strcpy(s, day_long[dt.yday%5]);
+		s += strlen(day_long[dt.yday%5]);
+		strcpy(s, ", the ");
+		s+= 6;
+
+		s += fmt_uint(s, dt.day+1);
+
+		switch ((dt.day+1)%10)
+		{
+		case 1:
+			strcpy(s,"st");
+			break;
+		case 2:
+			strcpy(s,"nd");
+			break;
+		case 3:
+			strcpy(s,"rd");
+			break;
+		default:
+			strcpy(s,"th");
+		}
+		s += 2;
+		strcpy(s," day of ");
+		s += 8;
+
+		strcpy(s, season_long[dt.season]);
+		s += strlen(season_long[dt.season]);
+
+	}
+	strcpy(s, " in the YOLD ");
+	s += 13;
+
+	s += fmt_uint(s, dt.year);
+	return 111; /* FIXME */
+}
+
+void testit()
+{
+	struct caldate cd;
+	cd.day = 3;
+	cd.month = 2;
+	cd.year = 2010;
+	char s[128];
+	fmt_caldate_nav(s, &cd);
+	sprintf(s);
+	int slen = strlen(s);
+}
+#else
 char months[12][4] =
 	{ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Okt",
 	"Nov", "Dez"
@@ -140,7 +245,7 @@ unsigned int fmt_caldate_nav(char *s, const struct caldate *cd)
 
 	return (cd->year < 0) + yi + 11;
 }
-
+#endif
 
 size_t scan_time_hex(const char *s, struct taia * time)
 {
@@ -227,3 +332,4 @@ size_t fmt_time_str(char *s, const struct taia *time)
 
 	return len;
 }
+

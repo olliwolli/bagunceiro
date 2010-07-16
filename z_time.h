@@ -36,7 +36,11 @@ size_t fmt_time_hex(char * s, const struct taia *time);
 
 /* simple date format like: 2010-06-31 : 10
  * 14 will work until 99999999 */
+#ifdef WANT_DT
+#define FMT_CALDATE_NAV 70
+#else
 #define FMT_CALDATE_NAV 14
+#endif
 unsigned int fmt_caldate_nav(char *s, const struct caldate *cd);
 
 /* scans ascii hex encoded taia */

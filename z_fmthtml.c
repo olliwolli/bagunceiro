@@ -66,6 +66,7 @@ static void print_tiny_html_editor()
 		"paste_retain_style_properties: \"\","
 		"paste_remove_spans: true,"
 		"paste_remove_styles_if_webkit: true,"
+		""
 		"dialog_type : \"modal\""
 	"});"
 	"</script>"
