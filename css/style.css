@@ -29,6 +29,10 @@ blockquote {
 	font-style: italic;
 }
 
+pre{
+	padding: 0px 20px;
+}
+
 #content a:hover {
 	text-decoration: underline;
 }
