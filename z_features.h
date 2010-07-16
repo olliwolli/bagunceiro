@@ -20,7 +20,9 @@
  * when printing and parsing it from web page i/o */
 #define WANT_REDUCE_TS
 
-#define WANT_ERISIAN_CALENDAR
+/* date is printed in erisian calendar
+ * https://secure.wikimedia.org/wikipedia/en/wiki/Discordian_calendar*/
+//#define WANT_ERISIAN_CALENDAR
 
 /* parameters for WANT_REDUCE_TS:
  * REDUCE_SIZE 16 will break on 2106-02-07 by overflowing after

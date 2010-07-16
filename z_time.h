@@ -37,7 +37,21 @@ size_t fmt_time_hex(char * s, const struct taia *time);
 /* simple date format like: 2010-06-31 : 10
  * 14 will work until 99999999 */
 #ifdef WANT_ERISIAN_CALENDAR
-/* safe for some time */
+/* safe for some time
+ *
+ * Day max: Prickle-Prickle		15	max var
+ * ",the " 						6	fix
+ * Day numbermax				2	max var
+ * st, th, nd					2	fix
+ * " day of "					8	fix
+ * season max: The Aftermath	13	max var
+ *" in the YOLD "				13	fix
+ * yearfmt						4 	var
+ * terminating 0				1	fix
+ *
+ * total						64	var
+ *
+ *  */
 #define FMT_CALDATE_NAV 42+23
 #else
 #define FMT_CALDATE_NAV 14
