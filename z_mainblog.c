@@ -179,7 +179,7 @@ static void do_admin_pass_mode(blog_t * conf, array * co, array * pd,
 		if(conf->auth){
 			err = add_session_id(conf->sid);
 			if(err < 0)
-				set_err("Could not add session id", 0, N_ERROR);
+				set_err("Could not add session id, check if the db/ directory is writable by the webserver", 0, N_ERROR);
 		}
 
 		conf->authtype = AUTH_POST;
