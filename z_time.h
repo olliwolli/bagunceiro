@@ -36,8 +36,9 @@ size_t fmt_time_hex(char * s, const struct taia *time);
 
 /* simple date format like: 2010-06-31 : 10
  * 14 will work until 99999999 */
-#ifdef WANT_DT
-#define FMT_CALDATE_NAV 70
+#ifdef WANT_ERISIAN_CALENDAR
+/* safe for some time */
+#define FMT_CALDATE_NAV 42+23
 #else
 #define FMT_CALDATE_NAV 14
 #endif

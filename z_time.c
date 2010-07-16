@@ -52,22 +52,13 @@ size_t fmt_time_hex(char *s, const struct taia *time)
 	return len;
 }
 
-
-#ifdef WANT_DT
+#ifdef WANT_ERISIAN_CALENDAR
 char *day_long[5] = {
     "Sweetmorn", "Boomtime", "Pungenday", "Prickle-Prickle", "Setting Orange"
 };
 
 char *season_long[5] = {
     "Chaos", "Discord", "Confusion", "Bureaucracy", "The Aftermath"
-};
-
-char *holyday[5][2] = {
-    "Mungday", "Chaoflux",
-    "Mojoday", "Discoflux",
-    "Syaday",  "Confuflux",
-    "Zaraday", "Bureflux",
-    "Maladay", "Afflux"
 };
 
 struct disc_time {
@@ -145,17 +136,6 @@ unsigned int fmt_caldate_nav(char * s, const struct caldate * cd){
 	return 111; /* FIXME */
 }
 
-void testit()
-{
-	struct caldate cd;
-	cd.day = 3;
-	cd.month = 2;
-	cd.year = 2010;
-	char s[128];
-	fmt_caldate_nav(s, &cd);
-	sprintf(s);
-	int slen = strlen(s);
-}
 #else
 char months[12][4] =
 	{ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Okt",
