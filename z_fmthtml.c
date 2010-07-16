@@ -15,6 +15,7 @@
 static void print_key_html(const blog_t * conf, struct nentry *e)
 {
 	char buf[FMT_TAIA_HEX];
+
 	buf[fmt_hexdump(buf, e->k.p, TAIA_PACK)] = 0;
 	reduce_ts(buf);
 
@@ -43,10 +44,7 @@ static void print_key_html(const blog_t * conf, struct nentry *e)
 static void print_tiny_html_editor()
 {
 	html_java_script("/tinymce/tiny_mce.js");
-
-	sprintm(
-		"<script type=\"text/javascript\">"
-			);
+	sprintm("<script type=\"text/javascript\">");
 	sprintm(
 		"tinyMCE.init({"
 		"mode : \"textareas\","
@@ -61,13 +59,17 @@ static void print_tiny_html_editor()
 		"forced_root_block : false,"
 		"force_br_newlines : true,"
 		"force_p_newlines : false,"
-		"plugins : \"inlinepopups\","
+		"plugins : \"inlinepopups,paste\","
+		"paste_auto_cleanup_on_paste : true,"
+		"paste_remove_styles: true,"
+		"paste_strip_class_attributes: true,"
+		"paste_retain_style_properties: \"\","
+		"paste_remove_spans: true,"
+		"paste_remove_styles_if_webkit: true,"
 		"dialog_type : \"modal\""
 	"});"
 	"</script>"
 	);
-
-
 }
 #endif
 
@@ -75,6 +77,7 @@ static void print_date_html(struct day *e)
 {
 	char dfmt[FMT_CALDATE_NAV];
 	size_t dlen;
+
 	dlen = fmt_caldate_nav(dfmt, &e->time.date);
 	dfmt[dlen] = '\0';
 	html_tag_open_close("h3", html_content, dfmt);
@@ -157,6 +160,7 @@ static int print_header_html(const blog_t * conf)
 		html_meta_refresh(PROTO_HTTPS, conf->host, "3");
 	}
 #endif
+
 	html_title(conf->title);
 	html_close_head_body("class=\"home blog\">");
 
@@ -230,6 +234,7 @@ static void day_entries_html(const blog_t * conf, struct day *de,
 	html_div_open("class", "day");
 	print_date_html(de);
 	html_tag_open("ul");
+
 	for (i = 0; i < elen; i++) {
 		e = day_get_nentry(de, i);
 		html_tag_open("li");
@@ -242,6 +247,7 @@ static void day_entries_html(const blog_t * conf, struct day *de,
 		print_key_html(conf, e);
 		html_tag_close("li");
 	}
+
 	html_tag_close("ul");
 	html_div_end();
 }
@@ -314,26 +320,26 @@ int print_config(const blog_t * conf)
 
 	html_tag_open("p");
 	html_content("Title: ");
-	html_input("text", POST_TITLE, conf->title);
+	html_input("text", POST_ARG_TITLE, conf->title);
 	html_tag_close("p");
 
 	html_tag_open("p");
 	html_content("Tagline: ");
-	html_input("text", POST_TAGLINE, conf->tagline);
+	html_input("text", POST_ARG_TAGLINE, conf->tagline);
 	html_tag_close("p");
 
 	html_tag_open("p");
 	html_content("Password: ");
-	html_input("password", POST_PASS, "");
+	html_input("password", POST_ARG_PASS, "");
 	html_tag_close("p");
 
 #ifdef WANT_SEARCHING
 	html_tag_open("p");
 	html_content("Search box: ");
 	if(conf->sbox == 'y')
-		html_checkbox(POST_SEARCHBOX, "y", 1);
+		html_checkbox(POST_ARG_SEARCHBOX, "y", 1);
 	else
-		html_checkbox(POST_SEARCHBOX, "y", 0);
+		html_checkbox(POST_ARG_SEARCHBOX, "y", 0);
 	html_tag_close("p");
 #endif
 
@@ -397,9 +403,9 @@ int print_add_entry(const blog_t * conf)
 
 	html_div_open("id", "mod");
 	html_form_open("post", conf->script, 0, 0);
-	html_input("hidden", "action", POST_ADD);
+	html_input("hidden", "action", POST_ACTION_ADD);
 
-	html_textarea_open(POST_INPUT, "input");
+	html_textarea_open(POST_ARG_INPUT, "input");
 	html_textarea_close();
 
 	html_div_open("class", "abutton");
@@ -427,10 +433,10 @@ int print_mod_entry(const blog_t * conf, struct nentry *n)
 	html_div_open("id", "mod");
 	html_form_open("post", conf->script, 0, 0);
 
-	html_input("hidden", "action", POST_MOD);
-	html_input("hidden", POST_KEY, key);
+	html_input("hidden", "action", POST_ACTION_MOD);
+	html_input("hidden", POST_ARG_KEY, key);
 
-	html_textarea_open(POST_INPUT, "input");
+	html_textarea_open(POST_ARG_INPUT, "input");
 	if (n->e.p)
 		html_bulk(n->e.p);
 	else

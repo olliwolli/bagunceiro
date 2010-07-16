@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include <array.h>
 #include <buffer.h>
 #include <str.h>
@@ -11,6 +12,10 @@
 #include "z_conf.h"
 #include "z_time.h"
 #include "z_features.h"
+
+#ifdef DEBUG
+#include "z_debug.h"
+#endif
 
 #ifdef WANT_FAST_CGI
 #include "fcgiapp.h"
@@ -27,74 +32,6 @@ struct errors gerr = {
 };
 #endif
 
-/* DEBUGGING */
-#ifdef DEBUG_PARSING
-static array debugmsg;
-static char daction[4][10] = { "Show", "Delete", "Add", "Modify" };
-
-static void __d(const char *desc, const char *value)
-{
-	array_cats(&debugmsg, "<tr>");
-	if (value) {
-		array_cats(&debugmsg, "<th align=\"left\">");
-		array_cats(&debugmsg, desc);
-		array_cats(&debugmsg, "</th>");
-		array_cats(&debugmsg, "<th align=\"left\">");
-		array_cats(&debugmsg, value);
-		array_cats(&debugmsg, "</th>");
-	} else {
-		array_cats(&debugmsg, "<th align=\"left\">");
-		array_cats(&debugmsg, desc);
-		array_cats(&debugmsg, "</th>");
-		array_cats(&debugmsg, "<th align=\"left\">");
-		array_cats(&debugmsg, "[Empty]<br>\n");
-		array_cats(&debugmsg, "</th>");
-	}
-	array_cats(&debugmsg, "</tr>");
-}
-
-static void debug_print(const blog_t * conf, array * ps, array * qs, array * co)
-{
-	array_cats(&debugmsg, "<table>");
-	__d("Poststring is: ", ps->p);
-	__d("Querystring is: ", qs->p);
-	__d("Cookie is: ", co->p);
-	__d("URL is: ", conf->script);
-	__d("Host is: ", conf->host);
-	__d("CSS arg is: ", conf->qry.css);
-
-	if (array_bytes(&conf->qry.input))
-		__d("Input is: ", conf->qry.input.p);
-
-	__d("Key is: ", conf->qry.ts);
-
-	__d("Action is: ", daction[conf->qry.action]);
-	array_cats(&debugmsg, "</table>");
-}
-#endif
-
-#ifdef DEBUG_PARSE_POST
-static void get_post_string(array * ps)
-{
-	memset(ps, 0, sizeof(array));
-	array_cats0(ps, DEBUG_PARSE_POST);
-}
-#endif
-#ifdef DEBUG_PARSE_QUERY
-static void get_query_string(array * qs)
-{
-	memset(qs, 0, sizeof(array));
-	array_cats0(qs, DEBUG_PARSE_QUERY);
-}
-#endif
-#ifdef DEBUG_PARSE_COOKIE
-static void get_cookie_string(array * co)
-{
-	memset(co, 0, sizeof(array));
-	array_cats0(co, DEBUG_PARSE_COOKIE);
-}
-#endif
-
 /* CONVERSION */
 #define P_UNLIMITED -1
 #define P_NO_VALUE -2
@@ -109,11 +46,11 @@ static int get_http_param(array * q_str, size_t qmax, char *search, char *ret,
 	char sep2[2] = "=";
 	char *query, *tokptr;
 	char *key, *val, *tokptr2;
-	char *buf;
 	size_t destlen, qlen;
 
 	qlen = array_bytes(q_str);
-	buf = alloca(qlen+1);
+	/* we write this array down here in order to use VLAs */
+	char buf[qlen+1];
 
 	if (!qlen || (qlen > qmax && qlen != -1))
 		return RET_INVALID;
@@ -235,7 +172,6 @@ static void do_admin_pass_mode(blog_t * conf, array * co, array * pd,
 	}
 
 	/*  parse postdata */
-
 	err = get_http_param(pd, P_UNLIMITED, POST_LOGIN, tmptoken, 100, "&");
 	if (err == PARAM_SUCCESS) {
 		conf->auth = auth_conf(conf, (unsigned char*)tmptoken, strlen(tmptoken));
@@ -271,7 +207,7 @@ static void do_admin_mode(blog_t * conf, array * co, array * pd, array * qs)
 {
 	/*  query */
 	int err;
-	char *parg;
+	char parg[array_bytes(pd)];
 	char tmp[30];
 
 	err = get_http_param(qs, MAX_KEY_LENGTH_STR + 4, QUERY_DEL, conf->qry.ts,
@@ -306,28 +242,28 @@ static void do_admin_mode(blog_t * conf, array * co, array * pd, array * qs)
 
 	/*  postdata */
 	if (array_bytes(pd) < POSTDATA_MAX && array_bytes(pd)) {
-		parg = alloca(array_bytes(pd));
 
+		/* FIXME: 7 should be calculated in some way here to avoid future errors */
 		if (get_http_param(pd, P_UNLIMITED, POST_ACTION, tmp, 7, "&") == PARAM_SUCCESS){
 
-			if (str_equal(tmp, POST_ADD))
+			if (str_equal(tmp, POST_ACTION_ADD))
 				conf->qry.action = QA_ADD_POST;
-			else if (str_equal(tmp, POST_MOD))
+			else if (str_equal(tmp, POST_ACTION_MOD))
 				conf->qry.action = QA_MODIFY_POST;
-			else if (str_equal(tmp, POST_CONFIG)){
+			else if (str_equal(tmp, POST_ACTION_CONFIG)){
 				conf->qry.action = QA_CONFIG_POST;
-				get_http_param(pd, P_UNLIMITED, POST_TITLE, conf->qry.title, SIZE_HTTP_ARG, "&");
-				get_http_param(pd, P_UNLIMITED, POST_TAGLINE, conf->qry.tagline, SIZE_TAGLINE, "&");
-				get_http_param(pd, P_UNLIMITED, POST_PASS, conf->qry.pass, SIZE_HTTP_ARG, "&");
-				if(get_http_param(pd, P_UNLIMITED, POST_SEARCHBOX, &conf->sbox, 1, "&") == RET_NOT_FOUND)
+				get_http_param(pd, P_UNLIMITED, POST_ARG_TITLE, conf->qry.title, SIZE_HTTP_ARG, "&");
+				get_http_param(pd, P_UNLIMITED, POST_ARG_TAGLINE, conf->qry.tagline, SIZE_TAGLINE, "&");
+				get_http_param(pd, P_UNLIMITED, POST_ARG_PASS, conf->qry.pass, SIZE_HTTP_ARG, "&");
+				if(get_http_param(pd, P_UNLIMITED, POST_ARG_SEARCHBOX, &conf->sbox, 1, "&") == RET_NOT_FOUND)
 						conf->sbox = 'n';
 			}
 
 			if(conf->qry.action == QA_ADD_POST || conf->qry.action == QA_MODIFY_POST){
-				err  = get_http_param(pd, P_UNLIMITED, POST_INPUT, parg, P_UNLIMITED, "&");
+				err  = get_http_param(pd, P_UNLIMITED, POST_ARG_INPUT, parg, P_UNLIMITED, "&");
 				if(err == PARAM_SUCCESS){
 					array_cats0(&conf->qry.input, parg);
-					get_http_param(pd, P_UNLIMITED, POST_KEY, conf->qry.ts, MAX_KEY_LENGTH_STR,
+					get_http_param(pd, P_UNLIMITED, POST_ARG_KEY, conf->qry.ts, MAX_KEY_LENGTH_STR,
 							"&");
 				}
 			}
@@ -339,58 +275,62 @@ static void do_admin_mode(blog_t * conf, array * co, array * pd, array * qs)
 /* the method of getting the environment variables depends on the use
  * of cgi or fcgi*/
 
-#if !defined(DEBUG_PARSE_QUERY)
 static void get_query_string(array * qs)
 {
 	memset(qs, 0, sizeof(array));
-	if (getenv("QUERY_STRING") != NULL)
-		array_cats0(qs, getenv("QUERY_STRING"));
 
-}
+#ifdef DEBUG
+	array_cats0(qs, debug_query);
+	return;
 #endif
 
-#if !defined(DEBUG_PARSE_COOKIE)
+	if (getenv("QUERY_STRING") != NULL)
+		array_cats0(qs, getenv("QUERY_STRING"));
+}
+
 static void get_cookie_string(array * co)
 {
 	memset(co, 0, sizeof(array));
-	if (getenv("HTTP_COOKIE") != NULL) {
-		array_cats0(co, getenv("HTTP_COOKIE"));
-	}
-}
+
+#ifdef DEBUG
+	array_cats0(co, debug_cookie);
+	return;
 #endif
 
-#if !defined(DEBUG_PARSE_POST) && !defined(WANT_FAST_CGI)
+	if (getenv("HTTP_COOKIE") != NULL)
+		array_cats0(co, getenv("HTTP_COOKIE"));
+}
+
 static void get_post_string(array * ps)
 {
 	char *len;
+
 	memset(ps, 0, sizeof(array));
+
+#ifdef DEBUG
+	array_cats0(ps, debug_post);
+	return;
+#endif
 
 	len = getenv("CONTENT_LENGTH");
 	if (len != 0) {
-		while (buffer_get_array(buffer_0, ps)) {
-			if (array_bytes(ps) > POSTDATA_MAX)
-				break;
-		}
-	}
-}
-#else
-static void get_post_string(array * ps)
-{
-	int r;
-	char ch[128];
 
-	memset(ps, 0, sizeof(array));
-
-	if (NULL != FCGX_GetParam("CONTENT_LENGTH", envp)) {
+#ifdef WANT_FAST_CGI
+		char ch[128];
+		int r;
 		while ((r = FCGX_GetStr(ch, 128, fcgi_in))){
 			array_catb(ps, ch, r);
 			if(r < 128)
 				break;
 		}
+#else
+		while (buffer_get_array(buffer_0, ps)>0) {
+			if (array_bytes(ps) > POSTDATA_MAX)
+				break;
+		}
+#endif
 	}
 }
-#endif
-
 
 static void make_host_string(blog_t * conf)
 {
@@ -537,7 +477,7 @@ int main()
 		}
 		inflate_ts(conf.qry.ts);
 
-		/* next step */
+		/* configuration and parameter parsing done. do something */
 		err = handle_query(&conf);
 
 #ifdef DEBUG_PARSING

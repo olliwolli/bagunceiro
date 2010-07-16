@@ -21,7 +21,6 @@ static int fmt_day_idx(array * fmt, struct taia *l)
 	int len;
 
 	len = fmt_time_str(buf, l);
-
 	array_catb(fmt, buf, len);
 	array_cats(fmt, "@");
 
@@ -33,6 +32,7 @@ int show_entry(struct cdbb *a, struct taia *k, struct nentry *n)
 {
 	int err;
 	char pac[TAIA_PACK];
+
 	taia_pack(pac, k);
 	err = cdbb_read_nentry(a, pac, TAIA_PACK, n);
 
@@ -77,6 +77,7 @@ void add_entry_now(struct cdbb *a, char *v, size_t vs)
 void modify_entry(struct cdbb *a, struct taia *k, char *v, size_t vs)
 {
 	char pk[TAIA_PACK];
+
 	taia_pack(pk, k);
 	cdbb_mod(a, pk, TAIA_PACK, v, vs);
 	blog_modified(a);
@@ -101,8 +102,8 @@ void delete_entry(struct cdbb *a, struct taia *k)
 void entry_dump(const struct nentry *e)
 {
 	char b[FMT_TAIA_HEX];
-	b[fmt_hexdump(b, e->k.p, TAIA_PACK)]=0;
 
+	b[fmt_hexdump(b, e->k.p, TAIA_PACK)]=0;
 	sprintmf("Dump: ", b, "->", e->e.p, "\n");
 }
 

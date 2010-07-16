@@ -46,12 +46,14 @@ size_t day_length(struct day *d)
 
 struct nentry * day_get_nentry(struct day *d, int i)
 {
-	return  *(struct nentry **)array_get(&d->es, sizeof(struct nentry **), i);
+	return  *(struct nentry **)
+			array_get(&d->es, sizeof(struct nentry **), i);
 }
 
 void day_add_nentry(struct day *d, struct nentry * n)
 {
-	array_catb(&d->es, (char *)&n, sizeof(struct nentry **));
+	array_catb(&d->es, (char *)&n,
+			sizeof(struct nentry **));
 }
 
 int cdbb_fetch_day(struct cdbb *a, struct day * entries, const struct taia *day)
@@ -60,12 +62,10 @@ int cdbb_fetch_day(struct cdbb *a, struct day * entries, const struct taia *day)
 	struct nentry * entry;
 	char *key;
 	int err, len, i;
-
 	char buf[FMT_TAIA_STR + 1] = "";
 
 	len = fmt_time_str(buf, day);
-	buf[len] = '@';		/* len = len+1 */
-
+	buf[len] = '@'; /* fits, but is not null terminated */
 	dentry = new_nentry();
 
 	/* lookup all entries for that day */

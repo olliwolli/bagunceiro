@@ -5,13 +5,13 @@ WANT_DIET=yes
 
 # compile fast cgi version
 # increases the binary by about 36kb 
-#WANT_FCGI=yes
+WANT_FCGI=yes
 
 # compile with clang instead of gcc
 #WANT_CLANG=yes
 
 # enable debugging
-#DEBUG=yes
+DEBUG=yes
 
 # makefile
 .SUFFIXES: .std.o .adm.o .o .c
@@ -96,8 +96,12 @@ TARGETS=blog.cgi admin.cgi blogcmd
 
 all: $(TARGETS)
 
-HEADERS=z_blog.h z_conf.h z_entry.h z_features.h z_format.h z_time.h z_day.h z_html5.h z_http.h z_rss.h z_cdbb.h z_result.h z_fmthtml.h z_fmtrss.h
-SOURCES=z_blog.c z_conf.c z_entry.c z_format.c z_time.c z_day.c z_html5.c z_http.c z_rss.c z_cdbb.c z_result.c z_fmthtml.c z_fmtrss.c
+HEADERS=\
+z_blog.h z_conf.h z_entry.h z_features.h z_format.h z_time.h z_day.h \
+z_html5.h z_http.h z_rss.h z_cdbb.h z_result.h z_fmthtml.h z_fmtrss.h z_debug.h
+
+SOURCES=z_blog.c z_conf.c z_entry.c z_format.c z_time.c z_day.c z_html5.c\
+ z_http.c z_rss.c z_cdbb.c z_result.c z_fmthtml.c z_fmtrss.c z_debug.c
 
 BLOG_O=$(SOURCES:%.c=%.o)
 BLOG_O_STD=$(SOURCES:%.c=%.std.o)

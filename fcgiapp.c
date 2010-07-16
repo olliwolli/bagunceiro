@@ -77,8 +77,7 @@ void FCGX_ShutdownPending(void)
 
 static void *Malloc(size_t size)
 {
-    void *result = malloc(size);
-    return result;
+    return malloc(size);
 }
 
 static char *StringCopy(char *str)
@@ -239,7 +238,6 @@ char *FCGX_GetLine(char *str, int n, FCGX_Stream *stream)
 int FCGX_HasSeenEOF(FCGX_Stream *stream) {
     return (stream->isClosed) ? EOF : 0;
 }
-
 
 /*
  *----------------------------------------------------------------------

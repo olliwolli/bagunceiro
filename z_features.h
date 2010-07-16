@@ -67,10 +67,6 @@
 /* loops through default action x100 */
 //#define DEBUG_MEMORY 100
 
-/* activate and set for input simulation */
-//#define DEBUG_PARSE_QUERY "fmt=rss"
-//#define DEBUG_PARSE_POST "action=config&title=Titles&tagline=Tagline&pass=&sbox=y"
-//#define DEBUG_PARSE_COOKIE "sid=03143246f1188b30e6a26c7e4dfdcfcb"
 
 /* YOU SHOULDN'T EDIT BELOW THIS LINE */
 /* NOTE:
@@ -166,6 +162,19 @@ struct errors {
 	int error;
 	enum notice type;
 } gerr;
+
+
+#if defined(DEBUG_ENTRY) ||\
+	defined(DEBUG_PARSING)
+#define DEBUG
+#endif
+
+/* activate and set for input simulation */
+#ifdef DEBUG
+extern char debug_query[];
+extern char debug_post[];
+extern char debug_cookie[];
+#endif
 
 static inline void set_err(char *msg, int num, enum notice type)
 {
