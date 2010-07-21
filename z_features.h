@@ -21,7 +21,8 @@
 #define WANT_REDUCE_TS
 
 /* date is printed in erisian calendar
- * https://secure.wikimedia.org/wikipedia/en/wiki/Discordian_calendar*/
+ * https://secure.wikimedia.org/wikipedia/en/wiki/Discordian_calendar
+ * TODO: season browsing not implemented */
 //#define WANT_ERISIAN_CALENDAR
 
 /* parameters for WANT_REDUCE_TS:
@@ -52,7 +53,7 @@
  * want to delete the two files mentioned below */
 #define WANT_UPLOAD
 #define UPLOAD_JS "/upload.js"
-#define UPLOAD_CGI "/upload.pl"
+#define UPLOAD_CGI "http://localhost/cgi-bin/clog/upload.cgi"
 
 /* full text searching capability */
 #define WANT_SEARCHING

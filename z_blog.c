@@ -195,6 +195,13 @@ sub:
 }
 
 #ifdef WANT_MONTH_BROWSING
+#ifdef WANT_ERISIAN_CALENDAR
+static int fetch_entries_month(blog_t * conf, struct result * res)
+{
+	// TODO:
+}
+#endif
+
 /* this calculates offsets from today and calls fetch_entries_days */
 static int fetch_entries_month(blog_t * conf, struct result * res)
 {

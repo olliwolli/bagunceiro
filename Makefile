@@ -11,7 +11,7 @@ WANT_DIET=yes
 #WANT_CLANG=yes
 
 # enable debugging
-#DEBUG=yes
+DEBUG=yes
 
 # makefile
 .SUFFIXES: .std.o .adm.o .o .c
@@ -92,7 +92,7 @@ LDFLAGS+=-s -static
 CFLAGS_ADMIN=$(CFLAGS) -DADMIN_MODE -DADMIN_MODE_PASS
 endif
 
-TARGETS=blog.cgi admin.cgi blogcmd
+TARGETS=blog.cgi admin.cgi blogcmd upload.cgi
 
 all: $(TARGETS)
 
@@ -101,7 +101,7 @@ z_blog.h z_conf.h z_entry.h z_features.h z_format.h z_time.h z_day.h \
 z_html5.h z_http.h z_rss.h z_cdbb.h z_result.h z_fmthtml.h z_fmtrss.h z_debug.h
 
 SOURCES=z_blog.c z_conf.c z_entry.c z_format.c z_time.c z_day.c z_html5.c\
- z_http.c z_rss.c z_cdbb.c z_result.c z_fmthtml.c z_fmtrss.c z_debug.c
+ z_http.c z_rss.c z_cdbb.c z_result.c z_fmthtml.c z_fmtrss.c z_debug.c 
 
 BLOG_O=$(SOURCES:%.c=%.o)
 BLOG_O_STD=$(SOURCES:%.c=%.std.o)
@@ -138,6 +138,10 @@ _blog: $(BLOG_O) z_mainblog.o
 blog.cgi: _blog
 	cp -p $^ $@
 	-strip -R .note -R .comment $@
+
+
+upload.cgi: upload.o
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
 	rm -f _* $(TARGETS) css/*~ *~ *.o cscope.out tags

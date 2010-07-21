@@ -434,7 +434,15 @@ int main()
 		conf.qry.action = QA_SHOW;
 		conf.qry.type = QRY_WEEK;
 		conf.qry.start = 0;
+#ifdef WANT_ERISIAN_CALENDAR
+		/*. The days of the week are named after
+		 *  the five basic Discordian elements,
+		 *  Sweet, Boom, Pungent, Prickle, and Orange.
+		 *   There are 73 of these weeks per year. */
+		conf.qry.doff = 6;
+#else
 		conf.qry.doff = 8;
+#endif
 		conf.qry.stype = S_HTML;
 		conf.qry.csstype = CSS_DEFAULT;
 
