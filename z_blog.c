@@ -289,12 +289,28 @@ int handle_query(blog_t * conf)
 	case QA_SHOW:
 		switch (conf->qry.type) {
 		case QRY_WEEK:
-			err = fetch_entries_days(conf, &res);
-#ifdef WANT_MONTH_BROWSING
-			if(err < 1){
-				fetch_entries_month(conf, &res);
-			}
-#endif
+			/* here we try to get a week full of blog posts. (7days)
+			 * If not all 7 days have blog posts. We get another week
+			 * and if that one does not fill the posts up to 7, we get
+			 * another one, and so on */
+			err = 0;
+			int i = 100;
+			do{
+				// FIXME fetch_entries_days opens and closes database all the time */
+				err += fetch_entries_days(conf, &res);
+
+				/* if we did get end-start (number of days) entries -> ok */
+				if(err + 1 >=  conf->qry.doff - conf->qry.start)
+					break;
+
+				/* now, this might actually get more than doff, entries,
+				 * but whatever -- I hereby declare that doff has that meaning
+				 * at least when used with QRY_WEEK */
+				conf->qry.start = conf->qry.doff + 1;
+				conf->qry.doff = conf->qry.start + 8;
+
+			}while(i--);
+
 			break;
 		case QRY_TS:
 			fetch_entry_ts(conf, &res);

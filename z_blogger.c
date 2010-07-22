@@ -122,7 +122,6 @@ int main(int argc, char **argv)
 		cdbb_start_mod(&a, db);
 		if(mode == TAIA){
 			add_entry(&a, &t, entry.e.p, array_bytes(&entry.e));
-			entry_dump(&entry);
 		}else
 			cdbb_add(&a, skey, strlen(skey), value.p, array_bytes(&value));
 
