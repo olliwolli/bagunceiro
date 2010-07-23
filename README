@@ -1,4 +1,4 @@
-- A blog system
+Bagunceiro - A blog system
 
 This is a blog system written in C designed to be a single small cgi script run
 by a webserver. It was written using a (link)modified version of libowfat,
