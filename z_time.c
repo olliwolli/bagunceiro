@@ -17,11 +17,12 @@ void reduce_ts(char *src)
 {
 	char tmp[FMT_TAIA_HEX];
 
-	memset(tmp, '0', FMT_TAIA_HEX-1);
+	memset(tmp, '0', FMT_TAIA_HEX - 1);
 	memcpy(tmp, src + REDUCE_OFFSET, REDUCE_SIZE);
 	memcpy(src, tmp, FMT_TAIA_HEX);
 	src[REDUCE_SIZE] = 0;
 }
+
 /* We use 40 00 00 00 00 00 00 00 here
  * since we do not allow past timestamps
  * (more precisely timestamps before 1970)
@@ -36,8 +37,13 @@ void inflate_ts(char *src)
 	memcpy(src, tmp, FMT_TAIA_HEX);
 }
 #else
-void reduce_ts(char *src){}
-void inflate_ts(char *src){}
+void reduce_ts(char *src)
+{
+}
+
+void inflate_ts(char *src)
+{
+}
 #endif
 
 /* the following format functions null-terminate the resulting strings */
@@ -54,75 +60,77 @@ size_t fmt_time_hex(char *s, const struct taia *time)
 
 #ifdef WANT_ERISIAN_CALENDAR
 char *day_long[5] = {
-    "Sweetmorn", "Boomtime", "Pungenday", "Prickle-Prickle", "Setting Orange"
+	"Sweetmorn", "Boomtime", "Pungenday", "Prickle-Prickle",
+	"Setting Orange"
 };
 
 char *season_long[5] = {
-    "Chaos", "Discord", "Confusion", "Bureaucracy", "The Aftermath"
+	"Chaos", "Discord", "Confusion", "Bureaucracy", "The Aftermath"
 };
 
 struct disc_time {
-    int season; /* 0-4 */
-    int day; /* 0-72 */
-    int yday; /* 0-365 */
-    int year; /* 3066- */
+	int season;		/* 0-4 */
+	int day;		/* 0-72 */
+	int yday;		/* 0-365 */
+	int year;		/* 3066- */
 };
 
-int cal[12] = {0,31,59,90,120,151,181,212,243,273,304,334};
-int convert(struct disc_time * dt, const struct caldate * cd)
+int cal[12] = { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
+
+int convert(struct disc_time *dt, const struct caldate *cd)
 {
-   dt->year = cd->year+1166;
-   dt->day = cal[cd->month-1] + cd->day - 1;
-   dt->season = 0;
+	dt->year = cd->year + 1166;
+	dt->day = cal[cd->month - 1] + cd->day - 1;
+	dt->season = 0;
 
-   /* leap year */
-   if ((dt->year % 4) == 2) {
-	   if (dt->day == 59)
-		   dt->day = -1;
-	   else if (dt->day > 59)
-		   dt->day -= 1;
-   }
+	/* leap year */
+	if ((dt->year % 4) == 2) {
+		if (dt->day == 59)
+			dt->day = -1;
+		else if (dt->day > 59)
+			dt->day -= 1;
+	}
 
-   dt->yday = dt->day;
-   while (dt->day >= 73) {
-	   dt->season++;
-	   dt->day -= 73;
-   }
-   return 0;
+	dt->yday = dt->day;
+	while (dt->day >= 73) {
+		dt->season++;
+		dt->day -= 73;
+	}
+	return 0;
 }
 
-unsigned int fmt_caldate_nav(char * s, const struct caldate * cd){
+unsigned int fmt_caldate_nav(char *s, const struct caldate *cd)
+{
 
 	struct disc_time dt;
 	convert(&dt, cd);
 
-	if(dt.day==-1){
+	if (dt.day == -1) {
 		strcpy(s, "St. Tib's Day ");
 		s += 14;
-	}else{
-		strcpy(s, day_long[dt.yday%5]);
-		s += strlen(day_long[dt.yday%5]);
+	} else {
+		strcpy(s, day_long[dt.yday % 5]);
+		s += strlen(day_long[dt.yday % 5]);
 		strcpy(s, ", the ");
-		s+= 6;
+		s += 6;
 
-		s += fmt_uint(s, dt.day+1);
+		s += fmt_uint(s, dt.day + 1);
 
-		switch ((dt.day+1)%10)
-		{
+		switch ((dt.day + 1) % 10) {
 		case 1:
-			strcpy(s,"st");
+			strcpy(s, "st");
 			break;
 		case 2:
-			strcpy(s,"nd");
+			strcpy(s, "nd");
 			break;
 		case 3:
-			strcpy(s,"rd");
+			strcpy(s, "rd");
 			break;
 		default:
-			strcpy(s,"th");
+			strcpy(s, "th");
 		}
 		s += 2;
-		strcpy(s," day of ");
+		strcpy(s, " day of ");
 		s += 8;
 
 		strcpy(s, season_long[dt.season]);
@@ -134,7 +142,7 @@ unsigned int fmt_caldate_nav(char * s, const struct caldate * cd){
 
 	s += fmt_uint(s, dt.year);
 	s[0] = 0;
-	return 111; /* FIXME */
+	return 111;		/* FIXME */
 }
 
 #else
@@ -212,7 +220,7 @@ unsigned int fmt_caldate_nav(char *s, const struct caldate *cd)
 
 		s[6] = ' ';
 		x = cd->month;
-		memcpy(s + 7, months[x-1], 3);
+		memcpy(s + 7, months[x - 1], 3);
 		s[10] = ' ';
 
 		x = cd->year;
@@ -313,4 +321,3 @@ size_t fmt_time_str(char *s, const struct taia *time)
 
 	return len;
 }
-

@@ -17,7 +17,7 @@
 
 /* Formatting of the output */
 /* needs FMT_TAIA_HEX */
-void fmt_key_plain(struct nentry *e, char * fmt)
+void fmt_key_plain(struct nentry *e, char *fmt)
 {
 	fmt[fmt_hexdump(fmt, e->k.p, TAIA_PACK)] = 0;
 	reduce_ts(fmt);
@@ -25,15 +25,15 @@ void fmt_key_plain(struct nentry *e, char * fmt)
 
 /* needs at most FMT_PERMA_STATIC + strlen(conf->host) characters */
 
-int fmt_perma_link(const blog_t * conf, struct nentry *e, char * fmt)
+int fmt_perma_link(const blog_t * conf, struct nentry *e, char *fmt)
 {
 	char k[FMT_TAIA_HEX];
 	int ls = strlen(conf->host);
 
-	if(ls >= 256 - FMT_PERMA_STATIC)
+	if (ls >= 256 - FMT_PERMA_STATIC)
 		return 0;
 
-	if(fmt == NULL)
+	if (fmt == NULL)
 		return ls + FMT_PERMA_STATIC;
 
 	fmt[0] = 0;
@@ -42,12 +42,12 @@ int fmt_perma_link(const blog_t * conf, struct nentry *e, char * fmt)
 
 	strcat(fmt, PROTO_HTTP);
 	strcat(fmt, conf->host);
-	strcat(fmt,"?"QUERY_TS"=");
+	strcat(fmt, "?" QUERY_TS "=");
 	strcat(fmt, k);
 	return FMT_PERMA_STATIC + ls;
 }
 
-int print_show(struct result * res, blog_t * conf)
+int print_show(struct result *res, blog_t * conf)
 {
 	int err;
 	size_t blen, elen;
@@ -58,10 +58,10 @@ int print_show(struct result * res, blog_t * conf)
 	time_t t;
 
 	/* may exit */
-	if(conf->mod){
-		if((t=http_if_modified_since(conf->mod)) != 0)
+	if (conf->mod) {
+		if ((t = http_if_modified_since(conf->mod)) != 0)
 			http_last_modified(t);
-		else{
+		else {
 			http_not_changed_modified();
 
 			return 304;
@@ -83,9 +83,9 @@ int print_show(struct result * res, blog_t * conf)
 
 	blen = result_length(res);
 
-	if (conf->fmt->header){
+	if (conf->fmt->header) {
 		err = conf->fmt->header(conf);
-		if(err)
+		if (err)
 			return 1;
 	}
 

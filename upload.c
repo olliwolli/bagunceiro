@@ -15,7 +15,6 @@
 #include "z_debug.h"
 #endif
 
-
 #ifdef WANT_FAST_CGI
 #include "fcgiapp.h"
 #endif
@@ -46,14 +45,14 @@ static int get_post_string(array * ps)
 #ifdef WANT_FAST_CGI
 		char ch[128];
 		int r;
-		while ((r = FCGX_GetStr(ch, 128, fcgi_in))){
+		while ((r = FCGX_GetStr(ch, 128, fcgi_in))) {
 			array_catb(ps, ch, r);
-			if(r < 128)
+			if (r < 128)
 				break;
 		}
-	return array_bytes(ps);
+		return array_bytes(ps);
 #else
-		while (buffer_get_array(buffer_0, ps)>0) {
+		while (buffer_get_array(buffer_0, ps) > 0) {
 			plen = array_bytes(ps);
 			if (plen > POSTDATA_MAX)
 				break;
@@ -64,25 +63,27 @@ static int get_post_string(array * ps)
 	return 0;
 }
 
-size_t randomname(char * s, char *ext)
+size_t randomname(char *s, char *ext)
 {
 	int i;
 	char let[] = "0123456789abcdef";
 
 	srand(time(0));
-	for(i=0; i < 32; i++)
-		s[i] = let[rand()%strlen(let)];
+	for (i = 0; i < 32; i++)
+		s[i] = let[rand() % strlen(let)];
 
 	/* copy the extension */
 	s[i] = '.';
-	s[i+1] = ext[0];s[i+2] = ext[1];
-	s[i+3] = ext[2];s[i+4] = ext[3];
-	s[i+5] = '\0';
+	s[i + 1] = ext[0];
+	s[i + 2] = ext[1];
+	s[i + 3] = ext[2];
+	s[i + 4] = ext[3];
+	s[i + 5] = '\0';
 
 	return 0;
 }
 
-void upload_error(char * str)
+void upload_error(char *str)
 {
 	sprintf(str);
 	int fp = open_write("/tmp/upload.log");
@@ -90,15 +91,15 @@ void upload_error(char * str)
 	close(fp);
 }
 
-int write_file(char *fname, char * data, size_t dlen)
+int write_file(char *fname, char *data, size_t dlen)
 {
 	int fp;
 	char path[128];
 
 	strcpy(path, UPLOAD_PATH);
-	strncat(fname, fname, (128-1)-strlen(UPLOAD_PATH));
+	strncat(fname, fname, (128 - 1) - strlen(UPLOAD_PATH));
 	fp = open_write("/tmp/file");
-	if(fp == -1)
+	if (fp == -1)
 		upload_error("Could not create new file");
 	write(fp, data, dlen);
 	close(fp);
@@ -107,54 +108,53 @@ int write_file(char *fname, char * data, size_t dlen)
 
 int isvalid(char s)
 {
-	if(s != '\\' && s!= '\"')
+	if (s != '\\' && s != '\"')
 		return 1;
 	return 0;
 }
 
 size_t extract_fileext(char *fname, char *ps)
 {
-	char *begin,*end,*dot;
+	char *begin, *end, *dot;
 	int i;
 
 	/* find the beginning */
 	begin = strstr(ps, "filename");
-	if(begin==NULL)
+	if (begin == NULL)
 		return -1;
 
 	/* find the end including value */
 	end = strchr(begin, '\n');
-	if(end==NULL)
+	if (end == NULL)
 		return -1;
 
-	*end = '\0'; /* 1: end the string */
+	*end = '\0';		/* 1: end the string */
 
 	/* find the last dot */
 	dot = strrchr(begin, '.');
-	if(dot == NULL)
+	if (dot == NULL)
 		return -1;
 
-	*end = '\n';/* 2: fix the string */
+	*end = '\n';		/* 2: fix the string */
 
 	/* copy the file extension */
-	for(i=1;i<3;i++)
-		if(!isvalid(dot[i]))
+	for (i = 1; i < 3; i++)
+		if (!isvalid(dot[i]))
 			return -1;
 
 	fname[0] = dot[1];
 	fname[1] = dot[2];
 	fname[2] = dot[3];
-	if(dot[4] != '\\' && dot[4] != '\"'){
+	if (dot[4] != '\\' && dot[4] != '\"') {
 		fname[3] = dot[4];
 		return 4;
-	}
-	else
-		fname[3] ='\0';
+	} else
+		fname[3] = '\0';
 
 	return 3;
 }
 
-int main ()
+int main()
 {
 	array ps;
 	array content;
@@ -170,22 +170,25 @@ int main ()
 #endif
 
 		plen = get_post_string(&ps);
-		if(plen >= UPLOAD_POST_LENGTH)
-			upload_error("The file you are attempting to upload exceeds the maximum allowable file size (300kb)");
+		if (plen >= UPLOAD_POST_LENGTH)
+			upload_error
+				("The file you are attempting to upload exceeds the maximum allowable file size (300kb)");
 
 		err = extract_fileext(ext, ps.p);
-		if(err == -1)
+		if (err == -1)
 			upload_error("Could not extract file extension");
 
-		do{
+		do {
 			randomname(fname, ext);
-		}while (access(fname, F_OK) != -1);
+		} while (access(fname, F_OK) != -1);
 
-		while (buffer_get_array(buffer_0, &content)) {}
+		while (buffer_get_array(buffer_0, &content)) {
+		}
 		plen = array_bytes(&content);
 
 		write_file(fname, content.p, plen);
-		sprintmf("<a href=\"", UPLOAD_URL, "/", fname, "\">", UPLOAD_URL,"/" ,fname, "</a>");
+		sprintmf("<a href=\"", UPLOAD_URL, "/", fname, "\">",
+			UPLOAD_URL, "/", fname, "</a>");
 
 #if defined(WANT_FAST_CGI)
 	}

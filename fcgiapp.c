@@ -11,14 +11,14 @@
  *
  */
 #ifndef lint
-#endif /* not lint */
+#endif				/* not lint */
 
 #define EOF (-1)
 
 #include <errno.h>
-#include <fcntl.h>      /* for fcntl */
+#include <fcntl.h>		/* for fcntl */
 #include <math.h>
-#include <memory.h>     /* for memchr() */
+#include <memory.h>		/* for memchr() */
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +27,7 @@
 #include "fcgi_config.h"
 
 #ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h> /* for getpeername */
+#include <sys/socket.h>		/* for getpeername */
 #endif
 
 #ifdef HAVE_SYS_TIME_H
@@ -72,23 +72,22 @@ static FCGX_Request the_request;
 
 void FCGX_ShutdownPending(void)
 {
-    OS_ShutdownPending();
+	OS_ShutdownPending();
 }
 
 static void *Malloc(size_t size)
 {
-    return malloc(size);
+	return malloc(size);
 }
 
 static char *StringCopy(char *str)
 {
-    int strLen = strlen(str);
-    char *newString = (char *)Malloc(strLen + 1);
-    memcpy(newString, str, strLen);
-    newString[strLen] = '\000';
-    return newString;
+	int strLen = strlen(str);
+	char *newString = (char *)Malloc(strLen + 1);
+	memcpy(newString, str, strLen);
+	newString[strLen] = '\000';
+	return newString;
 }
-
 
 /*
  *----------------------------------------------------------------------
@@ -102,23 +101,23 @@ static char *StringCopy(char *str)
  *
  *----------------------------------------------------------------------
  */
-int FCGX_GetChar(FCGX_Stream *stream)
+int FCGX_GetChar(FCGX_Stream * stream)
 {
-    if (stream->isClosed || ! stream->isReader)
-        return EOF;
+	if (stream->isClosed || !stream->isReader)
+		return EOF;
 
-    if (stream->rdNext != stream->stop)
-        return *stream->rdNext++;
+	if (stream->rdNext != stream->stop)
+		return *stream->rdNext++;
 
-    stream->fillBuffProc(stream);
-    if (stream->isClosed)
-        return EOF;
+	stream->fillBuffProc(stream);
+	if (stream->isClosed)
+		return EOF;
 
-    stream->stopUnget = stream->rdNext;
-    if (stream->rdNext != stream->stop)
-        return *stream->rdNext++;
+	stream->stopUnget = stream->rdNext;
+	if (stream->rdNext != stream->stop)
+		return *stream->rdNext++;
 
-    return EOF;
+	return EOF;
 }
 
 /*
@@ -136,44 +135,44 @@ int FCGX_GetChar(FCGX_Stream *stream)
  *
  *----------------------------------------------------------------------
  */
-int FCGX_GetStr(char *str, int n, FCGX_Stream *stream)
+int FCGX_GetStr(char *str, int n, FCGX_Stream * stream)
 {
-    int m, bytesMoved;
+	int m, bytesMoved;
 
-    if (stream->isClosed || ! stream->isReader || n <= 0) {
-        return 0;
-    }
-    /*
-     * Fast path: n bytes are already available
-     */
-    if(n <= (stream->stop - stream->rdNext)) {
-        memcpy(str, stream->rdNext, n);
-        stream->rdNext += n;
-        return n;
-    }
-    /*
-     * General case: stream is closed or buffer fill procedure
-     * needs to be called
-     */
-    bytesMoved = 0;
-    for (;;) {
-        if(stream->rdNext != stream->stop) {
-            m = min(n - bytesMoved, stream->stop - stream->rdNext);
-            memcpy(str, stream->rdNext, m);
-            bytesMoved += m;
-            stream->rdNext += m;
-            if(bytesMoved == n)
-                return bytesMoved;
-            str += m;
-        }
-        if(stream->isClosed || !stream->isReader)
-            return bytesMoved;
-        stream->fillBuffProc(stream);
-        if (stream->isClosed)
-            return bytesMoved;
+	if (stream->isClosed || !stream->isReader || n <= 0) {
+		return 0;
+	}
+	/*
+	 * Fast path: n bytes are already available
+	 */
+	if (n <= (stream->stop - stream->rdNext)) {
+		memcpy(str, stream->rdNext, n);
+		stream->rdNext += n;
+		return n;
+	}
+	/*
+	 * General case: stream is closed or buffer fill procedure
+	 * needs to be called
+	 */
+	bytesMoved = 0;
+	for (;;) {
+		if (stream->rdNext != stream->stop) {
+			m = min(n - bytesMoved, stream->stop - stream->rdNext);
+			memcpy(str, stream->rdNext, m);
+			bytesMoved += m;
+			stream->rdNext += m;
+			if (bytesMoved == n)
+				return bytesMoved;
+			str += m;
+		}
+		if (stream->isClosed || !stream->isReader)
+			return bytesMoved;
+		stream->fillBuffProc(stream);
+		if (stream->isClosed)
+			return bytesMoved;
 
-        stream->stopUnget = stream->rdNext;
-    }
+		stream->stopUnget = stream->rdNext;
+	}
 }
 
 /*
@@ -193,29 +192,28 @@ int FCGX_GetStr(char *str, int n, FCGX_Stream *stream)
  *
  *----------------------------------------------------------------------
  */
-char *FCGX_GetLine(char *str, int n, FCGX_Stream *stream)
+char *FCGX_GetLine(char *str, int n, FCGX_Stream * stream)
 {
-    int c;
-    char *p = str;
+	int c;
+	char *p = str;
 
-    n--;
-    while (n > 0) {
-        c = FCGX_GetChar(stream);
-        if(c == EOF) {
-            if(p == str)
-                return NULL;
-            else
-                break;
-        }
-        *p++ = (char) c;
-        n--;
-        if(c == '\n')
-            break;
-    }
-    *p = '\0';
-    return str;
+	n--;
+	while (n > 0) {
+		c = FCGX_GetChar(stream);
+		if (c == EOF) {
+			if (p == str)
+				return NULL;
+			else
+				break;
+		}
+		*p++ = (char)c;
+		n--;
+		if (c == '\n')
+			break;
+	}
+	*p = '\0';
+	return str;
 }
-
 
 /*
  *----------------------------------------------------------------------
@@ -235,8 +233,9 @@ char *FCGX_GetLine(char *str, int n, FCGX_Stream *stream)
  *
  *----------------------------------------------------------------------
  */
-int FCGX_HasSeenEOF(FCGX_Stream *stream) {
-    return (stream->isClosed) ? EOF : 0;
+int FCGX_HasSeenEOF(FCGX_Stream * stream)
+{
+	return (stream->isClosed) ? EOF : 0;
 }
 
 /*
@@ -254,38 +253,38 @@ int FCGX_HasSeenEOF(FCGX_Stream *stream) {
  *
  *----------------------------------------------------------------------
  */
-int FCGX_PutStr(const char *str, int n, FCGX_Stream *stream)
+int FCGX_PutStr(const char *str, int n, FCGX_Stream * stream)
 {
-    int m, bytesMoved;
-    if(!stream)
-    	return -1;
-    /*
-     * Fast path: room for n bytes in the buffer
-     */
-    if(n <= (stream->stop - stream->wrNext)) {
-        memcpy(stream->wrNext, str, n);
-        stream->wrNext += n;
-        return n;
-    }
-    /*
-     * General case: stream is closed or buffer empty procedure
-     * needs to be called
-     */
-    bytesMoved = 0;
-    for (;;) {
-        if(stream->wrNext != stream->stop) {
-            m = min(n - bytesMoved, stream->stop - stream->wrNext);
-            memcpy(stream->wrNext, str, m);
-            bytesMoved += m;
-            stream->wrNext += m;
-            if(bytesMoved == n)
-                return bytesMoved;
-            str += m;
+	int m, bytesMoved;
+	if (!stream)
+		return -1;
+	/*
+	 * Fast path: room for n bytes in the buffer
+	 */
+	if (n <= (stream->stop - stream->wrNext)) {
+		memcpy(stream->wrNext, str, n);
+		stream->wrNext += n;
+		return n;
 	}
-        if(stream->isClosed || stream->isReader)
-            return -1;
-        stream->emptyBuffProc(stream, FALSE);
-    }
+	/*
+	 * General case: stream is closed or buffer empty procedure
+	 * needs to be called
+	 */
+	bytesMoved = 0;
+	for (;;) {
+		if (stream->wrNext != stream->stop) {
+			m = min(n - bytesMoved, stream->stop - stream->wrNext);
+			memcpy(stream->wrNext, str, m);
+			bytesMoved += m;
+			stream->wrNext += m;
+			if (bytesMoved == n)
+				return bytesMoved;
+			str += m;
+		}
+		if (stream->isClosed || stream->isReader)
+			return -1;
+		stream->emptyBuffProc(stream, FALSE);
+	}
 }
 
 /*
@@ -301,23 +300,24 @@ int FCGX_PutStr(const char *str, int n, FCGX_Stream *stream)
  *
  *----------------------------------------------------------------------
  */
-int FCGX_PutS(const char *str, FCGX_Stream *stream)
+int FCGX_PutS(const char *str, FCGX_Stream * stream)
 {
-    return FCGX_PutStr(str, strlen(str), stream);
+	return FCGX_PutStr(str, strlen(str), stream);
 }
 
-int FCGX_PutSm_internal(FCGX_Stream *stream, ...) {
-  int r=0;
-  va_list a;
-  const char* s;
-  va_start(a,stream);
-  while ((s=va_arg(a,const char*)))
-	if (FCGX_PutS(s, stream) == -1){
-      r=-1;
-      break;
-    }
-  va_end(a);
-  return r;
+int FCGX_PutSm_internal(FCGX_Stream * stream, ...)
+{
+	int r = 0;
+	va_list a;
+	const char *s;
+	va_start(a, stream);
+	while ((s = va_arg(a, const char *)))
+		if (FCGX_PutS(s, stream) == -1) {
+			r = -1;
+			break;
+		}
+	va_end(a);
+	return r;
 }
 
 /*
@@ -338,12 +338,12 @@ int FCGX_PutSm_internal(FCGX_Stream *stream, ...) {
  *
  *----------------------------------------------------------------------
  */
-int FCGX_FFlush(FCGX_Stream *stream)
+int FCGX_FFlush(FCGX_Stream * stream)
 {
-    if(stream->isClosed || stream->isReader)
-        return 0;
-    stream->emptyBuffProc(stream, FALSE);
-    return (stream->isClosed) ? -1 : 0;
+	if (stream->isClosed || stream->isReader)
+		return 0;
+	stream->emptyBuffProc(stream, FALSE);
+	return (stream->isClosed) ? -1 : 0;
 }
 
 /*
@@ -363,23 +363,24 @@ int FCGX_FFlush(FCGX_Stream *stream)
  *
  *----------------------------------------------------------------------
  */
-int FCGX_FClose(FCGX_Stream *stream)
+int FCGX_FClose(FCGX_Stream * stream)
 {
-    if (stream == NULL) return 0;
+	if (stream == NULL)
+		return 0;
 
-    if(!stream->wasFCloseCalled) {
-        if(!stream->isReader) {
-            stream->emptyBuffProc(stream, TRUE);
-        }
-        stream->wasFCloseCalled = TRUE;
-        stream->isClosed = TRUE;
-        if(stream->isReader) {
-            stream->wrNext = stream->stop = stream->rdNext;
-        } else {
-            stream->rdNext = stream->stop = stream->wrNext;
-        }
-    }
-    return (stream->FCGI_errno == 0) ? 0 : EOF;
+	if (!stream->wasFCloseCalled) {
+		if (!stream->isReader) {
+			stream->emptyBuffProc(stream, TRUE);
+		}
+		stream->wasFCloseCalled = TRUE;
+		stream->isClosed = TRUE;
+		if (stream->isReader) {
+			stream->wrNext = stream->stop = stream->rdNext;
+		} else {
+			stream->rdNext = stream->stop = stream->wrNext;
+		}
+	}
+	return (stream->FCGI_errno == 0) ? 0 : EOF;
 }
 
 /*
@@ -393,16 +394,16 @@ int FCGX_FClose(FCGX_Stream *stream)
  *
  *----------------------------------------------------------------------
  */
-static void SetError(FCGX_Stream *stream, int FCGI_errno)
+static void SetError(FCGX_Stream * stream, int FCGI_errno)
 {
-    /*
-     * Preserve only the first error.
-     */
-    if(stream->FCGI_errno == 0) {
-        stream->FCGI_errno = FCGI_errno;
-    }
-  
-    stream->isClosed = TRUE;
+	/*
+	 * Preserve only the first error.
+	 */
+	if (stream->FCGI_errno == 0) {
+		stream->FCGI_errno = FCGI_errno;
+	}
+
+	stream->isClosed = TRUE;
 }
 
 /*
@@ -415,8 +416,9 @@ static void SetError(FCGX_Stream *stream, int FCGI_errno)
  *
  *----------------------------------------------------------------------
  */
-int FCGX_GetError(FCGX_Stream *stream) {
-    return stream->FCGI_errno;
+int FCGX_GetError(FCGX_Stream * stream)
+{
+	return stream->FCGI_errno;
 }
 
 /*
@@ -428,19 +430,20 @@ int FCGX_GetError(FCGX_Stream *stream) {
  *
  *----------------------------------------------------------------------
  */
-void FCGX_ClearError(FCGX_Stream *stream) {
-    stream->FCGI_errno = 0;
-    /*
-     * stream->isClosed = FALSE;
-     * XXX: should clear isClosed but work is needed to make it safe
-     * to do so.  For example, if an application calls FClose, gets
-     * an I/O error on the write, calls ClearError and retries
-     * the FClose, FClose (really EmptyBuffProc) will write a second
-     * EOF record.  If an application calls PutChar instead of FClose
-     * after the ClearError, the application will write more data.
-     * The stream's state must discriminate between various states
-     * of the stream that are now all lumped under isClosed.
-     */
+void FCGX_ClearError(FCGX_Stream * stream)
+{
+	stream->FCGI_errno = 0;
+	/*
+	 * stream->isClosed = FALSE;
+	 * XXX: should clear isClosed but work is needed to make it safe
+	 * to do so.  For example, if an application calls FClose, gets
+	 * an I/O error on the write, calls ClearError and retries
+	 * the FClose, FClose (really EmptyBuffProc) will write a second
+	 * EOF record.  If an application calls PutChar instead of FClose
+	 * after the ClearError, the application will write more data.
+	 * The stream's state must discriminate between various states
+	 * of the stream that are now all lumped under isClosed.
+	 */
 }
 
 /*
@@ -456,9 +459,9 @@ void FCGX_ClearError(FCGX_Stream *stream) {
  */
 
 typedef struct Params {
-    FCGX_ParamArray vec;    /* vector of strings */
-    int length;		    /* number of string vec can hold */
-    char **cur;		    /* current item in vec; *cur == NULL */
+	FCGX_ParamArray vec;	/* vector of strings */
+	int length;		/* number of string vec can hold */
+	char **cur;		/* current item in vec; *cur == NULL */
 } Params;
 typedef Params *ParamsPtr;
 
@@ -476,13 +479,13 @@ typedef Params *ParamsPtr;
  */
 static ParamsPtr NewParams(int length)
 {
-    ParamsPtr result;
-    result = (Params *)Malloc(sizeof(Params));
-    result->vec = (char **)Malloc(length * sizeof(char *));
-    result->length = length;
-    result->cur = result->vec;
-    *result->cur = NULL;
-    return result;
+	ParamsPtr result;
+	result = (Params *) Malloc(sizeof(Params));
+	result->vec = (char **)Malloc(length * sizeof(char *));
+	result->length = length;
+	result->cur = result->vec;
+	*result->cur = NULL;
+	return result;
 }
 
 /*
@@ -497,19 +500,19 @@ static ParamsPtr NewParams(int length)
  *
  *----------------------------------------------------------------------
  */
-static void FreeParams(ParamsPtr *paramsPtrPtr)
+static void FreeParams(ParamsPtr * paramsPtrPtr)
 {
-    ParamsPtr paramsPtr = *paramsPtrPtr;
-    char **p;
-    if(paramsPtr == NULL) {
-        return;
-    }
-    for (p = paramsPtr->vec; p < paramsPtr->cur; p++) {
-        free(*p);
-    }
-    free(paramsPtr->vec);
-    free(paramsPtr);
-    *paramsPtrPtr = NULL;
+	ParamsPtr paramsPtr = *paramsPtrPtr;
+	char **p;
+	if (paramsPtr == NULL) {
+		return;
+	}
+	for (p = paramsPtr->vec; p < paramsPtr->cur; p++) {
+		free(*p);
+	}
+	free(paramsPtr->vec);
+	free(paramsPtr);
+	*paramsPtrPtr = NULL;
 }
 
 /*
@@ -529,16 +532,18 @@ static void FreeParams(ParamsPtr *paramsPtrPtr)
  */
 static void PutParam(ParamsPtr paramsPtr, char *nameValue)
 {
-    int size;
+	int size;
 
-    *paramsPtr->cur++ = nameValue;
-    size = paramsPtr->cur - paramsPtr->vec;
-    if(size >= paramsPtr->length) {
-	paramsPtr->length *= 2;
-	paramsPtr->vec = (FCGX_ParamArray)realloc(paramsPtr->vec, paramsPtr->length * sizeof(char *));
-	paramsPtr->cur = paramsPtr->vec + size;
-    }
-    *paramsPtr->cur = NULL;
+	*paramsPtr->cur++ = nameValue;
+	size = paramsPtr->cur - paramsPtr->vec;
+	if (size >= paramsPtr->length) {
+		paramsPtr->length *= 2;
+		paramsPtr->vec =
+			(FCGX_ParamArray) realloc(paramsPtr->vec,
+			paramsPtr->length * sizeof(char *));
+		paramsPtr->cur = paramsPtr->vec + size;
+	}
+	*paramsPtr->cur = NULL;
 }
 
 /*
@@ -556,19 +561,20 @@ static void PutParam(ParamsPtr paramsPtr, char *nameValue)
  */
 char *FCGX_GetParam(const char *name, FCGX_ParamArray envp)
 {
-    int len;
-    char **p;
+	int len;
+	char **p;
 
-	if (name == NULL || envp == NULL) return NULL;
+	if (name == NULL || envp == NULL)
+		return NULL;
 
-    len = strlen(name);
+	len = strlen(name);
 
-    for (p = envp; *p; ++p) {
-        if((strncmp(name, *p, len) == 0) && ((*p)[len] == '=')) {
-            return *p+len+1;
-        }
-    }
-    return NULL;
+	for (p = envp; *p; ++p) {
+		if ((strncmp(name, *p, len) == 0) && ((*p)[len] == '=')) {
+			return *p + len + 1;
+		}
+	}
+	return NULL;
 }
 
 /*
@@ -589,58 +595,59 @@ char *FCGX_GetParam(const char *name, FCGX_ParamArray envp)
  *
  *----------------------------------------------------------------------
  */
-static int ReadParams(Params *paramsPtr, FCGX_Stream *stream)
+static int ReadParams(Params * paramsPtr, FCGX_Stream * stream)
 {
-    int nameLen, valueLen;
-    unsigned char lenBuff[3];
-    char *nameValue;
+	int nameLen, valueLen;
+	unsigned char lenBuff[3];
+	char *nameValue;
 
-    while((nameLen = FCGX_GetChar(stream)) != EOF) {
-        /*
-         * Read name length (one or four bytes) and value length
-         * (one or four bytes) from stream.
-         */
-        if((nameLen & 0x80) != 0) {
-            if(FCGX_GetStr((char *) &lenBuff[0], 3, stream) != 3) {
-                SetError(stream, FCGX_PARAMS_ERROR);
-                return -1;
-	    }
-            nameLen = ((nameLen & 0x7f) << 24) + (lenBuff[0] << 16)
-                    + (lenBuff[1] << 8) + lenBuff[2];
-        }
-        if((valueLen = FCGX_GetChar(stream)) == EOF) {
-            SetError(stream, FCGX_PARAMS_ERROR);
-            return -1;
+	while ((nameLen = FCGX_GetChar(stream)) != EOF) {
+		/*
+		 * Read name length (one or four bytes) and value length
+		 * (one or four bytes) from stream.
+		 */
+		if ((nameLen & 0x80) != 0) {
+			if (FCGX_GetStr((char *)&lenBuff[0], 3, stream) != 3) {
+				SetError(stream, FCGX_PARAMS_ERROR);
+				return -1;
+			}
+			nameLen = ((nameLen & 0x7f) << 24) + (lenBuff[0] << 16)
+				+ (lenBuff[1] << 8) + lenBuff[2];
+		}
+		if ((valueLen = FCGX_GetChar(stream)) == EOF) {
+			SetError(stream, FCGX_PARAMS_ERROR);
+			return -1;
+		}
+		if ((valueLen & 0x80) != 0) {
+			if (FCGX_GetStr((char *)&lenBuff[0], 3, stream) != 3) {
+				SetError(stream, FCGX_PARAMS_ERROR);
+				return -1;
+			}
+			valueLen =
+				((valueLen & 0x7f) << 24) + (lenBuff[0] << 16)
+				+ (lenBuff[1] << 8) + lenBuff[2];
+		}
+		/*
+		 * nameLen and valueLen are now valid; read the name and value
+		 * from stream and construct a standard environment entry.
+		 */
+		nameValue = (char *)Malloc(nameLen + valueLen + 2);
+		if (FCGX_GetStr(nameValue, nameLen, stream) != nameLen) {
+			SetError(stream, FCGX_PARAMS_ERROR);
+			free(nameValue);
+			return -1;
+		}
+		*(nameValue + nameLen) = '=';
+		if (FCGX_GetStr(nameValue + nameLen + 1, valueLen, stream)
+			!= valueLen) {
+			SetError(stream, FCGX_PARAMS_ERROR);
+			free(nameValue);
+			return -1;
+		}
+		*(nameValue + nameLen + valueLen + 1) = '\0';
+		PutParam(paramsPtr, nameValue);
 	}
-        if((valueLen & 0x80) != 0) {
-            if(FCGX_GetStr((char *) &lenBuff[0], 3, stream) != 3) {
-                SetError(stream, FCGX_PARAMS_ERROR);
-                return -1;
-	    }
-            valueLen = ((valueLen & 0x7f) << 24) + (lenBuff[0] << 16)
-                    + (lenBuff[1] << 8) + lenBuff[2];
-        }
-        /*
-         * nameLen and valueLen are now valid; read the name and value
-         * from stream and construct a standard environment entry.
-         */
-        nameValue = (char *)Malloc(nameLen + valueLen + 2);
-        if(FCGX_GetStr(nameValue, nameLen, stream) != nameLen) {
-            SetError(stream, FCGX_PARAMS_ERROR);
-            free(nameValue);
-            return -1;
-	}
-        *(nameValue + nameLen) = '=';
-        if(FCGX_GetStr(nameValue + nameLen + 1, valueLen, stream)
-                != valueLen) {
-            SetError(stream, FCGX_PARAMS_ERROR);
-            free(nameValue);
-            return -1;
-	}
-        *(nameValue + nameLen + valueLen + 1) = '\0';
-        PutParam(paramsPtr, nameValue);
-    }
-    return 0;
+	return 0;
 }
 
 /*
@@ -652,22 +659,19 @@ static int ReadParams(Params *paramsPtr, FCGX_Stream *stream)
  *
  *----------------------------------------------------------------------
  */
-static FCGI_Header MakeHeader(
-        int type,
-        int requestId,
-        int contentLength,
-        int paddingLength)
+static FCGI_Header MakeHeader(int type,
+	int requestId, int contentLength, int paddingLength)
 {
-    FCGI_Header header;
-    header.version = FCGI_VERSION_1;
-    header.type             = (unsigned char) type;
-    header.requestIdB1      = (unsigned char) ((requestId     >> 8) & 0xff);
-    header.requestIdB0      = (unsigned char) ((requestId         ) & 0xff);
-    header.contentLengthB1  = (unsigned char) ((contentLength >> 8) & 0xff);
-    header.contentLengthB0  = (unsigned char) ((contentLength     ) & 0xff);
-    header.paddingLength    = (unsigned char) paddingLength;
-    header.reserved         =  0;
-    return header;
+	FCGI_Header header;
+	header.version = FCGI_VERSION_1;
+	header.type = (unsigned char)type;
+	header.requestIdB1 = (unsigned char)((requestId >> 8) & 0xff);
+	header.requestIdB0 = (unsigned char)((requestId) & 0xff);
+	header.contentLengthB1 = (unsigned char)((contentLength >> 8) & 0xff);
+	header.contentLengthB0 = (unsigned char)((contentLength) & 0xff);
+	header.paddingLength = (unsigned char)paddingLength;
+	header.reserved = 0;
+	return header;
 }
 
 /*
@@ -679,18 +683,16 @@ static FCGI_Header MakeHeader(
  *
  *----------------------------------------------------------------------
  */
-static FCGI_EndRequestBody MakeEndRequestBody(
-        int appStatus,
-        int protocolStatus)
+static FCGI_EndRequestBody MakeEndRequestBody(int appStatus, int protocolStatus)
 {
-    FCGI_EndRequestBody body;
-    body.appStatusB3    = (unsigned char) ((appStatus >> 24) & 0xff);
-    body.appStatusB2    = (unsigned char) ((appStatus >> 16) & 0xff);
-    body.appStatusB1    = (unsigned char) ((appStatus >>  8) & 0xff);
-    body.appStatusB0    = (unsigned char) ((appStatus      ) & 0xff);
-    body.protocolStatus = (unsigned char) protocolStatus;
-    memset(body.reserved, 0, sizeof(body.reserved));
-    return body;
+	FCGI_EndRequestBody body;
+	body.appStatusB3 = (unsigned char)((appStatus >> 24) & 0xff);
+	body.appStatusB2 = (unsigned char)((appStatus >> 16) & 0xff);
+	body.appStatusB1 = (unsigned char)((appStatus >> 8) & 0xff);
+	body.appStatusB0 = (unsigned char)((appStatus) & 0xff);
+	body.protocolStatus = (unsigned char)protocolStatus;
+	memset(body.reserved, 0, sizeof(body.reserved));
+	return body;
 }
 
 /*
@@ -702,13 +704,12 @@ static FCGI_EndRequestBody MakeEndRequestBody(
  *
  *----------------------------------------------------------------------
  */
-static FCGI_UnknownTypeBody MakeUnknownTypeBody(
-        int type)
+static FCGI_UnknownTypeBody MakeUnknownTypeBody(int type)
 {
-    FCGI_UnknownTypeBody body;
-    body.type = (unsigned char) type;
-    memset(body.reserved, 0, sizeof(body.reserved));
-    return body;
+	FCGI_UnknownTypeBody body;
+	body.type = (unsigned char)type;
+	memset(body.reserved, 0, sizeof(body.reserved));
+	return body;
 }
 
 /*
@@ -721,8 +722,9 @@ static FCGI_UnknownTypeBody MakeUnknownTypeBody(
  *
  *----------------------------------------------------------------------
  */
-static int AlignInt8(unsigned n) {
-    return (n + 7) & (UINT_MAX - 7);
+static int AlignInt8(unsigned n)
+{
+	return (n + 7) & (UINT_MAX - 7);
 }
 
 /*
@@ -735,33 +737,33 @@ static int AlignInt8(unsigned n) {
  *
  *----------------------------------------------------------------------
  */
-static unsigned char *AlignPtr8(unsigned char *p) {
-    unsigned long u = (unsigned long) p;
-    u = ((u + 7) & (ULONG_MAX - 7)) - u;
-    return p + u;
+static unsigned char *AlignPtr8(unsigned char *p)
+{
+	unsigned long u = (unsigned long)p;
+	u = ((u + 7) & (ULONG_MAX - 7)) - u;
+	return p + u;
 }
-
 
 /*
  * State associated with a stream
  */
 typedef struct FCGX_Stream_Data {
-    unsigned char *buff;      /* buffer after alignment */
-    int bufflen;              /* number of bytes buff can store */
-    unsigned char *mBuff;     /* buffer as returned by Malloc */
-    unsigned char *buffStop;  /* reader: last valid byte + 1 of entire buffer.
-                               * stop generally differs from buffStop for
-                               * readers because of record structure.
-                               * writer: buff + bufflen */
-    int type;                 /* reader: FCGI_PARAMS or FCGI_STDIN
-                               * writer: FCGI_STDOUT or FCGI_STDERR */
-    int eorStop;              /* reader: stop stream at end-of-record */
-    int skip;                 /* reader: don't deliver content bytes */
-    int contentLen;           /* reader: bytes of unread content */
-    int paddingLen;           /* reader: bytes of unread padding */
-    int isAnythingWritten;    /* writer: data has been written to ipcFd */
-    int rawWrite;             /* writer: write data without stream headers */
-    FCGX_Request *reqDataPtr; /* request data not specific to one stream */
+	unsigned char *buff;	/* buffer after alignment */
+	int bufflen;		/* number of bytes buff can store */
+	unsigned char *mBuff;	/* buffer as returned by Malloc */
+	unsigned char *buffStop;	/* reader: last valid byte + 1 of entire buffer.
+					 * stop generally differs from buffStop for
+					 * readers because of record structure.
+					 * writer: buff + bufflen */
+	int type;		/* reader: FCGI_PARAMS or FCGI_STDIN
+				 * writer: FCGI_STDOUT or FCGI_STDERR */
+	int eorStop;		/* reader: stop stream at end-of-record */
+	int skip;		/* reader: don't deliver content bytes */
+	int contentLen;		/* reader: bytes of unread content */
+	int paddingLen;		/* reader: bytes of unread padding */
+	int isAnythingWritten;	/* writer: data has been written to ipcFd */
+	int rawWrite;		/* writer: write data without stream headers */
+	FCGX_Request *reqDataPtr;	/* request data not specific to one stream */
 } FCGX_Stream_Data;
 
 /*
@@ -777,52 +779,52 @@ typedef struct FCGX_Stream_Data {
  */
 static void WriteCloseRecords(struct FCGX_Stream *stream)
 {
-    FCGX_Stream_Data *data = (FCGX_Stream_Data *)stream->data;
-    /*
-     * Enter rawWrite mode so final records won't be encapsulated as
-     * stream data.
-     */
-    data->rawWrite = TRUE;
-    /*
-     * Generate EOF for stream content if needed.
-     */
-    if(!(data->type == FCGI_STDERR
-            && stream->wrNext == data->buff
-            && !data->isAnythingWritten)) {
-        FCGI_Header header;
-        header = MakeHeader(data->type, data->reqDataPtr->requestId, 0, 0);
-        FCGX_PutStr((char *) &header, sizeof(header), stream);
-    };
-    /*
-     * Generate FCGI_END_REQUEST record if needed.
-     */
-    if(data->reqDataPtr->nWriters == 1) {
-        FCGI_EndRequestRecord endRequestRecord;
-        endRequestRecord.header = MakeHeader(FCGI_END_REQUEST,
-                data->reqDataPtr->requestId,
-                sizeof(endRequestRecord.body), 0);
-        endRequestRecord.body = MakeEndRequestBody(
-                data->reqDataPtr->appStatus, FCGI_REQUEST_COMPLETE);
-        FCGX_PutStr((char *) &endRequestRecord,
-                sizeof(endRequestRecord), stream);
-    }
-    data->reqDataPtr->nWriters--;
+	FCGX_Stream_Data *data = (FCGX_Stream_Data *) stream->data;
+	/*
+	 * Enter rawWrite mode so final records won't be encapsulated as
+	 * stream data.
+	 */
+	data->rawWrite = TRUE;
+	/*
+	 * Generate EOF for stream content if needed.
+	 */
+	if (!(data->type == FCGI_STDERR
+			&& stream->wrNext == data->buff
+			&& !data->isAnythingWritten)) {
+		FCGI_Header header;
+		header = MakeHeader(data->type, data->reqDataPtr->requestId, 0,
+			0);
+		FCGX_PutStr((char *)&header, sizeof(header), stream);
+	};
+	/*
+	 * Generate FCGI_END_REQUEST record if needed.
+	 */
+	if (data->reqDataPtr->nWriters == 1) {
+		FCGI_EndRequestRecord endRequestRecord;
+		endRequestRecord.header = MakeHeader(FCGI_END_REQUEST,
+			data->reqDataPtr->requestId,
+			sizeof(endRequestRecord.body), 0);
+		endRequestRecord.body =
+			MakeEndRequestBody(data->reqDataPtr->appStatus,
+			FCGI_REQUEST_COMPLETE);
+		FCGX_PutStr((char *)&endRequestRecord, sizeof(endRequestRecord),
+			stream);
+	}
+	data->reqDataPtr->nWriters--;
 }
-
-
 
 static int write_it_all(int fd, char *buf, int len)
 {
-    int wrote;
+	int wrote;
 
-    while (len) {
-        wrote = OS_Write(fd, buf, len);
-        if (wrote < 0)
-            return wrote;
-        len -= wrote;
-        buf += wrote;
-    }
-    return len;
+	while (len) {
+		wrote = OS_Write(fd, buf, len);
+		if (wrote < 0)
+			return wrote;
+		len -= wrote;
+		buf += wrote;
+	}
+	return len;
 }
 
 /*
@@ -837,48 +839,49 @@ static int write_it_all(int fd, char *buf, int len)
  */
 static void EmptyBuffProc(struct FCGX_Stream *stream, int doClose)
 {
-    FCGX_Stream_Data *data = (FCGX_Stream_Data *)stream->data;
-    int cLen, eLen;
-    /*
-     * If the buffer contains stream data, fill in the header.
-     * Pad the record to a multiple of 8 bytes in length.  Padding
-     * can't overflow the buffer because the buffer is a multiple
-     * of 8 bytes in length.  If the buffer contains no stream
-     * data, reclaim the space reserved for the header.
-     */
-    if(!data->rawWrite) {
-        cLen = stream->wrNext - data->buff - sizeof(FCGI_Header);
-        if(cLen > 0) {
-            eLen = AlignInt8(cLen);
-            /*
-             * Giving the padding a well-defined value keeps Purify happy.
-             */
-            memset(stream->wrNext, 0, eLen - cLen);
-            stream->wrNext += eLen - cLen;
-            *((FCGI_Header *) data->buff)
-                    = MakeHeader(data->type,
-                            data->reqDataPtr->requestId, cLen, eLen - cLen);
-        } else {
-            stream->wrNext = data->buff;
+	FCGX_Stream_Data *data = (FCGX_Stream_Data *) stream->data;
+	int cLen, eLen;
+	/*
+	 * If the buffer contains stream data, fill in the header.
+	 * Pad the record to a multiple of 8 bytes in length.  Padding
+	 * can't overflow the buffer because the buffer is a multiple
+	 * of 8 bytes in length.  If the buffer contains no stream
+	 * data, reclaim the space reserved for the header.
+	 */
+	if (!data->rawWrite) {
+		cLen = stream->wrNext - data->buff - sizeof(FCGI_Header);
+		if (cLen > 0) {
+			eLen = AlignInt8(cLen);
+			/*
+			 * Giving the padding a well-defined value keeps Purify happy.
+			 */
+			memset(stream->wrNext, 0, eLen - cLen);
+			stream->wrNext += eLen - cLen;
+			*((FCGI_Header *) data->buff)
+				= MakeHeader(data->type,
+				data->reqDataPtr->requestId, cLen, eLen - cLen);
+		} else {
+			stream->wrNext = data->buff;
+		}
 	}
-    }
-    if(doClose) {
-        WriteCloseRecords(stream);
-    };
-    if (stream->wrNext != data->buff) {
-        data->isAnythingWritten = TRUE;
-        if (write_it_all(data->reqDataPtr->ipcFd, (char *)data->buff, stream->wrNext - data->buff) < 0) {
-            SetError(stream, OS_Errno);
-            return;
-        }
-        stream->wrNext = data->buff;
-    }
-    /*
-     * The buffer is empty.
-     */
-    if(!data->rawWrite) {
-        stream->wrNext += sizeof(FCGI_Header);
-    }
+	if (doClose) {
+		WriteCloseRecords(stream);
+	};
+	if (stream->wrNext != data->buff) {
+		data->isAnythingWritten = TRUE;
+		if (write_it_all(data->reqDataPtr->ipcFd, (char *)data->buff,
+				stream->wrNext - data->buff) < 0) {
+			SetError(stream, OS_Errno);
+			return;
+		}
+		stream->wrNext = data->buff;
+	}
+	/*
+	 * The buffer is empty.
+	 */
+	if (!data->rawWrite) {
+		stream->wrNext += sizeof(FCGI_Header);
+	}
 }
 
 /*
@@ -903,65 +906,66 @@ static void EmptyBuffProc(struct FCGX_Stream *stream, int doClose)
  *
  *----------------------------------------------------------------------
  */
-static int ProcessManagementRecord(int type, FCGX_Stream *stream)
+static int ProcessManagementRecord(int type, FCGX_Stream * stream)
 {
-    FCGX_Stream_Data *data = (FCGX_Stream_Data *)stream->data;
-    ParamsPtr paramsPtr = NewParams(3);
-    char **pPtr;
-    char response[64]; /* 64 = 8 + 3*(1+1+14+1)* + padding */
-    char *responseP = &response[FCGI_HEADER_LEN];
-    char *name, value = '\0';
-    int len, paddedLen;
-    if(type == FCGI_GET_VALUES) {
-        ReadParams(paramsPtr, stream);
-        if((FCGX_GetError(stream) != 0) || (data->contentLen != 0)) {
-            FreeParams(&paramsPtr);
-            return FCGX_PROTOCOL_ERROR;
-        }
-        for (pPtr = paramsPtr->vec; pPtr < paramsPtr->cur; pPtr++) {
-            name = *pPtr;
-            *(strchr(name, '=')) = '\0';
-            if(strcmp(name, FCGI_MAX_CONNS) == 0) {
-                value = '1';
-            } else if(strcmp(name, FCGI_MAX_REQS) == 0) {
-                value = '1';
-            } else if(strcmp(name, FCGI_MPXS_CONNS) == 0) {
-                value = '0';
-            } else {
-                name = NULL;
-            }
-            if(name != NULL) {
+	FCGX_Stream_Data *data = (FCGX_Stream_Data *) stream->data;
+	ParamsPtr paramsPtr = NewParams(3);
+	char **pPtr;
+	char response[64];	/* 64 = 8 + 3*(1+1+14+1)* + padding */
+	char *responseP = &response[FCGI_HEADER_LEN];
+	char *name, value = '\0';
+	int len, paddedLen;
+	if (type == FCGI_GET_VALUES) {
+		ReadParams(paramsPtr, stream);
+		if ((FCGX_GetError(stream) != 0) || (data->contentLen != 0)) {
+			FreeParams(&paramsPtr);
+			return FCGX_PROTOCOL_ERROR;
+		}
+		for (pPtr = paramsPtr->vec; pPtr < paramsPtr->cur; pPtr++) {
+			name = *pPtr;
+			*(strchr(name, '=')) = '\0';
+			if (strcmp(name, FCGI_MAX_CONNS) == 0) {
+				value = '1';
+			} else if (strcmp(name, FCGI_MAX_REQS) == 0) {
+				value = '1';
+			} else if (strcmp(name, FCGI_MPXS_CONNS) == 0) {
+				value = '0';
+			} else {
+				name = NULL;
+			}
+			if (name != NULL) {
 #include <fmt.h>
-                len = strlen(name);
-                responseP[0] = (char ) len;
-                responseP[1] = (char ) 1;
-                fmt_str(responseP+2, name);
-                responseP[2+len] = value;
-                responseP[3+len] = '\0';
+				len = strlen(name);
+				responseP[0] = (char)len;
+				responseP[1] = (char)1;
+				fmt_str(responseP + 2, name);
+				responseP[2 + len] = value;
+				responseP[3 + len] = '\0';
 //                sprintf(responseP, "%c%c%s%c", len, 1, name, value);
-                responseP += len + 3;
-	    }
-        }
-        len = responseP - &response[FCGI_HEADER_LEN];
-        paddedLen = AlignInt8(len);
-        *((FCGI_Header *) response)
-            = MakeHeader(FCGI_GET_VALUES_RESULT, FCGI_NULL_REQUEST_ID,
-                         len, paddedLen - len);
-        FreeParams(&paramsPtr);
-    } else {
-        paddedLen = len = sizeof(FCGI_UnknownTypeBody);
-        ((FCGI_UnknownTypeRecord *) response)->header
-            = MakeHeader(FCGI_UNKNOWN_TYPE, FCGI_NULL_REQUEST_ID,
-                         len, 0);
-        ((FCGI_UnknownTypeRecord *) response)->body
-            = MakeUnknownTypeBody(type);
-    }
-    if (write_it_all(data->reqDataPtr->ipcFd, response, FCGI_HEADER_LEN + paddedLen) < 0) {
-        SetError(stream, OS_Errno);
-        return -1;
-    }
+				responseP += len + 3;
+			}
+		}
+		len = responseP - &response[FCGI_HEADER_LEN];
+		paddedLen = AlignInt8(len);
+		*((FCGI_Header *) response)
+			= MakeHeader(FCGI_GET_VALUES_RESULT,
+			FCGI_NULL_REQUEST_ID, len, paddedLen - len);
+		FreeParams(&paramsPtr);
+	} else {
+		paddedLen = len = sizeof(FCGI_UnknownTypeBody);
+		((FCGI_UnknownTypeRecord *) response)->header
+			= MakeHeader(FCGI_UNKNOWN_TYPE, FCGI_NULL_REQUEST_ID,
+			len, 0);
+		((FCGI_UnknownTypeRecord *) response)->body
+			= MakeUnknownTypeBody(type);
+	}
+	if (write_it_all(data->reqDataPtr->ipcFd, response,
+			FCGI_HEADER_LEN + paddedLen) < 0) {
+		SetError(stream, OS_Errno);
+		return -1;
+	}
 
-    return MGMT_RECORD;
+	return MGMT_RECORD;
 }
 
 /*
@@ -982,43 +986,45 @@ static int ProcessManagementRecord(int type, FCGX_Stream *stream)
  *
  *----------------------------------------------------------------------
  */
-static int ProcessBeginRecord(int requestId, FCGX_Stream *stream)
+static int ProcessBeginRecord(int requestId, FCGX_Stream * stream)
 {
-    FCGX_Stream_Data *data = (FCGX_Stream_Data *)stream->data;
-    FCGI_BeginRequestBody body;
-    if(requestId == 0 || data->contentLen != sizeof(body)) {
-        return FCGX_PROTOCOL_ERROR;
-    }
-    if(data->reqDataPtr->isBeginProcessed) {
-        /*
-         * The Web server is multiplexing the connection.  This library
-         * doesn't know how to handle multiplexing, so respond with
-         * FCGI_END_REQUEST{protocolStatus = FCGI_CANT_MPX_CONN}
-         */
-        FCGI_EndRequestRecord endRequestRecord;
-        endRequestRecord.header = MakeHeader(FCGI_END_REQUEST,
-                requestId, sizeof(endRequestRecord.body), 0);
-        endRequestRecord.body
-                = MakeEndRequestBody(0, FCGI_CANT_MPX_CONN);
-        if (write_it_all(data->reqDataPtr->ipcFd, (char *)&endRequestRecord, sizeof(endRequestRecord)) < 0) {
-            SetError(stream, OS_Errno);
-            return -1;
-        }
+	FCGX_Stream_Data *data = (FCGX_Stream_Data *) stream->data;
+	FCGI_BeginRequestBody body;
+	if (requestId == 0 || data->contentLen != sizeof(body)) {
+		return FCGX_PROTOCOL_ERROR;
+	}
+	if (data->reqDataPtr->isBeginProcessed) {
+		/*
+		 * The Web server is multiplexing the connection.  This library
+		 * doesn't know how to handle multiplexing, so respond with
+		 * FCGI_END_REQUEST{protocolStatus = FCGI_CANT_MPX_CONN}
+		 */
+		FCGI_EndRequestRecord endRequestRecord;
+		endRequestRecord.header = MakeHeader(FCGI_END_REQUEST,
+			requestId, sizeof(endRequestRecord.body), 0);
+		endRequestRecord.body
+			= MakeEndRequestBody(0, FCGI_CANT_MPX_CONN);
+		if (write_it_all(data->reqDataPtr->ipcFd,
+				(char *)&endRequestRecord,
+				sizeof(endRequestRecord)) < 0) {
+			SetError(stream, OS_Errno);
+			return -1;
+		}
 
-        return SKIP;
-    }
-    /*
-     * Accept this new request.  Read the record body.
-     */
-    data->reqDataPtr->requestId = requestId;
-    if(FCGX_GetStr((char *) &body, sizeof(body), stream)
-            != sizeof(body)) {
-        return FCGX_PROTOCOL_ERROR;
-    }
-    data->reqDataPtr->keepConnection = (body.flags & FCGI_KEEP_CONN);
-    data->reqDataPtr->role = (body.roleB1 << 8) + body.roleB0;
-    data->reqDataPtr->isBeginProcessed = TRUE;
-    return BEGIN_RECORD;
+		return SKIP;
+	}
+	/*
+	 * Accept this new request.  Read the record body.
+	 */
+	data->reqDataPtr->requestId = requestId;
+	if (FCGX_GetStr((char *)&body, sizeof(body), stream)
+		!= sizeof(body)) {
+		return FCGX_PROTOCOL_ERROR;
+	}
+	data->reqDataPtr->keepConnection = (body.flags & FCGI_KEEP_CONN);
+	data->reqDataPtr->role = (body.roleB1 << 8) + body.roleB0;
+	data->reqDataPtr->isBeginProcessed = TRUE;
+	return BEGIN_RECORD;
 }
 
 /*
@@ -1043,31 +1049,31 @@ static int ProcessBeginRecord(int requestId, FCGX_Stream *stream)
  *
  *----------------------------------------------------------------------
  */
-static int ProcessHeader(FCGI_Header header, FCGX_Stream *stream)
+static int ProcessHeader(FCGI_Header header, FCGX_Stream * stream)
 {
-    FCGX_Stream_Data *data = (FCGX_Stream_Data *)stream->data;
-    int requestId;
-    if(header.version != FCGI_VERSION_1) {
-        return FCGX_UNSUPPORTED_VERSION;
-    }
-    requestId =        (header.requestIdB1 << 8)
-                         + header.requestIdB0;
-    data->contentLen = (header.contentLengthB1 << 8)
-                         + header.contentLengthB0;
-    data->paddingLen = header.paddingLength;
-    if(header.type == FCGI_BEGIN_REQUEST) {
-        return ProcessBeginRecord(requestId, stream);
-    }
-    if(requestId  == FCGI_NULL_REQUEST_ID) {
-        return ProcessManagementRecord(header.type, stream);
-    }
-    if(requestId != data->reqDataPtr->requestId) {
-        return SKIP;
-    }
-    if(header.type != data->type) {
-        return FCGX_PROTOCOL_ERROR;
-    }
-    return STREAM_RECORD;
+	FCGX_Stream_Data *data = (FCGX_Stream_Data *) stream->data;
+	int requestId;
+	if (header.version != FCGI_VERSION_1) {
+		return FCGX_UNSUPPORTED_VERSION;
+	}
+	requestId = (header.requestIdB1 << 8)
+		+ header.requestIdB0;
+	data->contentLen = (header.contentLengthB1 << 8)
+		+ header.contentLengthB0;
+	data->paddingLen = header.paddingLength;
+	if (header.type == FCGI_BEGIN_REQUEST) {
+		return ProcessBeginRecord(requestId, stream);
+	}
+	if (requestId == FCGI_NULL_REQUEST_ID) {
+		return ProcessManagementRecord(header.type, stream);
+	}
+	if (requestId != data->reqDataPtr->requestId) {
+		return SKIP;
+	}
+	if (header.type != data->type) {
+		return FCGX_PROTOCOL_ERROR;
+	}
+	return STREAM_RECORD;
 }
 
 /*
@@ -1079,123 +1085,129 @@ static int ProcessHeader(FCGI_Header header, FCGX_Stream *stream)
  *
  *----------------------------------------------------------------------
  */
-static void FillBuffProc(FCGX_Stream *stream)
+static void FillBuffProc(FCGX_Stream * stream)
 {
-    FCGX_Stream_Data *data = (FCGX_Stream_Data *)stream->data;
-    FCGI_Header header;
-    int headerLen = 0;
-    int status, count;
+	FCGX_Stream_Data *data = (FCGX_Stream_Data *) stream->data;
+	FCGI_Header header;
+	int headerLen = 0;
+	int status, count;
 
-    for (;;) {
-        /*
-         * If data->buff is empty, do a read.
-         */
-        if(stream->rdNext == data->buffStop) {
-            count = OS_Read(data->reqDataPtr->ipcFd, (char *)data->buff,
-                            data->bufflen);
-            if(count <= 0) {
-                SetError(stream, (count == 0 ? FCGX_PROTOCOL_ERROR : OS_Errno));
-                return;
-            }
-            stream->rdNext = data->buff;
-            data->buffStop = data->buff + count;
+	for (;;) {
+		/*
+		 * If data->buff is empty, do a read.
+		 */
+		if (stream->rdNext == data->buffStop) {
+			count = OS_Read(data->reqDataPtr->ipcFd,
+				(char *)data->buff, data->bufflen);
+			if (count <= 0) {
+				SetError(stream,
+					(count ==
+						0 ? FCGX_PROTOCOL_ERROR :
+						OS_Errno));
+				return;
+			}
+			stream->rdNext = data->buff;
+			data->buffStop = data->buff + count;
+		}
+		/*
+		 * Now data->buff is not empty.  If the current record contains
+		 * more content bytes, deliver all that are present in data->buff.
+		 */
+		if (data->contentLen > 0) {
+			count = min(data->contentLen,
+				data->buffStop - stream->rdNext);
+			data->contentLen -= count;
+			if (!data->skip) {
+				stream->wrNext = stream->stop =
+					stream->rdNext + count;
+				return;
+			} else {
+				stream->rdNext += count;
+				if (data->contentLen > 0) {
+					continue;
+				} else {
+					data->skip = FALSE;
+				}
+			}
+		}
+		/*
+		 * If the current record (whose content has been fully consumed by
+		 * the client) was padded, skip over the padding bytes.
+		 */
+		if (data->paddingLen > 0) {
+			count = min(data->paddingLen,
+				data->buffStop - stream->rdNext);
+			data->paddingLen -= count;
+			stream->rdNext += count;
+			if (data->paddingLen > 0) {
+				continue;
+			}
+		}
+		/*
+		 * All done with the current record, including the padding.
+		 * If we're in a recursive call from ProcessHeader, deliver EOF.
+		 */
+		if (data->eorStop) {
+			stream->stop = stream->rdNext;
+			stream->isClosed = TRUE;
+			return;
+		}
+		/*
+		 * Fill header with bytes from the input buffer.
+		 */
+		count = min((int)sizeof(header) - headerLen,
+			data->buffStop - stream->rdNext);
+		memcpy(((char *)(&header)) + headerLen, stream->rdNext, count);
+		headerLen += count;
+		stream->rdNext += count;
+		if (headerLen < sizeof(header)) {
+			continue;
+		};
+		headerLen = 0;
+		/*
+		 * Interpret header.  eorStop prevents ProcessHeader from reading
+		 * past the end-of-record when using stream to read content.
+		 */
+		data->eorStop = TRUE;
+		stream->stop = stream->rdNext;
+		status = ProcessHeader(header, stream);
+		data->eorStop = FALSE;
+		stream->isClosed = FALSE;
+		switch (status) {
+		case STREAM_RECORD:
+			/*
+			 * If this stream record header marked the end of stream
+			 * data deliver EOF to the stream client, otherwise loop
+			 * and deliver data.
+			 *
+			 * XXX: If this is final stream and
+			 * stream->rdNext != data->buffStop, buffered
+			 * data is next request (server pipelining)?
+			 */
+			if (data->contentLen == 0) {
+				stream->wrNext = stream->stop = stream->rdNext;
+				stream->isClosed = TRUE;
+				return;
+			}
+			break;
+		case SKIP:
+			data->skip = TRUE;
+			break;
+		case BEGIN_RECORD:
+			/*
+			 * If this header marked the beginning of a new
+			 * request, return role information to caller.
+			 */
+			return;
+			break;
+		case MGMT_RECORD:
+			break;
+		default:
+			SetError(stream, status);
+			return;
+			break;
+		}
 	}
-        /*
-         * Now data->buff is not empty.  If the current record contains
-         * more content bytes, deliver all that are present in data->buff.
-         */
-        if(data->contentLen > 0) {
-            count = min(data->contentLen, data->buffStop - stream->rdNext);
-            data->contentLen -= count;
-            if(!data->skip) {
-                stream->wrNext = stream->stop = stream->rdNext + count;
-                return;
-	    } else {
-                stream->rdNext += count;
-                if(data->contentLen > 0) {
-                    continue;
-	        } else {
-                    data->skip = FALSE;
-	        }
-	    }
-	}
-        /*
-         * If the current record (whose content has been fully consumed by
-         * the client) was padded, skip over the padding bytes.
-         */
-        if(data->paddingLen > 0) {
-            count = min(data->paddingLen, data->buffStop - stream->rdNext);
-            data->paddingLen -= count;
-            stream->rdNext += count;
-            if(data->paddingLen > 0) {
-                continue;
-	    }
-	}
-        /*
-         * All done with the current record, including the padding.
-         * If we're in a recursive call from ProcessHeader, deliver EOF.
-         */
-        if(data->eorStop) {
-            stream->stop = stream->rdNext;
-            stream->isClosed = TRUE;
-            return;
-        }
-        /*
-         * Fill header with bytes from the input buffer.
-         */
-        count = min((int)sizeof(header) - headerLen,
-                        data->buffStop - stream->rdNext);
-        memcpy(((char *)(&header)) + headerLen, stream->rdNext, count);
-        headerLen += count;
-        stream->rdNext += count;
-        if(headerLen < sizeof(header)) {
-            continue;
-	};
-        headerLen = 0;
-        /*
-         * Interpret header.  eorStop prevents ProcessHeader from reading
-         * past the end-of-record when using stream to read content.
-         */
-        data->eorStop = TRUE;
-        stream->stop = stream->rdNext;
-        status = ProcessHeader(header, stream);
-        data->eorStop = FALSE;
-        stream->isClosed = FALSE;
-        switch(status) {
-            case STREAM_RECORD:
-                /*
-                 * If this stream record header marked the end of stream
-                 * data deliver EOF to the stream client, otherwise loop
-                 * and deliver data.
-                 *
-                 * XXX: If this is final stream and
-                 * stream->rdNext != data->buffStop, buffered
-                 * data is next request (server pipelining)?
-                 */
-                if(data->contentLen == 0) {
-                    stream->wrNext = stream->stop = stream->rdNext;
-                    stream->isClosed = TRUE;
-                    return;
-	        }
-                break;
-	    case SKIP:
-                data->skip = TRUE;
-                break;
-            case BEGIN_RECORD:
-                /*
-                 * If this header marked the beginning of a new
-                 * request, return role information to caller.
-                 */
-                return;
-                break;
-            case MGMT_RECORD:
-                break;
-            default:
-                SetError(stream, status);
-                return;
-                break;
-	}
-    }
 }
 
 /*
@@ -1208,61 +1220,62 @@ static void FillBuffProc(FCGX_Stream *stream)
  *
  *----------------------------------------------------------------------
  */
-static FCGX_Stream *NewStream(
-        FCGX_Request *reqDataPtr, int bufflen, int isReader, int streamType)
+static FCGX_Stream *NewStream(FCGX_Request * reqDataPtr, int bufflen,
+	int isReader, int streamType)
 {
-    /*
-     * XXX: It would be a lot cleaner to have a NewStream that only
-     * knows about the type FCGX_Stream, with all other
-     * necessary data passed in.  It appears that not just
-     * data and the two procs are needed for initializing stream,
-     * but also data->buff and data->buffStop.  This has implications
-     * for procs that want to swap buffers, too.
-     */
-    FCGX_Stream *stream = (FCGX_Stream *)Malloc(sizeof(FCGX_Stream));
-    FCGX_Stream_Data *data = (FCGX_Stream_Data *)Malloc(sizeof(FCGX_Stream_Data));
-    data->reqDataPtr = reqDataPtr;
-    bufflen = AlignInt8(min(max(bufflen, 32), FCGI_MAX_LENGTH + 1));
-    data->bufflen = bufflen;
-    data->mBuff = (unsigned char *)Malloc(bufflen);
-    data->buff = AlignPtr8(data->mBuff);
-    if(data->buff != data->mBuff) {
-        data->bufflen -= 8;
-    }
-    if(isReader) {
-        data->buffStop = data->buff;
-    } else {
-        data->buffStop = data->buff + data->bufflen;
-    }
-    data->type = streamType;
-    data->eorStop = FALSE;
-    data->skip = FALSE;
-    data->contentLen = 0;
-    data->paddingLen = 0;
-    data->isAnythingWritten = FALSE;
-    data->rawWrite = FALSE;
+	/*
+	 * XXX: It would be a lot cleaner to have a NewStream that only
+	 * knows about the type FCGX_Stream, with all other
+	 * necessary data passed in.  It appears that not just
+	 * data and the two procs are needed for initializing stream,
+	 * but also data->buff and data->buffStop.  This has implications
+	 * for procs that want to swap buffers, too.
+	 */
+	FCGX_Stream *stream = (FCGX_Stream *) Malloc(sizeof(FCGX_Stream));
+	FCGX_Stream_Data *data =
+		(FCGX_Stream_Data *) Malloc(sizeof(FCGX_Stream_Data));
+	data->reqDataPtr = reqDataPtr;
+	bufflen = AlignInt8(min(max(bufflen, 32), FCGI_MAX_LENGTH + 1));
+	data->bufflen = bufflen;
+	data->mBuff = (unsigned char *)Malloc(bufflen);
+	data->buff = AlignPtr8(data->mBuff);
+	if (data->buff != data->mBuff) {
+		data->bufflen -= 8;
+	}
+	if (isReader) {
+		data->buffStop = data->buff;
+	} else {
+		data->buffStop = data->buff + data->bufflen;
+	}
+	data->type = streamType;
+	data->eorStop = FALSE;
+	data->skip = FALSE;
+	data->contentLen = 0;
+	data->paddingLen = 0;
+	data->isAnythingWritten = FALSE;
+	data->rawWrite = FALSE;
 
-    stream->data = data;
-    stream->isReader = isReader;
-    stream->isClosed = FALSE;
-    stream->wasFCloseCalled = FALSE;
-    stream->FCGI_errno = 0;
-    if(isReader) {
-        stream->fillBuffProc = FillBuffProc;
-        stream->emptyBuffProc = NULL;
-        stream->rdNext = data->buff;
-        stream->stop = stream->rdNext;
-        stream->stopUnget = data->buff;
-        stream->wrNext = stream->stop;
-    } else {
-        stream->fillBuffProc = NULL;
-        stream->emptyBuffProc = EmptyBuffProc;
-        stream->wrNext = data->buff + sizeof(FCGI_Header);
-        stream->stop = data->buffStop;
-        stream->stopUnget = NULL;
-        stream->rdNext = stream->stop;
-    }
-    return stream;
+	stream->data = data;
+	stream->isReader = isReader;
+	stream->isClosed = FALSE;
+	stream->wasFCloseCalled = FALSE;
+	stream->FCGI_errno = 0;
+	if (isReader) {
+		stream->fillBuffProc = FillBuffProc;
+		stream->emptyBuffProc = NULL;
+		stream->rdNext = data->buff;
+		stream->stop = stream->rdNext;
+		stream->stopUnget = data->buff;
+		stream->wrNext = stream->stop;
+	} else {
+		stream->fillBuffProc = NULL;
+		stream->emptyBuffProc = EmptyBuffProc;
+		stream->wrNext = data->buff + sizeof(FCGI_Header);
+		stream->stop = data->buffStop;
+		stream->stopUnget = NULL;
+		stream->rdNext = stream->stop;
+	}
+	return stream;
 }
 
 /*
@@ -1275,19 +1288,19 @@ static FCGX_Stream *NewStream(
  *
  *----------------------------------------------------------------------
  */
-void FCGX_FreeStream(FCGX_Stream **streamPtr)
+void FCGX_FreeStream(FCGX_Stream ** streamPtr)
 {
-    FCGX_Stream *stream = *streamPtr;
-    FCGX_Stream_Data *data;
-    if(stream == NULL) {
-        return;
-    }
-    data = (FCGX_Stream_Data *)stream->data;
-    data->reqDataPtr = NULL;
-    free(data->mBuff);
-    free(data);
-    free(stream);
-    *streamPtr = NULL;
+	FCGX_Stream *stream = *streamPtr;
+	FCGX_Stream_Data *data;
+	if (stream == NULL) {
+		return;
+	}
+	data = (FCGX_Stream_Data *) stream->data;
+	data->reqDataPtr = NULL;
+	free(data->mBuff);
+	free(data);
+	free(stream);
+	*streamPtr = NULL;
 }
 
 /*
@@ -1299,17 +1312,17 @@ void FCGX_FreeStream(FCGX_Stream **streamPtr)
  *
  *----------------------------------------------------------------------
  */
-static FCGX_Stream *SetReaderType(FCGX_Stream *stream, int streamType)
+static FCGX_Stream *SetReaderType(FCGX_Stream * stream, int streamType)
 {
-    FCGX_Stream_Data *data = (FCGX_Stream_Data *)stream->data;
-    data->type = streamType;
-    data->eorStop = FALSE;
-    data->skip = FALSE;
-    data->contentLen = 0;
-    data->paddingLen = 0;
-    stream->wrNext = stream->stop = stream->rdNext;
-    stream->isClosed = FALSE;
-    return stream;
+	FCGX_Stream_Data *data = (FCGX_Stream_Data *) stream->data;
+	data->type = streamType;
+	data->eorStop = FALSE;
+	data->skip = FALSE;
+	data->contentLen = 0;
+	data->paddingLen = 0;
+	stream->wrNext = stream->stop = stream->rdNext;
+	stream->isClosed = FALSE;
+	return stream;
 }
 
 /*
@@ -1322,9 +1335,10 @@ static FCGX_Stream *SetReaderType(FCGX_Stream *stream, int streamType)
  *
  *----------------------------------------------------------------------
  */
-static FCGX_Stream *NewReader(FCGX_Request *reqDataPtr, int bufflen, int streamType)
+static FCGX_Stream *NewReader(FCGX_Request * reqDataPtr, int bufflen,
+	int streamType)
 {
-    return NewStream(reqDataPtr, bufflen, TRUE, streamType);
+	return NewStream(reqDataPtr, bufflen, TRUE, streamType);
 }
 
 /*
@@ -1338,9 +1352,10 @@ static FCGX_Stream *NewReader(FCGX_Request *reqDataPtr, int bufflen, int streamT
  *
  *----------------------------------------------------------------------
  */
-static FCGX_Stream *NewWriter(FCGX_Request *reqDataPtr, int bufflen, int streamType)
+static FCGX_Stream *NewWriter(FCGX_Request * reqDataPtr, int bufflen,
+	int streamType)
 {
-    return NewStream(reqDataPtr, bufflen, FALSE, streamType);
+	return NewStream(reqDataPtr, bufflen, FALSE, streamType);
 }
 
 /*
@@ -1355,20 +1370,18 @@ static FCGX_Stream *NewWriter(FCGX_Request *reqDataPtr, int bufflen, int streamT
  *
  *----------------------------------------------------------------------
  */
-FCGX_Stream *FCGX_CreateWriter(
-        int ipcFd,
-        int requestId,
-        int bufflen,
-        int streamType)
+FCGX_Stream *FCGX_CreateWriter(int ipcFd,
+	int requestId, int bufflen, int streamType)
 {
-    FCGX_Request *reqDataPtr = (FCGX_Request *)Malloc(sizeof(FCGX_Request));
-    reqDataPtr->ipcFd = ipcFd;
-    reqDataPtr->requestId = requestId;
-    /*
-     * Suppress writing an FCGI_END_REQUEST record.
-     */
-    reqDataPtr->nWriters = 2;
-    return NewWriter(reqDataPtr, bufflen, streamType);
+	FCGX_Request *reqDataPtr =
+		(FCGX_Request *) Malloc(sizeof(FCGX_Request));
+	reqDataPtr->ipcFd = ipcFd;
+	reqDataPtr->requestId = requestId;
+	/*
+	 * Suppress writing an FCGI_END_REQUEST record.
+	 */
+	reqDataPtr->nWriters = 2;
+	return NewWriter(reqDataPtr, bufflen, streamType);
 }
 
 /*
@@ -1394,21 +1407,21 @@ FCGX_Stream *FCGX_CreateWriter(
  */
 int FCGX_IsCGI(void)
 {
-    if (isFastCGI != -1) {
-        return !isFastCGI;
-    }
+	if (isFastCGI != -1) {
+		return !isFastCGI;
+	}
 
-    if (!libInitialized) {
-        int rc = FCGX_Init();
-        if (rc) {
-            /* exit() isn't great, but hey */
-            exit((rc < 0) ? rc : -rc);
-        }
-    }
+	if (!libInitialized) {
+		int rc = FCGX_Init();
+		if (rc) {
+			/* exit() isn't great, but hey */
+			exit((rc < 0) ? rc : -rc);
+		}
+	}
 
-    isFastCGI = OS_IsFcgi(FCGI_LISTENSOCK_FILENO);
+	isFastCGI = OS_IsFcgi(FCGI_LISTENSOCK_FILENO);
 
-    return !isFastCGI;
+	return !isFastCGI;
 }
 
 /*
@@ -1433,7 +1446,7 @@ int FCGX_IsCGI(void)
 
 void FCGX_Finish(void)
 {
-    FCGX_Finish_r(&the_request);
+	FCGX_Finish_r(&the_request);
 }
 
 /*
@@ -1455,66 +1468,66 @@ void FCGX_Finish(void)
  *
  *----------------------------------------------------------------------
  */
-void FCGX_Finish_r(FCGX_Request *reqDataPtr)
+void FCGX_Finish_r(FCGX_Request * reqDataPtr)
 {
-    int close;
+	int close;
 
-    if (reqDataPtr == NULL) {
-        return;
-    }
+	if (reqDataPtr == NULL) {
+		return;
+	}
 
-    close = !reqDataPtr->keepConnection;
+	close = !reqDataPtr->keepConnection;
 
-    /* This should probably use a 'status' member instead of 'in' */
-    if (reqDataPtr->in) {
-        close |= FCGX_FClose(reqDataPtr->err);
-        close |= FCGX_FClose(reqDataPtr->out);
+	/* This should probably use a 'status' member instead of 'in' */
+	if (reqDataPtr->in) {
+		close |= FCGX_FClose(reqDataPtr->err);
+		close |= FCGX_FClose(reqDataPtr->out);
 
-	close |= FCGX_GetError(reqDataPtr->in);
-    }
+		close |= FCGX_GetError(reqDataPtr->in);
+	}
 
-    FCGX_Free(reqDataPtr, close);
+	FCGX_Free(reqDataPtr, close);
 }
 
 void FCGX_Free(FCGX_Request * request, int close)
 {
-    if (request == NULL) 
-        return;
+	if (request == NULL)
+		return;
 
-    FCGX_FreeStream(&request->in);
-    FCGX_FreeStream(&request->out);
-    FCGX_FreeStream(&request->err);
-    FreeParams(&request->paramsPtr);
+	FCGX_FreeStream(&request->in);
+	FCGX_FreeStream(&request->out);
+	FCGX_FreeStream(&request->err);
+	FreeParams(&request->paramsPtr);
 
-    if (close) {
-        OS_IpcClose(request->ipcFd);
-        request->ipcFd = -1;
-    }
+	if (close) {
+		OS_IpcClose(request->ipcFd);
+		request->ipcFd = -1;
+	}
 }
 
 int FCGX_OpenSocket(const char *path, int backlog)
 {
-    int rc = OS_CreateLocalIpcFd(path, backlog);
-    if (rc == FCGI_LISTENSOCK_FILENO && isFastCGI == 0) {
-        /* XXX probably need to call OS_LibInit() again for Win */
-        isFastCGI = 1;
-    }
-    return rc;
+	int rc = OS_CreateLocalIpcFd(path, backlog);
+	if (rc == FCGI_LISTENSOCK_FILENO && isFastCGI == 0) {
+		/* XXX probably need to call OS_LibInit() again for Win */
+		isFastCGI = 1;
+	}
+	return rc;
 }
 
-int FCGX_InitRequest(FCGX_Request *request, int sock, int flags)
+int FCGX_InitRequest(FCGX_Request * request, int sock, int flags)
 {
-    memset(request, 0, sizeof(FCGX_Request));
+	memset(request, 0, sizeof(FCGX_Request));
 
-    /* @@@ Should check that sock is open and listening */
-    request->listen_sock = sock;
+	/* @@@ Should check that sock is open and listening */
+	request->listen_sock = sock;
 
-    /* @@@ Should validate against "known" flags */
-    request->flags = flags;
+	/* @@@ Should validate against "known" flags */
+	request->flags = flags;
 
-    request->ipcFd = -1;
+	request->ipcFd = -1;
 
-    return 0;
+	return 0;
 }
 
 /*
@@ -1532,23 +1545,23 @@ int FCGX_InitRequest(FCGX_Request *request, int sock, int flags)
  */
 int FCGX_Init(void)
 {
-    char *p;
+	char *p;
 
-    if (libInitialized) {
-        return 0;
-    }
+	if (libInitialized) {
+		return 0;
+	}
 
-    FCGX_InitRequest(&the_request, FCGI_LISTENSOCK_FILENO, 0);
+	FCGX_InitRequest(&the_request, FCGI_LISTENSOCK_FILENO, 0);
 
-    if (OS_LibInit(NULL) == -1) {
-        return OS_Errno ? OS_Errno : -9997;
-    }
+	if (OS_LibInit(NULL) == -1) {
+		return OS_Errno ? OS_Errno : -9997;
+	}
 
-    p = getenv("FCGI_WEB_SERVER_ADDRS");
-    webServerAddressList = p ? StringCopy(p) : NULL;
+	p = getenv("FCGI_WEB_SERVER_ADDRS");
+	webServerAddressList = p ? StringCopy(p) : NULL;
 
-    libInitialized = 1;
-    return 0;
+	libInitialized = 1;
+	return 0;
 }
 
 /*
@@ -1579,29 +1592,26 @@ int FCGX_Init(void)
  *----------------------------------------------------------------------
  */
 
-int FCGX_Accept(
-        FCGX_Stream **in,
-        FCGX_Stream **out,
-        FCGX_Stream **err,
-        FCGX_ParamArray *envp)
+int FCGX_Accept(FCGX_Stream ** in,
+	FCGX_Stream ** out, FCGX_Stream ** err, FCGX_ParamArray * envp)
 {
-    int rc;
+	int rc;
 
-    if (! libInitialized) {
-        rc = FCGX_Init();
-        if (rc) {
-            return rc;
-        }
-    }
+	if (!libInitialized) {
+		rc = FCGX_Init();
+		if (rc) {
+			return rc;
+		}
+	}
 
-    rc = FCGX_Accept_r(&the_request);
+	rc = FCGX_Accept_r(&the_request);
 
-    *in = the_request.in;
-    *out = the_request.out;
-    *err = the_request.err;
-    *envp = the_request.envp;
+	*in = the_request.in;
+	*out = the_request.out;
+	*err = the_request.err;
+	*envp = the_request.envp;
 
-    return rc;
+	return rc;
 }
 
 /*
@@ -1631,84 +1641,87 @@ int FCGX_Accept(
  *
  *----------------------------------------------------------------------
  */
-int FCGX_Accept_r(FCGX_Request *reqDataPtr)
+int FCGX_Accept_r(FCGX_Request * reqDataPtr)
 {
-    if (!libInitialized) {
-        return -9998;
-    }
+	if (!libInitialized) {
+		return -9998;
+	}
 
-    /* Finish the current request, if any. */
-    FCGX_Finish_r(reqDataPtr);
+	/* Finish the current request, if any. */
+	FCGX_Finish_r(reqDataPtr);
 
-    for (;;) {
-        /*
-         * If a connection isn't open, accept a new connection (blocking).
-         * If an OS error occurs in accepting the connection,
-         * return -1 to the caller, who should exit.
-         */
-        if (reqDataPtr->ipcFd < 0) {
-            int fail_on_intr = reqDataPtr->flags & FCGI_FAIL_ACCEPT_ON_INTR;
+	for (;;) {
+		/*
+		 * If a connection isn't open, accept a new connection (blocking).
+		 * If an OS error occurs in accepting the connection,
+		 * return -1 to the caller, who should exit.
+		 */
+		if (reqDataPtr->ipcFd < 0) {
+			int fail_on_intr =
+				reqDataPtr->flags & FCGI_FAIL_ACCEPT_ON_INTR;
 
-            reqDataPtr->ipcFd = OS_Accept(reqDataPtr->listen_sock, fail_on_intr, webServerAddressList);
-            if (reqDataPtr->ipcFd < 0) {
-                return (errno > 0) ? (0 - errno) : -9999;
-            }
-        }
-        /*
-         * A connection is open.  Read from the connection in order to
-         * get the request's role and environment.  If protocol or other
-         * errors occur, close the connection and try again.
-         */
-        reqDataPtr->isBeginProcessed = FALSE;
-        reqDataPtr->in = NewReader(reqDataPtr, 8192, 0);
-        FillBuffProc(reqDataPtr->in);
-        if(!reqDataPtr->isBeginProcessed) {
-            goto TryAgain;
-        }
-        {
-            char *roleStr;
-            switch(reqDataPtr->role) {
-                case FCGI_RESPONDER:
-                    roleStr = "FCGI_ROLE=RESPONDER";
-                    break;
-                case FCGI_AUTHORIZER:
-                    roleStr = "FCGI_ROLE=AUTHORIZER";
-                    break;
-                case FCGI_FILTER:
-                    roleStr = "FCGI_ROLE=FILTER";
-                    break;
-                default:
-                    goto TryAgain;
-            }
-            reqDataPtr->paramsPtr = NewParams(30);
-            PutParam(reqDataPtr->paramsPtr, StringCopy(roleStr));
-        }
-        SetReaderType(reqDataPtr->in, FCGI_PARAMS);
-        if(ReadParams(reqDataPtr->paramsPtr, reqDataPtr->in) >= 0) {
-            /*
-             * Finished reading the environment.  No errors occurred, so
-             * leave the connection-retry loop.
-             */
-            break;
-        }
+			reqDataPtr->ipcFd =
+				OS_Accept(reqDataPtr->listen_sock, fail_on_intr,
+				webServerAddressList);
+			if (reqDataPtr->ipcFd < 0) {
+				return (errno > 0) ? (0 - errno) : -9999;
+			}
+		}
+		/*
+		 * A connection is open.  Read from the connection in order to
+		 * get the request's role and environment.  If protocol or other
+		 * errors occur, close the connection and try again.
+		 */
+		reqDataPtr->isBeginProcessed = FALSE;
+		reqDataPtr->in = NewReader(reqDataPtr, 8192, 0);
+		FillBuffProc(reqDataPtr->in);
+		if (!reqDataPtr->isBeginProcessed) {
+			goto TryAgain;
+		}
+		{
+			char *roleStr;
+			switch (reqDataPtr->role) {
+			case FCGI_RESPONDER:
+				roleStr = "FCGI_ROLE=RESPONDER";
+				break;
+			case FCGI_AUTHORIZER:
+				roleStr = "FCGI_ROLE=AUTHORIZER";
+				break;
+			case FCGI_FILTER:
+				roleStr = "FCGI_ROLE=FILTER";
+				break;
+			default:
+				goto TryAgain;
+			}
+			reqDataPtr->paramsPtr = NewParams(30);
+			PutParam(reqDataPtr->paramsPtr, StringCopy(roleStr));
+		}
+		SetReaderType(reqDataPtr->in, FCGI_PARAMS);
+		if (ReadParams(reqDataPtr->paramsPtr, reqDataPtr->in) >= 0) {
+			/*
+			 * Finished reading the environment.  No errors occurred, so
+			 * leave the connection-retry loop.
+			 */
+			break;
+		}
 
-        /*
-         * Close the connection and try again.
-         */
+		/*
+		 * Close the connection and try again.
+		 */
 TryAgain:
-        FCGX_Free(reqDataPtr, 1);
+		FCGX_Free(reqDataPtr, 1);
 
-    } /* for (;;) */
-    /*
-     * Build the remaining data structures representing the new
-     * request and return successfully to the caller.
-     */
-    SetReaderType(reqDataPtr->in, FCGI_STDIN);
-    reqDataPtr->out = NewWriter(reqDataPtr, 8192, FCGI_STDOUT);
-    reqDataPtr->err = NewWriter(reqDataPtr, 512, FCGI_STDERR);
-    reqDataPtr->nWriters = 2;
-    reqDataPtr->envp = reqDataPtr->paramsPtr->vec;
-    return 0;
+	}			/* for (;;) */
+	/*
+	 * Build the remaining data structures representing the new
+	 * request and return successfully to the caller.
+	 */
+	SetReaderType(reqDataPtr->in, FCGI_STDIN);
+	reqDataPtr->out = NewWriter(reqDataPtr, 8192, FCGI_STDOUT);
+	reqDataPtr->err = NewWriter(reqDataPtr, 512, FCGI_STDERR);
+	reqDataPtr->nWriters = 2;
+	reqDataPtr->envp = reqDataPtr->paramsPtr->vec;
+	return 0;
 }
 
 /*
@@ -1729,18 +1742,17 @@ TryAgain:
  *----------------------------------------------------------------------
  */
 
-int FCGX_StartFilterData(FCGX_Stream *stream)
+int FCGX_StartFilterData(FCGX_Stream * stream)
 {
-    FCGX_Stream_Data *data = (FCGX_Stream_Data *)stream->data;
-    if(data->reqDataPtr->role != FCGI_FILTER
-            || !stream->isReader
-            || !stream->isClosed
-            || data->type != FCGI_STDIN) {
-        SetError(stream, FCGX_CALL_SEQ_ERROR);
-        return -1;
-    }
-    SetReaderType(stream, FCGI_DATA);
-    return 0;
+	FCGX_Stream_Data *data = (FCGX_Stream_Data *) stream->data;
+	if (data->reqDataPtr->role != FCGI_FILTER
+		|| !stream->isReader
+		|| !stream->isClosed || data->type != FCGI_STDIN) {
+		SetError(stream, FCGX_CALL_SEQ_ERROR);
+		return -1;
+	}
+	SetReaderType(stream, FCGI_DATA);
+	return 0;
 }
 
 /*
@@ -1757,9 +1769,8 @@ int FCGX_StartFilterData(FCGX_Stream *stream)
  *----------------------------------------------------------------------
  */
 
-void FCGX_SetExitStatus(int status, FCGX_Stream *stream)
+void FCGX_SetExitStatus(int status, FCGX_Stream * stream)
 {
-    FCGX_Stream_Data *data = (FCGX_Stream_Data *)stream->data;
-    data->reqDataPtr->appStatus = status;
+	FCGX_Stream_Data *data = (FCGX_Stream_Data *) stream->data;
+	data->reqDataPtr->appStatus = status;
 }
-

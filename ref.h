@@ -1,7 +1,7 @@
 
-struct db_conf{
+struct db_conf {
 	char k[SIZE_HTTP_ARG];
-	size_t max; 	/* value max */
+	size_t max;		/* value max */
 	char *v;
 };
 
@@ -50,45 +50,45 @@ enum e_conf {
 #define P_NO_VALUE -2
 
 static struct db_conf conf_title[] = {
-		/* configuration values */
-		{"title", SIZE_HTTP_ARG},
-		{"tagline", SIZE_TAGLINE},
-		{"searchbox", SIZE_HTTP_ARG},
-		{"input", SIZE_HTTP_ARG},
+	/* configuration values */
+	{"title", SIZE_HTTP_ARG},
+	{"tagline", SIZE_TAGLINE},
+	{"searchbox", SIZE_HTTP_ARG},
+	{"input", SIZE_HTTP_ARG},
 
-		/* database */
-		{"!lastmodified", -1},
+	/* database */
+	{"!lastmodified", -1},
 
-		/* post values */
-		{"title", SIZE_HTTP_ARG},
-		{"tagline", SIZE_TAGLINE},
-		{"pass", SIZE_HTTP_ARG},
-		{"sbox", SIZE_HTTP_ARG},
-		{"input", -1}, // FIXME
-		{"key", MAX_KEY_LENGTH_STR}, // FIXME
-		{"login", 100},
-		{"file", -1 },
+	/* post values */
+	{"title", SIZE_HTTP_ARG},
+	{"tagline", SIZE_TAGLINE},
+	{"pass", SIZE_HTTP_ARG},
+	{"sbox", SIZE_HTTP_ARG},
+	{"input", -1},		// FIXME
+	{"key", MAX_KEY_LENGTH_STR},	// FIXME
+	{"login", 100},
+	{"file", -1},
 #define POST_ACTION_ADD "add"
 #define POST_ACTION_MOD "mod"
 #define POST_ACTION_CONFIG "config"
-		{"action", 7},
+	{"action", 7},
 
-		/* query values */
-		{"qry", SIZE_FIND_STR},
-		{"tag", SIZE_FIND_STR},
-		{"ts", MAX_KEY_LENGTH_STR}, // FIXME MAX_KEY_LENGTH_STR = 50
-		{"del", MAX_KEY_LENGTH_STR},
-		{"mod", MAX_KEY_LENGTH_STR},
-		{"add", P_NO_VALUE},
-		{"config", P_NO_VALUE},
-		{"css", SIZE_HTTP_ARG},
-		{"fmt", MAX_FMT_LENGTH},
-		{"mn", FMT_CALDATE},
-		{"login", P_NO_VALUE},
-		{"logout", P_NO_VALUE},
+	/* query values */
+	{"qry", SIZE_FIND_STR},
+	{"tag", SIZE_FIND_STR},
+	{"ts", MAX_KEY_LENGTH_STR},	// FIXME MAX_KEY_LENGTH_STR = 50
+	{"del", MAX_KEY_LENGTH_STR},
+	{"mod", MAX_KEY_LENGTH_STR},
+	{"add", P_NO_VALUE},
+	{"config", P_NO_VALUE},
+	{"css", SIZE_HTTP_ARG},
+	{"fmt", MAX_FMT_LENGTH},
+	{"mn", FMT_CALDATE},
+	{"login", P_NO_VALUE},
+	{"logout", P_NO_VALUE},
 
-		/* cookie values */
-		{"css", SIZE_HTTP_ARG},
-		{"sid", SIZE_SESSION_ID + 1}
+	/* cookie values */
+	{"css", SIZE_HTTP_ARG},
+	{"sid", SIZE_SESSION_ID + 1}
 
 };

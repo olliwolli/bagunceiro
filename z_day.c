@@ -10,7 +10,6 @@
 #include "z_entry.h"
 #include "z_day.h"
 
-
 void day_init(struct day *d)
 {
 	memset(&d->es, 0, sizeof(array));
@@ -44,44 +43,43 @@ size_t day_length(struct day *d)
 	return array_length(&d->es, sizeof(struct nentry **));
 }
 
-struct nentry * day_get_nentry(struct day *d, int i)
+struct nentry *day_get_nentry(struct day *d, int i)
 {
-	return  *(struct nentry **)
-			array_get(&d->es, sizeof(struct nentry **), i);
+	return *(struct nentry **)
+		array_get(&d->es, sizeof(struct nentry **), i);
 }
 
-void day_add_nentry(struct day *d, struct nentry * n)
+void day_add_nentry(struct day *d, struct nentry *n)
 {
-	array_catb(&d->es, (char *)&n,
-			sizeof(struct nentry **));
+	array_catb(&d->es, (char *)&n, sizeof(struct nentry **));
 }
 
-int cdbb_fetch_day(struct cdbb *a, struct day * entries, const struct taia *day)
+int cdbb_fetch_day(struct cdbb *a, struct day *entries, const struct taia *day)
 {
-	struct nentry * dentry;
-	struct nentry * entry;
+	struct nentry *dentry;
+	struct nentry *entry;
 	char *key;
 	int err, len, i;
 	char buf[FMT_TAIA_STR + 1] = "";
 
 	len = fmt_time_str(buf, day);
-	buf[len] = '@'; /* fits, but is not null terminated */
+	buf[len] = '@';		/* fits, but is not null terminated */
 	dentry = new_nentry();
 
 	/* lookup all entries for that day */
-	err = cdbb_read_nentry(a, buf, len+1, dentry);
+	err = cdbb_read_nentry(a, buf, len + 1, dentry);
 
 	if (err <= 0)
 		goto err;
 
 	/* reverse order since recent blog entires are added to the end */
-	for (i = array_length(&dentry->e, TAIA_PACK)-1; i >= 0; i--) {
+	for (i = array_length(&dentry->e, TAIA_PACK) - 1; i >= 0; i--) {
 		key = array_get(&dentry->e, TAIA_PACK, i);
 		entry = new_nentry();
 
 		/* ALLOCATION */
 		err = cdbb_read_nentry(a, key, TAIA_PACK, entry);
-		if(err < 0)
+		if (err < 0)
 			free_nentry(entry);
 		else
 			day_add_nentry(entries, entry);

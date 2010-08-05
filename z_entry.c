@@ -47,7 +47,7 @@ static void blog_modified(struct cdbb *a)
 
 	taia_now(&t);
 	taia_pack(pk, &t);
-	cdbb_rep(a, DB_LAST_MODIFIED, 13, pk,TAIA_PACK);
+	cdbb_rep(a, DB_LAST_MODIFIED, 13, pk, TAIA_PACK);
 }
 
 void add_entry(struct cdbb *a, struct taia *k, char *v, size_t vs)
@@ -59,7 +59,7 @@ void add_entry(struct cdbb *a, struct taia *k, char *v, size_t vs)
 	fmt_day_idx(&dayidx, k);
 	taia_pack(pk, k);
 
-	/* entry + idx*/
+	/* entry + idx */
 	cdbb_add(a, pk, TAIA_PACK, v, vs);
 	cdbb_add(a, dayidx.p, array_bytes(&dayidx), pk, TAIA_PACK);
 
@@ -103,7 +103,7 @@ void entry_dump(const struct nentry *e)
 {
 	char b[FMT_TAIA_HEX];
 
-	b[fmt_hexdump(b, e->k.p, TAIA_PACK)]=0;
+	b[fmt_hexdump(b, e->k.p, TAIA_PACK)] = 0;
 	sprintmf("Dump: ", b, "->", e->e.p, "\n");
 }
 
@@ -123,4 +123,3 @@ void dump_entries(array * entries)
 	}
 }
 #endif
-

@@ -6,9 +6,9 @@
 #define PROTO_HTTPS "https://"
 #define PROTO_HTTPS_LEN 8
 
-void http_content_type(const char * t);
-void http_set_cookie(const char * k, const char * v, const char * o);
-void http_set_cookie_ssl_age(const char * k, const char * v, const char *a);
+void http_content_type(const char *t);
+void http_set_cookie(const char *k, const char *v, const char *o);
+void http_set_cookie_ssl_age(const char *k, const char *v, const char *a);
 void http_not_found();
 
 #ifdef WANT_HTTP_304

@@ -47,17 +47,17 @@ void free_nentry(struct nentry *n)
 int cdbb_open_read(struct cdbb *a, const char *f)
 {
 	int fd = open_read(f);
-	if(fd < 0)
+	if (fd < 0)
 		return fd;
 
-	a->r = malloc(sizeof(struct cdb ));
+	a->r = malloc(sizeof(struct cdb));
 
-	if(a->r == NULL){
+	if (a->r == NULL) {
 		close(fd);
 		return -1;
 	}
-	 /* suppress valgrind warning:
-	  * "Uninitialised value was created by a heap allocation" in cdb_free */
+	/* suppress valgrind warning:
+	 * "Uninitialised value was created by a heap allocation" in cdb_free */
 	a->r->map = 0;
 
 	cdb_init(a->r, fd);
@@ -80,11 +80,11 @@ int cdbb_open_write(struct cdbb *a, const char *f)
 	unlink(f);
 	fp = open_write(f);
 
-	if(fp < 0)
+	if (fp < 0)
 		return -1;
 
 	a->w = malloc(sizeof(struct cdb_make));
-	if(a->w == NULL){
+	if (a->w == NULL) {
 		close(fp);
 		return -1;
 	}
@@ -101,40 +101,39 @@ void cdbb_close_write(struct cdbb *a)
 	free(a->w);
 }
 
-
 /* LEVLEL COPYING LOGIC */
 static int cdbb_check_ops(struct cdbb *a, unsigned char *k,
-		size_t ks, unsigned char * v, size_t vs)
+	size_t ks, unsigned char *v, size_t vs)
 {
-	struct op * t;
+	struct op *t;
 	int i, f;
 	f = 0;
 
 	for (i = 0; i < a->tnum; i++) {
 		t = &a->ops[i];
-		if(array_bytes(&t->n) == ks && !memcmp(k, t->n.p, ks) && ks){
+		if (array_bytes(&t->n) == ks && !memcmp(k, t->n.p, ks) && ks) {
 			t->kf = 1;
 
-			if(t->t != O_ADD)
+			if (t->t != O_ADD)
 				f = 1;
 
 			/* no value trigger */
-			if((array_bytes(&t->v) != 0)){
-				if(t->t == O_MOD || t->t == O_ADD_MOD)
+			if ((array_bytes(&t->v) != 0)) {
+				if (t->t == O_MOD || t->t == O_ADD_MOD)
 					continue;
 
 				/* value trigger */
-				t->sv = realloc(t->sv,vs);
-				if(t->sv == NULL)
+				t->sv = realloc(t->sv, vs);
+				if (t->sv == NULL)
 					continue;
 
 				memcpy(t->sv, v, vs);
 
 				/* values do match */
-				if ( !memcmp(t->v.p, t->sv, vs))
+				if (!memcmp(t->v.p, t->sv, vs))
 					t->vf = 1;
 				else
-					f = 0; /* reset found */
+					f = 0;	/* reset found */
 			}
 		}
 	}
@@ -142,11 +141,12 @@ static int cdbb_check_ops(struct cdbb *a, unsigned char *k,
 }
 
 /* LEVLEL COPYING LOGIC */
-static int cdbb_check_filter(struct cdbb *a, unsigned char *k, size_t ks, unsigned char * v, size_t vs)
+static int cdbb_check_filter(struct cdbb *a, unsigned char *k, size_t ks,
+	unsigned char *v, size_t vs)
 {
 	int i;
-	for(i=0; i < a->fnum; i++){
-		if(a->fil[i](k, ks, v, vs))
+	for (i = 0; i < a->fnum; i++) {
+		if (a->fil[i] (k, ks, v, vs))
 			return 1;
 	}
 	return 0;
@@ -160,18 +160,20 @@ static int cdbb_handle_ops(struct cdbb *a)
 
 	num = 0;
 
-	for(i=0; i < a->tnum; i++){
+	for (i = 0; i < a->tnum; i++) {
 		t = &a->ops[i];
 
-		if(t->kf){ /* trigger was fired */
-			switch(t->t){
+		if (t->kf) {	/* trigger was fired */
+			switch (t->t) {
 			case O_ADD:
 			case O_ADD_MOD:
 				/* fall-trought */
 			case O_MOD:
 				cdb_make_add(a->w,
-							(unsigned char * )t->n.p, array_bytes(&t->n),
-							(unsigned char * )t->v.p, array_bytes(&t->v));
+					(unsigned char *)t->n.p,
+					array_bytes(&t->n),
+					(unsigned char *)t->v.p,
+					array_bytes(&t->v));
 				num++;
 				break;
 			case O_DEL:
@@ -180,14 +182,16 @@ static int cdbb_handle_ops(struct cdbb *a)
 			default:
 				break;
 			}
-		}else{
-			switch(t->t){
+		} else {
+			switch (t->t) {
 			case O_ADD_MOD:
 				/* key not found so add, fall-trough */
 			case O_ADD:
 				cdb_make_add(a->w,
-						(unsigned char * )t->n.p, array_bytes(&t->n),
-						(unsigned char * )t->v.p, array_bytes(&t->v));
+					(unsigned char *)t->n.p,
+					array_bytes(&t->n),
+					(unsigned char *)t->v.p,
+					array_bytes(&t->v));
 				num++;
 				break;
 			case O_DEL:
@@ -206,7 +210,7 @@ static int cdbb_handle_ops(struct cdbb *a)
 	return num;
 }
 
-static int __cdbb_copy(struct cdbb * a, size_t ks, size_t vs)
+static int __cdbb_copy(struct cdbb *a, size_t ks, size_t vs)
 {
 	unsigned char k[ks];
 	unsigned char v[vs];
@@ -227,16 +231,16 @@ static int __cdbb_copy(struct cdbb * a, size_t ks, size_t vs)
 	filter = cdbb_check_filter(a, k, ks, v, vs);
 
 	/* if an operation applied or a filter, don't copy */
-	if(!found && !filter && kp){
+	if (!found && !filter && kp) {
 		cdb_make_add(a->w, k, ks, v, vs);
 		return 1;
 	}
 	return 0;
 }
 
-int cdbb_copy(struct cdbb * a)
+int cdbb_copy(struct cdbb *a)
 {
-	uint32 kfindpos,ks, vs;
+	uint32 kfindpos, ks, vs;
 	int num = 0;
 
 	if (!cdb_firstkey(a->r, &kfindpos))
@@ -251,16 +255,15 @@ int cdbb_copy(struct cdbb * a)
 	return num;
 }
 
-
 /* LEVEL 1 - SETUP */
 void cdbb_add_filter(struct cdbb *a, filter cb)
 {
 	a->fil[a->fnum++] = cb;
 }
 
-void cdbb_add_op(struct cdbb *a, char * n, size_t ns, enum opt t)
+void cdbb_add_op(struct cdbb *a, char *n, size_t ns, enum opt t)
 {
-	array * c= &a->ops[a->tnum].n;
+	array *c = &a->ops[a->tnum].n;
 	memset(&a->ops[a->tnum].v, 0, sizeof(array));
 	a->ops[a->tnum].svs = 0;
 	a->ops[a->tnum].sv = NULL;
@@ -271,48 +274,49 @@ void cdbb_add_op(struct cdbb *a, char * n, size_t ns, enum opt t)
 	++(a->tnum);
 }
 
-void cdbb_add_vop(struct cdbb *a, char * n,
-		size_t ns, char *v, size_t vs, enum opt t)
+void cdbb_add_vop(struct cdbb *a, char *n,
+	size_t ns, char *v, size_t vs, enum opt t)
 {
 	cdbb_add_op(a, n, ns, t);
 	/* write to tnum -1 because add_op already incremented */
-	array_catb(&a->ops[a->tnum-1].v, v, vs);
+	array_catb(&a->ops[a->tnum - 1].v, v, vs);
 }
 
-void free_ops(struct cdbb * a)
+void free_ops(struct cdbb *a)
 {
 	int i;
-	for(i=0; i < a->tnum; i++){
-		if(a->ops[i].sv)
+	for (i = 0; i < a->tnum; i++) {
+		if (a->ops[i].sv)
 			free(a->ops[i].sv);
 		array_reset(&a->ops[i].n);
 		array_reset(&a->ops[i].v);
 	}
 }
 
-int cdbb_start_mod(struct cdbb * a, char * f)
+int cdbb_start_mod(struct cdbb *a, char *f)
 {
 	int err;
 	a->f = f;
-	a->t = malloc(strlen(a->f)+5);
-	if(a->t == NULL)
+	a->t = malloc(strlen(a->f) + 5);
+	if (a->t == NULL)
 		return -1;
 
 	strcpy(a->t, a->f);
 	strcat(a->t, ".tmp");
 
 	err = cdbb_open_write(a, a->t);
-	if(err <= 0)
+	if (err <= 0)
 		return -1;
 
 	err = cdbb_open_read(a, a->f);
 	return err;
 }
 
-int cdbb_apply(struct cdbb * a) {
+int cdbb_apply(struct cdbb *a)
+{
 	int err = 0;
 
-	err= cdbb_copy(a);
+	err = cdbb_copy(a);
 
 	err += cdbb_handle_ops(a);
 
@@ -361,21 +365,21 @@ int cdbb_readn(struct cdbb *a, char *k, size_t ks, char *v, size_t n)
 {
 	int dlen;
 
-	if(cdb_find(a->r, (unsigned char *) k,  ks) <= 0)
+	if (cdb_find(a->r, (unsigned char *)k, ks) <= 0)
 		return -1;
 
 	dlen = cdb_datalen(a->r);
 
-	if(dlen > n)
-			return -2;
+	if (dlen > n)
+		return -2;
 
-	if (cdb_read(a->r, (unsigned char * )v, dlen, cdb_datapos(a->r)) < 0)
+	if (cdb_read(a->r, (unsigned char *)v, dlen, cdb_datapos(a->r)) < 0)
 		return -3;
 
 	return 1;
 }
 
-int cdbb_firstkey(struct cdbb * a)
+int cdbb_firstkey(struct cdbb *a)
 {
 	if (!cdb_firstkey(a->r, &a->kfindpos))
 		return -1;
@@ -387,37 +391,37 @@ int cdbb_firstkey(struct cdbb * a)
  * http://goalbit.git.sourceforge.net/git/gitweb.cgi?p=goalbit/goalbit;a=blob_plain;f=compat/strcasestr.c;h=e01e5c39acb9848b1bf86a9565282ece4b61b368;hb=779d38a
  * The dietlibc does not have strcasestr or similar. (Or I am too blind to find it).
  * This sucks badly. */
-static char *strcasestr (const char *psz_big, const char *psz_little)
+static char *strcasestr(const char *psz_big, const char *psz_little)
 {
-    char *p_pos = (char *)psz_big;
+	char *p_pos = (char *)psz_big;
 
-    if( !*psz_little ) return p_pos;
+	if (!*psz_little)
+		return p_pos;
 
-    while( *p_pos )
-    {
-        if( toupper( *p_pos ) == toupper( *psz_little ) )
-        {
-            char * psz_cur1 = p_pos + 1;
-            char * psz_cur2 = (char *)psz_little + 1;
-            while( *psz_cur1 && *psz_cur2 &&
-                   toupper( *psz_cur1 ) == toupper( *psz_cur2 ) )
-            {
-                psz_cur1++;
-                psz_cur2++;
-            }
-            if( !*psz_cur2 ) return p_pos;
-        }
-        p_pos++;
-    }
-    return NULL;
+	while (*p_pos) {
+		if (toupper(*p_pos) == toupper(*psz_little)) {
+			char *psz_cur1 = p_pos + 1;
+			char *psz_cur2 = (char *)psz_little + 1;
+			while (*psz_cur1 && *psz_cur2 &&
+				toupper(*psz_cur1) == toupper(*psz_cur2)) {
+				psz_cur1++;
+				psz_cur2++;
+			}
+			if (!*psz_cur2)
+				return p_pos;
+		}
+		p_pos++;
+	}
+	return NULL;
 }
 
-
-static int __cdbb_findnext(struct cdbb * a, const char *needle, struct nentry *n, int ignorecase){
+static int __cdbb_findnext(struct cdbb *a, const char *needle, struct nentry *n,
+	int ignorecase)
+{
 	uint32 kp, dp, ks, vs;
 	unsigned char *k, *v;
 
-	if(cdb_nextkey(a->r, &a->kfindpos) != 1)
+	if (cdb_nextkey(a->r, &a->kfindpos) != 1)
 		return -1;
 
 	kp = cdb_keypos(a->r);
@@ -433,11 +437,11 @@ static int __cdbb_findnext(struct cdbb * a, const char *needle, struct nentry *n
 	cdb_read(a->r, v, vs, dp);
 
 	/* search value */
-	if(ignorecase){
-		if(strcasestr((char *)v,needle) == NULL)
+	if (ignorecase) {
+		if (strcasestr((char *)v, needle) == NULL)
 			return 0;
-	}else{
-		if(strstr((char *)v,needle) == NULL)
+	} else {
+		if (strstr((char *)v, needle) == NULL)
 			return 0;
 	}
 
@@ -447,26 +451,29 @@ static int __cdbb_findnext(struct cdbb * a, const char *needle, struct nentry *n
 	return 1;
 }
 
-int cdbb_findnext_ignorecase(struct cdbb * a, const char *needle, struct nentry *n){
+int cdbb_findnext_ignorecase(struct cdbb *a, const char *needle,
+	struct nentry *n)
+{
 	return __cdbb_findnext(a, needle, n, 1);
 }
 
-int cdbb_findnext(struct cdbb * a, const char *needle, struct nentry *n){
+int cdbb_findnext(struct cdbb *a, const char *needle, struct nentry *n)
+{
 	return __cdbb_findnext(a, needle, n, 0);
 }
 
 int cdbb_read_nentry(struct cdbb *a, char *k, size_t ks, struct nentry *n)
 {
 	int err, dlen;
-	unsigned char * buf;
+	unsigned char *buf;
 
 	array_catb(&n->k, k, ks);
-	err = cdb_find(a->r, (unsigned char *) k,  ks);
+	err = cdb_find(a->r, (unsigned char *)k, ks);
 
 	if (err <= 0)
 		return err;
 
-	err = 0; /* num */
+	err = 0;		/* num */
 	do {
 		dlen = cdb_datalen(a->r);
 		buf = alloca(dlen);
@@ -474,8 +481,8 @@ int cdbb_read_nentry(struct cdbb *a, char *k, size_t ks, struct nentry *n)
 		if (cdb_read(a->r, buf, dlen, cdb_datapos(a->r)) < 0)
 			return -2;
 
-		array_catb(&n->e, (char *) buf, dlen);
+		array_catb(&n->e, (char *)buf, dlen);
 		err++;
-	} while (cdb_findnext(a->r, (unsigned char *) k, ks) > 0);
+	} while (cdb_findnext(a->r, (unsigned char *)k, ks) > 0);
 	return err;
 }

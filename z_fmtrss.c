@@ -19,25 +19,25 @@ static void fmt_date_rss(const struct nentry *n, char *d)
 static inline int print_header_rss(const blog_t * conf)
 {
 	rss_http_header();
-	rss_print_preface(conf->title, PROTO_HTTP, conf->host, conf->title, PROGRAM_NAME);
+	rss_print_preface(conf->title, PROTO_HTTP, conf->host, conf->title,
+		PROGRAM_NAME);
 	return 0;
 }
 
-static void day_entries_rss(const blog_t * conf, struct day *de,
-	size_t elen)
+static void day_entries_rss(const blog_t * conf, struct day *de, size_t elen)
 {
 	int i;
 	struct nentry *e;
 
 	char lnk[FMT_PERMA_STATIC + strlen(conf->host)];
-	char * cnt;
+	char *cnt;
 	char d[40] = "";
 
 	lnk[0] = '\0';
 
 	for (i = 0; i < elen; i++) {
 		e = day_get_nentry(de, i);
-		cnt = alloca(array_bytes(&e->e)); // FIXME
+		cnt = alloca(array_bytes(&e->e));	// FIXME
 
 		fmt_perma_link(conf, e, lnk);
 		html_remove_tags(e->e.p, -1, cnt);

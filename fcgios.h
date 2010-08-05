@@ -19,7 +19,7 @@
 #define _FCGIOS_H
 
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN 
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winsock2.h>
 #endif
@@ -42,12 +42,12 @@ extern "C" {
 #define OS_Errno GetLastError()
 #define OS_SetErrno(err) SetLastError(err)
 #ifndef O_NONBLOCK
-#define O_NONBLOCK     0x0004  /* no delay */
+#define O_NONBLOCK     0x0004	/* no delay */
 #endif
-#else /* !_WIN32 */
+#else				/* !_WIN32 */
 #define OS_Errno errno
 #define OS_SetErrno(err) errno = (err)
-#endif /* !_WIN32 */
+#endif				/* !_WIN32 */
 
 #ifndef DLLAPI
 #ifdef _WIN32
@@ -56,7 +56,6 @@ extern "C" {
 #define DLLAPI
 #endif
 #endif
-
 
 /* This is the initializer for a "struct timeval" used in a select() call
  * right after a new request is accept()ed to determine readablity.  Its
@@ -91,40 +90,40 @@ extern "C" {
 
 #ifndef _CLIENTDATA
 #   if defined(__STDC__) || defined(__cplusplus)
-    typedef void *ClientData;
+	typedef void *ClientData;
 #   else
-    typedef int *ClientData;
-#   endif /* __STDC__ */
+	typedef int *ClientData;
+#   endif			/* __STDC__ */
 #define _CLIENTDATA
 #endif
 
-typedef void (*OS_AsyncProc) (ClientData clientData, int len);
+	typedef void (*OS_AsyncProc) (ClientData clientData, int len);
 
-DLLAPI int OS_LibInit(int stdioFds[3]);
-DLLAPI void OS_LibShutdown(void);
-DLLAPI int OS_CreateLocalIpcFd(const char *bindPath, int backlog);
-DLLAPI int OS_FcgiConnect(char *bindPath);
-DLLAPI int OS_Read(int fd, char * buf, size_t len);
-DLLAPI int OS_Write(int fd, char * buf, size_t len);
-DLLAPI int OS_SpawnChild(char *execPath, int listenFd);
-DLLAPI int OS_AsyncReadStdin(void *buf, int len, OS_AsyncProc procPtr,
-                      ClientData clientData);
-DLLAPI int OS_AsyncRead(int fd, int offset, void *buf, int len,
-		 OS_AsyncProc procPtr, ClientData clientData);
-DLLAPI int OS_AsyncWrite(int fd, int offset, void *buf, int len,
-		  OS_AsyncProc procPtr, ClientData clientData);
-DLLAPI int OS_Close(int fd);
-DLLAPI int OS_CloseRead(int fd);
-DLLAPI int OS_DoIo(struct timeval *tmo);
-DLLAPI int OS_Accept(int listen_sock, int fail_on_intr, const char *webServerAddrs);
-DLLAPI int OS_IpcClose(int ipcFd);
-DLLAPI int OS_IsFcgi(int sock);
-DLLAPI void OS_SetFlags(int fd, int flags);
+	DLLAPI int OS_LibInit(int stdioFds[3]);
+	DLLAPI void OS_LibShutdown(void);
+	DLLAPI int OS_CreateLocalIpcFd(const char *bindPath, int backlog);
+	DLLAPI int OS_FcgiConnect(char *bindPath);
+	DLLAPI int OS_Read(int fd, char *buf, size_t len);
+	DLLAPI int OS_Write(int fd, char *buf, size_t len);
+	DLLAPI int OS_SpawnChild(char *execPath, int listenFd);
+	DLLAPI int OS_AsyncReadStdin(void *buf, int len, OS_AsyncProc procPtr,
+		ClientData clientData);
+	DLLAPI int OS_AsyncRead(int fd, int offset, void *buf, int len,
+		OS_AsyncProc procPtr, ClientData clientData);
+	DLLAPI int OS_AsyncWrite(int fd, int offset, void *buf, int len,
+		OS_AsyncProc procPtr, ClientData clientData);
+	DLLAPI int OS_Close(int fd);
+	DLLAPI int OS_CloseRead(int fd);
+	DLLAPI int OS_DoIo(struct timeval *tmo);
+	DLLAPI int OS_Accept(int listen_sock, int fail_on_intr,
+		const char *webServerAddrs);
+	DLLAPI int OS_IpcClose(int ipcFd);
+	DLLAPI int OS_IsFcgi(int sock);
+	DLLAPI void OS_SetFlags(int fd, int flags);
 
-DLLAPI void OS_ShutdownPending(void);
+	DLLAPI void OS_ShutdownPending(void);
 
 #if defined (__cplusplus) || defined (c_plusplus)
-} /* terminate extern "C" { */
+}				/* terminate extern "C" { */
 #endif
-
-#endif /* _FCGIOS_H */
+#endif				/* _FCGIOS_H */

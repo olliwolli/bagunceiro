@@ -7,8 +7,8 @@
 #include <errno.h>
 
 #define POSTDATA_MAX		1024 * 64
-#define QUERY_MAX			128
-#define COOKIE_MAX			128
+#define QUERY_MAX		128
+#define COOKIE_MAX		128
 
 #define PROGRAM_NAME		"b"
 
@@ -64,14 +64,12 @@
 /* want http "304 Not Modified" support, you usually want this */
 #define WANT_HTTP_304
 
-
 /* Debugging options */
 //#define DEBUG
 //#define DEBUG_PARSING
 //#define DEBUG_ENTRY
 /* loops through default action x100 */
 //#define DEBUG_MEMORY 100
-
 
 /* YOU SHOULDN'T EDIT BELOW THIS LINE */
 /* NOTE:
@@ -95,7 +93,6 @@
  * ?mod, ?del, ?logout, ?config. */
 //#define ADMIN_MODE_PASS
 
-
 /*	- free all malloced memory at each loop runtime
  * 	- reset variables at beginning of loop
  * Define in order to use fastcgi instead of cgi
@@ -115,41 +112,41 @@
 #endif
 
 #ifdef WANT_FAST_CGI
-	#include "fcgi_config.h"
-	#include "fcgiapp.h"
+#include "fcgi_config.h"
+#include "fcgiapp.h"
 
-	FCGX_Stream *fcgi_in, *fcgi_out, *fcgi_err;
-	FCGX_ParamArray envp;
+FCGX_Stream *fcgi_in, *fcgi_out, *fcgi_err;
+FCGX_ParamArray envp;
 
-	#define getenv(str) FCGX_GetParam((str), envp)
-	#define FCGX_PutSm(b,...) FCGX_PutSm_internal(b,__VA_ARGS__,(char*)0)
+#define getenv(str) FCGX_GetParam((str), envp)
+#define FCGX_PutSm(b,...) FCGX_PutSm_internal(b,__VA_ARGS__,(char*)0)
 
-	#define sprint(str) FCGX_PutS(str, fcgi_out)
-	#define sprintm(...) FCGX_PutSm(fcgi_out, ##__VA_ARGS__)
-	#define sprintf(str) FCGX_PutS(str, fcgi_out)
-	#define sprintmf(...) FCGX_PutSm(fcgi_out, ##__VA_ARGS__)
-	#define sprintn(str, len) FCGX_PutStr(str, len, fcgi_out)
+#define sprint(str) FCGX_PutS(str, fcgi_out)
+#define sprintm(...) FCGX_PutSm(fcgi_out, ##__VA_ARGS__)
+#define sprintf(str) FCGX_PutS(str, fcgi_out)
+#define sprintmf(...) FCGX_PutSm(fcgi_out, ##__VA_ARGS__)
+#define sprintn(str, len) FCGX_PutStr(str, len, fcgi_out)
 
-	#ifdef WANT_ERROR_PRINT
-	#define eprint(str) FCGX_PutS(str, fcgi_err)
-	#define eprintm(...) FCGX_PutSm(fcgi_err, ##__VA_ARGS__)
-	#define eprintf(str) do {FCGX_PutS(str, fcgi_err);} while(0)
-	#define eprintmf(...) do{FCGX_PutSm(fcgi_err);} while(0)
-	#define eprintn(str, len) FCGX_PutStr(str, len, fcgi_err)
-	#endif
+#ifdef WANT_ERROR_PRINT
+#define eprint(str) FCGX_PutS(str, fcgi_err)
+#define eprintm(...) FCGX_PutSm(fcgi_err, ##__VA_ARGS__)
+#define eprintf(str) do {FCGX_PutS(str, fcgi_err);} while(0)
+#define eprintmf(...) do{FCGX_PutSm(fcgi_err);} while(0)
+#define eprintn(str, len) FCGX_PutStr(str, len, fcgi_err)
+#endif
 #else
-	#define sprint(str) buffer_puts(buffer_1, (str))
-	#define sprintm(...) buffer_putm(buffer_1, ##__VA_ARGS__)
-	#define sprintf(str) buffer_putsflush(buffer_1, (str))
-	#define sprintmf(...) buffer_putmflush(buffer_1, ##__VA_ARGS__)
-	#define sprintn(str, len) buffer_put(buffer_1, (str), (len))
+#define sprint(str) buffer_puts(buffer_1, (str))
+#define sprintm(...) buffer_putm(buffer_1, ##__VA_ARGS__)
+#define sprintf(str) buffer_putsflush(buffer_1, (str))
+#define sprintmf(...) buffer_putmflush(buffer_1, ##__VA_ARGS__)
+#define sprintn(str, len) buffer_put(buffer_1, (str), (len))
 
-	#ifdef WANT_ERROR_PRINT
-	#define eprint(str) buffer_puts(buffer_2, (str))
-	#define eprintm(...) buffer_putm(buffer_2, ##__VA_ARGS__)
-	#define eprintf(str) buffer_putsflush(buffer_2, (str))
-	#define eprintmf(...) buffer_putmflush(buffer_2, ##__VA_ARGS__)
-	#endif
+#ifdef WANT_ERROR_PRINT
+#define eprint(str) buffer_puts(buffer_2, (str))
+#define eprintm(...) buffer_putm(buffer_2, ##__VA_ARGS__)
+#define eprintf(str) buffer_putsflush(buffer_2, (str))
+#define eprintmf(...) buffer_putmflush(buffer_2, ##__VA_ARGS__)
+#endif
 #endif
 
 #ifndef WANT_ERROR_PRINT
@@ -167,7 +164,6 @@ struct errors {
 	int error;
 	enum notice type;
 } gerr;
-
 
 #if defined(DEBUG_ENTRY) ||\
 	defined(DEBUG_PARSING)

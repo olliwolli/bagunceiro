@@ -45,8 +45,7 @@ static void print_tiny_html_editor()
 {
 	html_java_script("/tinymce/tiny_mce.js");
 	sprintm("<script type=\"text/javascript\">");
-	sprintm(
-		"tinyMCE.init({"
+	sprintm("tinyMCE.init({"
 		"mode : \"textareas\","
 		"theme : \"advanced\","
 		"theme_advanced_buttons1 : \"bold,italic,underline,strikethrough,|,justifyleft,justifycenter,justifyright,justifyfull,|,styleselect,formatselect,fontselect,fontsizeselect|,forecolor,backcolor\","
@@ -60,10 +59,7 @@ static void print_tiny_html_editor()
 		"force_br_newlines : true,"
 		"force_p_newlines : false,"
 		"plugins : \"inlinepopups\","
-		"dialog_type : \"modal\""
-	"});"
-	"</script>"
-	);
+		"dialog_type : \"modal\"" "});" "</script>");
 }
 #endif
 
@@ -111,19 +107,20 @@ static void print_notice_html(const blog_t * conf)
 static int print_header_html(const blog_t * conf)
 {
 	/* set a cookie */
-	if(conf->qry.csstype == CSS_SELECT)
+	if (conf->qry.csstype == CSS_SELECT)
 		http_set_cookie(COOKIE_CSS, conf->qry.css, "");
-	if(conf->qry.csstype == CSS_RESET)
+	if (conf->qry.csstype == CSS_RESET)
 		http_set_cookie(COOKIE_CSS, "", "");
 
 #ifdef ADMIN_MODE_PASS
 	if (conf->qry.action == QA_LOGOUT
-				||((conf->authtype == AUTH_SID) && !conf->auth)) {
+		|| ((conf->authtype == AUTH_SID) && !conf->auth)) {
 		http_set_cookie(COOKIE_SID, "", "");
 	}
 
 	if (conf->authtype == AUTH_POST) {
-		http_set_cookie_ssl_age(COOKIE_SID, conf->sid, SESSION_STR_VTIME);
+		http_set_cookie_ssl_age(COOKIE_SID, conf->sid,
+			SESSION_STR_VTIME);
 	}
 #endif
 
@@ -137,7 +134,7 @@ static int print_header_html(const blog_t * conf)
 		html_link_css(DEFAULT_STYLESHEET);
 
 	/* rss */
-	html_link_rss(conf->title, "?"QUERY_FMT"=rss");
+	html_link_rss(conf->title, "?" QUERY_FMT "=rss");
 
 #if defined(ADMIN_MODE) && defined(WANT_TINY_HTML_EDITOR)
 	if (conf->qry.action == QA_ADD || conf->qry.action == QA_MODIFY) {
@@ -163,36 +160,38 @@ static int print_header_html(const blog_t * conf)
 	html_div_open("id", "header");
 	html_tag_open_close2("h1", html_link, conf->path, conf->title);
 
-	#ifdef ADMIN_MODE_PASS
-		if(conf->ssl != NULL){
-			html_div_open("class", "mactions");
-			html_content("(");
-			if(conf->auth){
-				if (conf->qry.action != QA_ADD ) {
-					html_abs_qry_link2(conf->script, QUERY_ADD, "Add entry");
-				}
-				html_abs_qry_link2(conf->script, QUERY_CONFIG, "Config");
+#ifdef ADMIN_MODE_PASS
+	if (conf->ssl != NULL) {
+		html_div_open("class", "mactions");
+		html_content("(");
+		if (conf->auth) {
+			if (conf->qry.action != QA_ADD) {
+				html_abs_qry_link2(conf->script, QUERY_ADD,
+					"Add entry");
+			}
+			html_abs_qry_link2(conf->script, QUERY_CONFIG,
+				"Config");
 
-	#ifdef ADMIN_MODE_PASS
-				html_abs_qry_link2(conf->script, QUERY_LOGOUT, "Logout");
-			}else
-				html_abs_qry_link2(conf->script, QUERY_LOGIN, "Login");
+#ifdef ADMIN_MODE_PASS
+			html_abs_qry_link2(conf->script, QUERY_LOGOUT,
+				"Logout");
+		} else
+			html_abs_qry_link2(conf->script, QUERY_LOGIN, "Login");
 
-			html_content(")");
-			html_div_end();
-		}
-	#endif
-	#endif
+		html_content(")");
+		html_div_end();
+	}
+#endif
+#endif
 
 	html_div_open("id", "hwidgets");
-	if(strcmp(conf->tagline, "")){
+	if (strcmp(conf->tagline, "")) {
 		html_div_open("id", "tagline");
 		html_content(conf->tagline);
 		html_div_end();
 	}
-
 #ifdef WANT_SEARCHING
-	if(conf->sbox == 'y' && conf->path){
+	if (conf->sbox == 'y' && conf->path) {
 		html_div_open("id", "sbox");
 		html_form_open("get", conf->path, NULL, NULL);
 		html_input("text", QUERY_QRY, NULL);
@@ -219,8 +218,7 @@ static int print_header_html(const blog_t * conf)
 	return 0;
 }
 
-static void day_entries_html(const blog_t * conf, struct day *de,
-	size_t elen)
+static void day_entries_html(const blog_t * conf, struct day *de, size_t elen)
 {
 	int i;
 	struct nentry *e;
@@ -250,14 +248,14 @@ static void print_footer_html(const blog_t * conf)
 {
 #ifdef WANT_MONTH_BROWSING
 	/* print month selection, past, now, future */
-	char p[FMT_CALDATE]= "";
-	char n[FMT_CALDATE]= "";
-	char f[FMT_CALDATE]= "";
+	char p[FMT_CALDATE] = "";
+	char n[FMT_CALDATE] = "";
+	char f[FMT_CALDATE] = "";
 	struct caltime ct;
 
 	memcpy(&ct, &conf->qry.mon, sizeof(struct caltime));
 
-	if(caldate_fmt(0, &ct.date) < FMT_CALDATE){
+	if (caldate_fmt(0, &ct.date) < FMT_CALDATE) {
 		n[caldate_fmt(n, &ct.date)] = 0;
 		n[str_rchr(n, '-')] = 0;
 	}
@@ -265,7 +263,7 @@ static void print_footer_html(const blog_t * conf)
 	ct.date.month--;
 	caldate_normalize(&ct.date);
 
-	if(caldate_fmt(0, &ct.date) < FMT_CALDATE){
+	if (caldate_fmt(0, &ct.date) < FMT_CALDATE) {
 		p[caldate_fmt(p, &ct.date)] = 0;
 		p[str_rchr(p, '-')] = 0;
 	}
@@ -273,7 +271,7 @@ static void print_footer_html(const blog_t * conf)
 	ct.date.month += 2;
 	caldate_normalize(&ct.date);
 
-	if(caldate_fmt(0, &ct.date) < FMT_CALDATE){
+	if (caldate_fmt(0, &ct.date) < FMT_CALDATE) {
 		f[caldate_fmt(f, &ct.date)] = 0;
 		f[str_rchr(f, '-')] = 0;
 	}
@@ -309,7 +307,7 @@ int print_config(const blog_t * conf)
 	/* set appropriate notice */
 
 	html_div_open("id", "conf");
-	html_form_open("post", conf->script, 0 , 0);
+	html_form_open("post", conf->script, 0, 0);
 	html_input("hidden", "action", "config");
 
 	html_tag_open("p");
@@ -330,7 +328,7 @@ int print_config(const blog_t * conf)
 #ifdef WANT_SEARCHING
 	html_tag_open("p");
 	html_content("Search box: ");
-	if(conf->sbox == 'y')
+	if (conf->sbox == 'y')
 		html_checkbox(POST_ARG_SEARCHBOX, "y", 1);
 	else
 		html_checkbox(POST_ARG_SEARCHBOX, "y", 0);
@@ -353,39 +351,38 @@ static void print_upload(const blog_t * conf)
 #if defined(ADMIN_MODE) && defined(WANT_UPLOAD)
 	if (
 #ifdef ADMIN_MODE_PASS
-			conf->auth &&
+		conf->auth &&
 #endif
-			(conf->qry.action == QA_MODIFY || conf->qry.action ==
-			QA_ADD)){
+		(conf->qry.action == QA_MODIFY || conf->qry.action == QA_ADD)) {
 
-	html_div_open("id", "upload");
+		html_div_open("id", "upload");
 
-	html_form_open("post", UPLOAD_CGI,
+		html_form_open("post", UPLOAD_CGI,
 			"multipart/form-data",
 			"return AIM.submit(this, {'onStart' : startCallback, 'onComplete' : completeCallback})");
 
-	html_div_open(0, 0);
-	html_tag_open("label");
-	html_input("file", POST_FILE_UPLOAD, 0);
-	html_div_end();
+		html_div_open(0, 0);
+		html_tag_open("label");
+		html_input("file", POST_FILE_UPLOAD, 0);
+		html_div_end();
 
-	html_div_open(0, 0);
-	html_input("submit", 0, "Upload");
-	html_div_end();
+		html_div_open(0, 0);
+		html_input("submit", 0, "Upload");
+		html_div_end();
 
-	html_form_close();
+		html_form_close();
 
-	html_div_open("id", "upload_out");
-	html_span_open("id", "nr");
-	html_content("0");
-	html_span_end();
-	html_content("Files uploaded");
-	html_div_end();
+		html_div_open("id", "upload_out");
+		html_span_open("id", "nr");
+		html_content("0");
+		html_span_end();
+		html_content("Files uploaded");
+		html_div_end();
 
-	html_div_open(0, 0);
-	html_content("Filename: ");
-	html_bulk("<pre id=\"r\">");
-	html_div_end();
+		html_div_open(0, 0);
+		html_content("Filename: ");
+		html_bulk("<pre id=\"r\">");
+		html_div_end();
 	}
 #endif
 }
@@ -454,14 +451,15 @@ int print_mod_entry(const blog_t * conf, struct nentry *n)
 void print_login(const blog_t * conf)
 {
 	set_err("Login", 0, N_ACTION);
-	if(print_header_html(conf))
+	if (print_header_html(conf))
 		return;
 
 	html_div_open("id", "login");
 
-	html_form_open("post", conf->script, 0 ,0 );
+	html_form_open("post", conf->script, 0, 0);
 	html_content("Enter your password: ");
-	html_bulk("<input name=\""POST_LOGIN"\" type=\"password\" size=\"12\" maxlength=\"12\">\n");
+	html_bulk("<input name=\"" POST_LOGIN
+		"\" type=\"password\" size=\"12\" maxlength=\"12\">\n");
 
 	html_input("submit", 0, "Login");
 	html_form_close();

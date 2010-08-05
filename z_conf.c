@@ -19,12 +19,12 @@
 #define SESSION_DB "db/session.inc"
 #define SESSION_DB_TMP "db/session.tmp.inc"
 
-int expire_all_sessions(blog_t *conf)
+int expire_all_sessions(blog_t * conf)
 {
 	int fd;
 	unlink(SESSION_DB);
 	fd = open_write(SESSION_DB);
-	if(!fd)
+	if (!fd)
 		return -1;
 	close(fd);
 	return 0;
@@ -40,13 +40,14 @@ int load_config(blog_t * conf)
 		return -1;
 
 	err = cdbb_readn(&a, CONF_TITLE, 5, conf->title, sizeof(conf->title));
-	if(err < 0)
+	if (err < 0)
 		return -2;
-	err = cdbb_readn(&a, CONF_TAGLINE, 7, conf->tagline, sizeof(conf->tagline));
-	if(err < 0)
+	err = cdbb_readn(&a, CONF_TAGLINE, 7, conf->tagline,
+		sizeof(conf->tagline));
+	if (err < 0)
 		return -2;
 	err = cdbb_readn(&a, CONF_SEARCHBOX, 9, &conf->sbox, 1);
-	if(err < 0)
+	if (err < 0)
 		return -2;
 
 	cdbb_close_read(&a);
@@ -58,9 +59,9 @@ int load_config(blog_t * conf)
 int http_is_modified(char *lm, time_t t)
 {
 	time_t ims;
-	scan_httpdate(lm,&ims);
+	scan_httpdate(lm, &ims);
 
-	if(t>ims)
+	if (t > ims)
 		return 1;
 	return 0;
 }
@@ -81,32 +82,31 @@ time_t http_if_modified_since(char *m)
 
 	taia_unpack(pk, &t);
 
-	if(err == 1 && m && !http_is_modified(m,
-			(time_t)t.sec.x&0xffffffffffful)){
+	if (err == 1 && m && !http_is_modified(m,
+			(time_t) t.sec.x & 0xffffffffffful)) {
 		return 0;
 	}
 
-	return (time_t)t.sec.x&0xffffffffffful;
+	return (time_t) t.sec.x & 0xffffffffffful;
 }
 #endif
 
 #if defined(WANT_CGI_CONFIG) && defined(ADMIN_MODE)
 /*  SESSION */
 
-int is_expired(char * v)
+int is_expired(char *v)
 {
-		struct taia now, ts;
-		taia_now(&now);
+	struct taia now, ts;
+	taia_now(&now);
 
-		taia_unpack((char*)v, &ts);
+	taia_unpack((char *)v, &ts);
 
-		if (taia_less(&now, &ts))
-			return 0;
-		return 1;
+	if (taia_less(&now, &ts))
+		return 0;
+	return 1;
 }
 
-int filter_expired(unsigned char * k, size_t ks,
-		unsigned char *v, size_t vs)
+int filter_expired(unsigned char *k, size_t ks, unsigned char *v, size_t vs)
 {
 	return is_expired((char *)v);
 }
@@ -115,13 +115,16 @@ int save_config(blog_t * conf)
 {
 	struct cdbb a;
 	cdbb_start_mod(&a, CONF_DB);
-	if(strcmp(conf->qry.title, "")){
-		cdbb_rep(&a, CONF_TITLE, 5, conf->qry.title, strlen(conf->qry.title)+1);
+	if (strcmp(conf->qry.title, "")) {
+		cdbb_rep(&a, CONF_TITLE, 5, conf->qry.title,
+			strlen(conf->qry.title) + 1);
 		strcpy(conf->title, conf->qry.title);
 	}
-	if(strcmp(conf->qry.pass, ""))
-		cdbb_rep(&a, CONF_PASS, 5, conf->qry.pass, strlen(conf->qry.pass)+1);
-	cdbb_rep(&a, CONF_TAGLINE, 7, conf->qry.tagline, strlen(conf->qry.tagline)+1);
+	if (strcmp(conf->qry.pass, ""))
+		cdbb_rep(&a, CONF_PASS, 5, conf->qry.pass,
+			strlen(conf->qry.pass) + 1);
+	cdbb_rep(&a, CONF_TAGLINE, 7, conf->qry.tagline,
+		strlen(conf->qry.tagline) + 1);
 	strcpy(conf->tagline, conf->qry.tagline);
 #ifdef WANT_SEARCHING
 	cdbb_rep(&a, CONF_SEARCHBOX, 9, &conf->sbox, 1);
@@ -135,19 +138,19 @@ int save_config(blog_t * conf)
 #ifdef ADMIN_MODE_PASS
 int auth_conf(blog_t * conf, unsigned char *in, size_t len)
 {
-	struct nentry * n = new_nentry();
+	struct nentry *n = new_nentry();
 	int auth;
 
 	struct cdbb a;
 	cdbb_open_read(&a, CONF_DB);
-	if(cdbb_read_nentry(&a, CONF_PASS, 5, n) <= 0){
+	if (cdbb_read_nentry(&a, CONF_PASS, 5, n) <= 0) {
 		free_nentry(n);
 		return 0;
 	}
 	cdbb_close_read(&a);
 
 	/* contains zero */
-	if(array_bytes(&n->e) != len + 1)
+	if (array_bytes(&n->e) != len + 1)
 		return 0;
 
 	auth = !memcmp(in, n->e.p, array_bytes(&n->e));
@@ -178,7 +181,7 @@ int add_session_id(char *buf)
 	taia_pack(ts, &now);
 
 	err = cdbb_start_mod(&a, SESSION_DB);
-	if(err < 0)
+	if (err < 0)
 		return -1;
 
 	cdbb_add(&a, buf, SIZE_SESSION_ID, ts, TAIA_PACK);
@@ -199,7 +202,7 @@ int validate_session_id(char *buf)
 	cdbb_open_read(&a, SESSION_DB);
 	err = cdbb_read_nentry(&a, buf, SIZE_SESSION_ID, &value);
 
-	if (err <= 0){
+	if (err <= 0) {
 		cdbb_close_read(&a);
 		return 0;
 	}

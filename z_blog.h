@@ -68,23 +68,24 @@ typedef struct query {
 	/* query actions */
 	enum qaction { QA_SHOW,
 #ifdef ADMIN_MODE_PASS
-		QA_LOGIN, QA_LOGOUT ,
+		QA_LOGIN, QA_LOGOUT,
 #endif
 #ifdef ADMIN_MODE
-			QA_DELETE,
-			QA_ADD, QA_ADD_POST,
-			QA_MODIFY, QA_MODIFY_POST,
-			QA_CONFIG, QA_CONFIG_POST
+		QA_DELETE,
+		QA_ADD, QA_ADD_POST,
+		QA_MODIFY, QA_MODIFY_POST,
+		QA_CONFIG, QA_CONFIG_POST
 #endif
 	} action;
 
 	/* in case of QA_SHOW, distinct between different query types */
-	enum qtype { QRY_TS, QRY_WEEK, QRY_MONTH, QRY_NONE, QRY_FIND, QRY_TAG } type;
+	enum qtype { QRY_TS, QRY_WEEK, QRY_MONTH, QRY_NONE, QRY_FIND,
+			QRY_TAG } type;
 
 	/* query timestamp (?ts=) */
 	char ts[FMT_TAIA_HEX];
 
-	/* query days (e.g. for the last 7 days, start=0, doff=8 )*/
+	/* query days (e.g. for the last 7 days, start=0, doff=8 ) */
 	unsigned int start;	/* offset from today, positive */
 	unsigned int doff;	/* offset from start, positive */
 
@@ -120,7 +121,6 @@ typedef struct query {
 		CSS_COOKIE
 	} csstype;
 
-
 } query_t;
 
 typedef struct blog {
@@ -130,7 +130,7 @@ typedef struct blog {
 	int auth;
 	enum authtype { AUTH_NONE, AUTH_POST, AUTH_SID } authtype;
 	/* session id */
-	char sid[SIZE_SESSION_ID+1];
+	char sid[SIZE_SESSION_ID + 1];
 #endif
 
 /* basic info */

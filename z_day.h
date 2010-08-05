@@ -18,10 +18,10 @@ typedef struct day {
 
 void day_init(struct day *d);
 size_t day_length(struct day *d);
-struct nentry * day_get_nentry(struct day *d, int i);
-void day_add_nentry(struct day *d, struct nentry * n);
-struct day * day_new();
-void day_free(struct day * d);
+struct nentry *day_get_nentry(struct day *d, int i);
+void day_add_nentry(struct day *d, struct nentry *n);
+struct day *day_new();
+void day_free(struct day *d);
 
-int cdbb_fetch_day(struct cdbb *a, struct day * entries, const struct taia *day);
+int cdbb_fetch_day(struct cdbb *a, struct day *entries, const struct taia *day);
 #endif
