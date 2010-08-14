@@ -7,6 +7,7 @@ void result_init(struct result *r) {
 	memset(&r->r, 0, sizeof(array));
 }
 
+// not needed
 //struct result * result_new()
 //{
 //	struct result r = malloc(sizeof(struct result));

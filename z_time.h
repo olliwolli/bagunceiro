@@ -54,7 +54,7 @@ size_t fmt_time_hex(char *s, const struct taia *time);
  *  */
 #define FMT_CALDATE_NAV 42+23
 #else
-#define FMT_CALDATE_NAV 14
+#define FMT_CALDATE_NAV 20
 #endif
 unsigned int fmt_caldate_nav(char *s, const struct caldate *cd);
 
