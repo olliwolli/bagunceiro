@@ -457,6 +457,11 @@ void print_login(const blog_t * conf)
 	html_div_open("id", "login");
 
 	html_form_open("post", conf->script, 0, 0);
+
+	html_content("Enter your username: ");
+	html_bulk("<input name=\"" POST_USERNAME
+		"\" type=\"text\" size=\"12\" maxlength=\"12\">\n");
+
 	html_content("Enter your password: ");
 	html_bulk("<input name=\"" POST_LOGIN
 		"\" type=\"password\" size=\"12\" maxlength=\"12\">\n");

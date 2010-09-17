@@ -52,6 +52,7 @@
 #define POST_ARG_KEY "key"
 
 #define POST_LOGIN "login"
+#define POST_USERNAME "username"
 #define POST_FILE_UPLOAD "file"
 
 #define POST_ACTION "action"
