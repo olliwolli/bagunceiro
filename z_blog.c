@@ -308,8 +308,8 @@ int handle_query(blog_t * conf)
 				/* now, this might actually get more than doff, entries,
 				 * but whatever -- I hereby declare that doff has that meaning
 				 * at least when used with QRY_WEEK */
-				conf->qry.start = conf->qry.doff + 1;
-				conf->qry.doff = conf->qry.start + 8;
+				conf->qry.start = conf->qry.doff;
+				conf->qry.doff = conf->qry.start + 7;
 
 			} while (i--);
 
