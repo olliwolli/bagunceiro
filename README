@@ -18,13 +18,13 @@ One feature that is awkward to implement though is searching through
 the blog. Right now the implementation just goes through all the blog posts
 doing a full-text search.
 
-Q: Why did implement a command line client and not the MetaWeblog API (XML-RPC)
+Q: Why did you implement a command line client and not the MetaWeblog API (XML-RPC)
 A: Why anyone would want to use a heavy client in order to post something
 on the web nowadays escapes me completely. I can however understand if somebody
 wants to write blog posts using a command line client over ssh.
  
 Q: So how do you use cdb to store your blog?
-A: I use on entry for every day which contains a list of references to
+A: I use on entry for every day which in turn contains a list of references to
 the actual blog entries.
 
 
