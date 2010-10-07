@@ -167,8 +167,11 @@ static int fetch_entries_days(const blog_t * conf, struct result *res)
 	memcpy(&tday, &conf->now, sizeof(struct taia));
 	sub_days(&tday, start);
 
-	for (start=0 ; start < conf->qry.doff-conf->qry.start; start++) {
+	for (start=0 ; start < conf->qry.doff; start++) {
 		day = day_new();
+
+//		caltime_utc(&day->time, &tday.sec, (int *)0, (int *)0);
+//		printf("Today is: %d.%d\n", day->time.date.day, day->time.date.month);
 
 		/* get entries for calculated day */
 		if (cdbb_fetch_day(&a, day, &tday) <= 0) {	/* File not found or 0 entries */
@@ -303,14 +306,14 @@ int handle_query(blog_t * conf)
 				err += fetch_entries_days(conf, &res);
 
 				/* if we did get end-start (number of days) entries -> ok */
-				if (err + 1 >= conf->qry.doff - conf->qry.start)
+				if (err + 1 >= conf->qry.doff)
 					break;
 
 			/* now, this might actually get more than doff, entries,
 			 * but whatever -- I hereby declare that doff has that meaning
 			 * at least when used with QRY_WEEK */
-				conf->qry.start = conf->qry.doff;
-				conf->qry.doff = conf->qry.start + 7;
+				conf->qry.start = conf->qry.start + conf->qry.doff;
+				conf->qry.doff = 7;
 
 			} while (i--);
 

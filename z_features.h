@@ -10,7 +10,7 @@
 #define QUERY_MAX		128
 #define COOKIE_MAX		128
 
-#define PROGRAM_NAME		"b"
+#define PROGRAM_NAME		"bagunceiro"
 
 /* Adds error messages that are not for free. Adds approx. 4k.
  * This also removes some useful notices. Ok for admin binary */
