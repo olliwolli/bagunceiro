@@ -53,7 +53,7 @@
  * want to delete the two files mentioned below */
 #define WANT_UPLOAD
 #define UPLOAD_JS "/upload.js"
-#define UPLOAD_CGI "http://localhost/cgi-bin/clog/upload.cgi"
+#define UPLOAD_CGI "/upload.cgi"
 
 /* full text searching capability */
 #define WANT_SEARCHING
