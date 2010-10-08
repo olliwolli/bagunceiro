@@ -289,8 +289,10 @@ static void get_query_string(array * qs)
 	memset(qs, 0, sizeof(array));
 
 #ifdef DEBUG
-	array_cats0(qs, debug_query);
-	return;
+	if(!strcmp("", qs)){
+		array_cats0(qs, debug_query);
+		return;
+	}
 #endif
 
 	if (getenv("QUERY_STRING") != NULL)
@@ -302,8 +304,10 @@ static void get_cookie_string(array * co)
 	memset(co, 0, sizeof(array));
 
 #ifdef DEBUG
-	array_cats0(co, debug_cookie);
-	return;
+	if(!strcmp("", co)){
+		array_cats0(co, debug_cookie);
+		return;
+	}
 #endif
 
 	if (getenv("HTTP_COOKIE") != NULL)
@@ -317,8 +321,10 @@ static void get_post_string(array * ps)
 	memset(ps, 0, sizeof(array));
 
 #ifdef DEBUG
-	array_cats0(ps, debug_post);
-	return;
+	if(!strcmp("", ps)){
+		array_cats0(ps, debug_post);
+		return;
+	}
 #endif
 
 	len = getenv("CONTENT_LENGTH");

@@ -85,7 +85,7 @@ LDFLAGS_ADMIN=$(LDFLAGS)
 # static breaks valgrind leak checking
 ifneq ($(DEBUG),)
 CFLAGS+=-g3 -fomit-frame-pointer
-CFLAGS_ADMIN=$(CFLAGS) -DADMIN_MODE -DADMIN_MODE_PASS -g -DDEBUG
+CFLAGS_ADMIN=$(CFLAGS) -DADMIN_MODE -DADMIN_MODE_PASS -g
 else
 CFLAGS+=-Os -fomit-frame-pointer
 LDFLAGS+=-s -static
