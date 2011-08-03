@@ -139,9 +139,15 @@ int save_config(blog_t * conf)
 int auth_conf(blog_t * conf, unsigned char *in, size_t len)
 {
 	struct nentry *n = new_nentry();
-	int auth;
-
+ 	int auth;
 	struct cdbb a;
+
+	unsigned char hash[SHA256_DIGEST_LENGTH+1];
+ 	SHA256_CTX c;
+
+	SHA256_Init(&c);
+	memset(hash, '\0', SHA256_DIGEST_LENGTH+1);
+
 	cdbb_open_read(&a, CONF_DB);
 	if (cdbb_read_nentry(&a, CONF_PASS, 5, n) <= 0) {
 		free_nentry(n);
@@ -150,10 +156,14 @@ int auth_conf(blog_t * conf, unsigned char *in, size_t len)
 	cdbb_close_read(&a);
 
 	/* contains zero */
-	if (array_bytes(&n->e) != len + 1)
-		return 0;
+//	if (array_bytes(&n->e) != len + 1)
+//		return 0;
 
-	auth = !memcmp(in, n->e.p, array_bytes(&n->e));
+	/* Do sha256 */
+ 	SHA256_Update(&c, in, len);
+ 	SHA256_Final(hash, &c);
+
+	auth = !memcmp(hash, n->e.p, SHA256_DIGEST_LENGTH);
 	memset(n->e.p, 0, array_bytes(&n->e));
 
 	return auth;

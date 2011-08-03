@@ -51,7 +51,7 @@
 
 /* upload form on post page, if you disable this you also might
  * want to delete the two files mentioned below */
-#define WANT_UPLOAD
+//#define WANT_UPLOAD
 #define UPLOAD_JS "/upload.js"
 #define UPLOAD_CGI "/upload.cgi"
 

@@ -1,7 +1,9 @@
+#
 # uses dietlibc (default)
 # be sure that libowfat is compiled with the same
 # libc as the one you are using here
 WANT_DIET=yes
+#WANT_UPLOAD=
 
 # compile fast cgi version
 # increases the binary by about 36kb 
@@ -37,7 +39,7 @@ endif
 
 # dynamic and static content in the same path
 INSTALL_DIR=/var/www/blog
-BINDIR=/usr/bin
+BIN_DIR=/usr/bin
 DBDIR=$(INSTALL_DIR)/db
 TINYDIR=$(INSTALL_DIR)/tinymce
 WEBUSER=www-data
@@ -79,7 +81,7 @@ WEBGRP=www-data
 # are for.
 
 CFLAGS+=-Wall
-LDFLAGS+=-lowfat
+LDFLAGS+=-lowfat -lcrypto
 LDFLAGS_ADMIN=$(LDFLAGS)
 
 # static breaks valgrind leak checking
@@ -92,7 +94,12 @@ LDFLAGS+=-s -static
 CFLAGS_ADMIN=$(CFLAGS) -DADMIN_MODE -DADMIN_MODE_PASS
 endif
 
-TARGETS=blog.cgi admin.cgi blogcmd upload.cgi
+TARGETS=blog.cgi admin.cgi blogcmd
+
+ifneq ($(WANT_UPLOAD),)
+TARGETS+=upload.cgi
+endif
+
 
 all: $(TARGETS)
 
@@ -139,12 +146,13 @@ blog.cgi: _blog
 	cp -p $^ $@
 	-strip -R .note -R .comment $@
 
-
+ifneq ($(WANT_UPLOAD),)
 upload.cgi: upload.o
 	$(CC) -o $@ $^ $(LDFLAGS)
+endif
 
 clean:
-	rm -f _* $(TARGETS) css/*~ *~ *.o cscope.out tags
+	rm -f _* $(TARGETS) css/*~ *~ *.o cscope.out tags *.cgi
 
 ###########
 # Deployment 
@@ -164,9 +172,11 @@ install:
 # wysiwyg editor
 	install -d $(TINYDIR)
 
+ifneq ($(WANT_UPLOAD),)
 # upload functionality
 	install upload/upload.pl $(INSTALL_DIR)
 	install upload/upload.js $(INSTALL_DIR)
+endif
 
 # install cgi scripts
 	install blog.cgi $(INSTALL_DIR)

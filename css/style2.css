@@ -1,0 +1,94 @@
+a img {
+ border:none;
+}
+
+a{
+	text-decoration: none;
+}
+
+body {
+	line-height: 16px;
+}
+
+h1, h1 a:link, h1 a:visited, h1 a:active, h1 a:hover {
+	font-size: 36px;
+	letter-spacing: -3px;
+	font-family: georgia;
+	margin-bottom: 30px;
+	color: #000000;
+	display: inline
+}
+
+textarea {
+	width:400px;
+	height:200px;
+}
+
+blockquote {
+	display: block;
+	font-style: italic;
+}
+
+pre{
+	padding: 0px 20px;
+}
+
+#content a:hover {
+	text-decoration: underline;
+}
+
+#tagline {
+	margin: 10px 40px;
+}
+
+#mod {
+	margin: 20px 0px 10px 10px;
+}
+
+#upload {
+	padding: 20px 200px;
+}
+
+#upload_out{
+	padding: 20px ;
+}
+
+#nav {
+	text-align: center;
+}
+
+#sbox {
+	margin: 20px 0px 10px 10px;
+}
+
+#conf p{
+	padding: 10px 5px;
+}
+
+.day ul{
+	margin-left: 20px;
+	list-style-image:url("star.gif");
+}
+
+.day li{
+	margin-bottom: 3px;
+}
+
+.actions{
+	display: inline;
+}
+
+.mactions, .mactions a{
+	font-size: 85%;
+	display: inline;
+}
+
+.abutton{
+	margin: 20px -1px 10px 10px;
+}
+
+.k a{
+	font-size: 70%;
+	color: #3f3f41;
+	font-style:italic;
+}

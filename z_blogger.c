@@ -12,7 +12,7 @@
 #include "z_entry.h"
 #include "z_blog.h"
 #include "z_time.h"
-
+#include <openssl/sha.h>
 #ifdef ADMIN_MODE
 
 void read_stdin(array * content)
@@ -35,7 +35,8 @@ void print_help()
 		"  -s          show\n"
 		"  -n          add now \n"
 		"  -t          taia mode (for blog posts)\n"
-		"  -h          print help\n");
+		"  -h          print help\n"
+		"  -c          use sha256 on value\n");
 }
 
 /* options */
@@ -54,10 +55,15 @@ int main(int argc, char **argv)
 	static array value;
 	char fmtkey[FMT_TAIA_HEX];
 
+	signed char hash[SHA256_DIGEST_LENGTH+1];
+ 	SHA256_CTX ctx;
+	int i=0;
+
 	enum mode { TAIA, PLAIN } mode = PLAIN;
 	enum action { ADD, DEL, MOD, SHOW, ADD_NOW, HELP } action = HELP;
+	int use_sha = 0;
 	/* parse */
-	while ((c = getopt(argc, argv, "b:k:v:tandmshi?")) != -1) {
+	while ((c = getopt(argc, argv, "b:k:v:ctandmshi?")) != -1) {
 		switch (c) {
 		case 'b':
 			str_copy(db, optarg);
@@ -65,8 +71,23 @@ int main(int argc, char **argv)
 		case 'k':
 			strcpy(skey, optarg);
 			break;
+		case 'c':
+			use_sha = 1;
+			break;
 		case 'v':
-			array_cats0(&value, optarg);
+			if (use_sha == 1) {
+		 		SHA256_Init(&ctx);
+				SHA256_Update(&ctx, optarg, strlen(optarg));
+
+			 	SHA256_Final(hash, &ctx);
+				hash[SHA256_DIGEST_LENGTH] = '\0';
+				puts(hash);
+
+				array_catb(&value, hash,
+						SHA256_DIGEST_LENGTH+1);
+			} else {
+				array_cats0(&value, optarg);
+			}
 			break;
 		case 'i':
 			read_stdin(&value);

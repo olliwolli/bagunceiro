@@ -404,8 +404,9 @@ int print_add_entry(const blog_t * conf)
 	html_div_end();
 
 	html_form_close();
-
+#ifdef WANT_UPLOAD
 	print_upload(conf);
+#endif
 	html_div_end();
 
 	print_footer_html(conf);

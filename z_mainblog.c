@@ -356,8 +356,8 @@ static void make_host_string(blog_t * conf)
 	if (conf->host != NULL)
 		hlen = strlen(conf->host);
 
-	if (conf->script != NULL)
-		slen = strlen(conf->script);
+/*	if (conf->script != NULL)
+		slen = strlen(conf->script);*/
 
 	if (!hlen || !slen || hlen + slen + PROTO_HTTPS_LEN + 1 > URL_PATH) {
 		strcpy(conf->path, "/");
