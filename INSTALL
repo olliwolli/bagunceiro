@@ -1,6 +1,6 @@
 1. Compilation
 
-Reuired libraries:
+Reuqired libraries:
 	- dietlibc
 	- libowfat
 
@@ -106,3 +106,11 @@ Which is here: https://sub.mydomain.com/admin.cgi?login .
 Note the "s" in https. This will direct you to the login page. After having
 provided the correct password you will be able to add, delete and modify blog
 posts.
+
+Security
+
+The uploads scripts contained in the upload directory are not secure.
+By installing them on a server everybody might upload files to it which
+is very probable to compromise security of the webserver. So
+you should delete them or restrict access to them by means of
+http basic authentication
