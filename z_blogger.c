@@ -57,7 +57,6 @@ int main(int argc, char **argv)
 
 	signed char hash[SHA256_DIGEST_LENGTH+1];
  	SHA256_CTX ctx;
-	int i=0;
 
 	enum mode { TAIA, PLAIN } mode = PLAIN;
 	enum action { ADD, DEL, MOD, SHOW, ADD_NOW, HELP } action = HELP;
@@ -79,11 +78,10 @@ int main(int argc, char **argv)
 		 		SHA256_Init(&ctx);
 				SHA256_Update(&ctx, optarg, strlen(optarg));
 
-			 	SHA256_Final(hash, &ctx);
+			 	SHA256_Final((unsigned char *)hash, &ctx);
 				hash[SHA256_DIGEST_LENGTH] = '\0';
-				puts(hash);
 
-				array_catb(&value, hash,
+				array_catb(&value, (const char *)hash,
 						SHA256_DIGEST_LENGTH+1);
 			} else {
 				array_cats0(&value, optarg);

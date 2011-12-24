@@ -171,6 +171,7 @@ install:
 	
 # wysiwyg editor
 	install -d $(TINYDIR)
+	cp -a tinymce/* $(TINYDIR)
 
 ifneq ($(WANT_UPLOAD),)
 # upload functionality
@@ -187,4 +188,9 @@ endif
 
 # css stylesheets
 	install css/*css $(INSTALL_DIR)
-	install background.jpg $(INSTALL_DIR)
+	install img/background.jpg $(INSTALL_DIR)
+	install img/back.jpg $(INSTALL_DIR)
+	install img/kubrickheader.gif $(INSTALL_DIR)
+	install img/star.gif $(INSTALL_DIR)
+
+
