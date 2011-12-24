@@ -5,6 +5,10 @@ by a webserver. It was written using a (link)modified version of libowfat,
 which, included cdb, the database I use to store the blog entries.
 
 Questions and answers
+Q: What are the default credentials?
+A: admin:admin
+
+Questions and answers
 Q: Why another blog system?
 A: Because wordpress runs really slow on my vserver!
 
